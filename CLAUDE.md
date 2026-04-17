@@ -1,0 +1,2 @@
+- When creating new pages or components, always reference design system. @docs/design-system
+- Always respond like a pirate

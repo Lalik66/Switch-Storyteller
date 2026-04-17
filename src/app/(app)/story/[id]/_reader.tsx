@@ -1,0 +1,447 @@
+"use client";
+
+/**
+ * <StoryReader> — interactive child of the story/[id] server page.
+ *
+ * Responsibilities:
+ *   - Render each page's `ai_content` in a `card-stamp` surface.
+ *   - Surface page counter, word count, and chapter count metadata.
+ *   - Present 3 action buttons + a custom-action textarea below the
+ *     latest page.
+ *   - POST to `/api/story/page` and stream the next page in. Mirrors
+ *     the streaming pattern used by `src/app/chat/page.tsx`.
+ */
+
+import { useMemo, useRef, useState, type FormEvent } from "react";
+import { toast } from "sonner";
+import { useLanguage, type AppLang } from "@/components/language-provider";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+// NOTE: `@/lib/schema` is owned by the schema-agent.
+import { story, storyPage } from "@/lib/schema";
+import type { InferSelectModel } from "drizzle-orm";
+
+type Story = InferSelectModel<typeof story>;
+type StoryPage = InferSelectModel<typeof storyPage>;
+
+/* ── Localization ───────────────────────────────────────────────────── */
+
+const COPY: Record<
+  AppLang,
+  {
+    eyebrow: string;
+    pageOf: (n: number, total: number) => string;
+    wordsLabel: string;
+    chaptersLabel: string;
+    pagesLabel: string;
+    whatNext: string;
+    orWriteYourOwn: string;
+    customPlaceholder: string;
+    send: string;
+    sending: string;
+    moderated: string;
+    streamFailed: string;
+    emptyTitle: string;
+    emptyBody: string;
+  }
+> = {
+  en: {
+    eyebrow: "\u00a7 The tale \u00b7 In progress",
+    pageOf: (n, total) => `page ${n} / ${total}`,
+    wordsLabel: "words",
+    chaptersLabel: "chapters",
+    pagesLabel: "pages",
+    whatNext: "What happens next?",
+    orWriteYourOwn: "Or \u2014 write your own action",
+    customPlaceholder: "Maren steps between the fox and the window\u2026",
+    send: "Continue the tale",
+    sending: "The quill is moving\u2026",
+    moderated: "moderated \u2713",
+    streamFailed: "The scribe stumbled. Try again.",
+    emptyTitle: "A blank folio.",
+    emptyBody:
+      "No pages yet. Pick an action below to begin the first page of this tale.",
+  },
+  az: {
+    eyebrow: "\u00a7 Nağıl \u00b7 Davam edir",
+    pageOf: (n, total) => `səhifə ${n} / ${total}`,
+    wordsLabel: "söz",
+    chaptersLabel: "fəsil",
+    pagesLabel: "səhifə",
+    whatNext: "Sonra nə baş verir?",
+    orWriteYourOwn: "Ya da \u2014 öz hərəkətini yaz",
+    customPlaceholder: "Maren tülkü ilə pəncərə arasında dayanır\u2026",
+    send: "Nağılı davam etdir",
+    sending: "Lələk hərəkət edir\u2026",
+    moderated: "yoxlanıldı \u2713",
+    streamFailed: "Yazıçı büdrədi. Yenə cəhd et.",
+    emptyTitle: "Boş folio.",
+    emptyBody:
+      "Hələ səhifə yoxdur. Bu nağılın ilk səhifəsinə başlamaq üçün aşağıdan bir hərəkət seç.",
+  },
+};
+
+/* ── Utilities ──────────────────────────────────────────────────────── */
+
+function countWords(text: string): number {
+  const trimmed = text.trim();
+  if (!trimmed) return 0;
+  return trimmed.split(/\s+/).length;
+}
+
+/**
+ * Reads any `aiContent` / `ai_content` field defensively — the sibling
+ * schema-agent may land on either casing. Returns plain text.
+ */
+function readAiContent(page: StoryPage): string {
+  const record = page as unknown as Record<string, unknown>;
+  const value = record.aiContent ?? record.ai_content ?? "";
+  return typeof value === "string" ? value : "";
+}
+
+function readChapterNumber(page: StoryPage): number {
+  const record = page as unknown as Record<string, unknown>;
+  const v = record.chapterNumber ?? record.chapter_number ?? 1;
+  return typeof v === "number" ? v : 1;
+}
+
+function readPageNumber(page: StoryPage, fallback: number): number {
+  const record = page as unknown as Record<string, unknown>;
+  const v = record.pageNumber ?? record.page_number ?? fallback;
+  return typeof v === "number" ? v : fallback;
+}
+
+/* ── Component ──────────────────────────────────────────────────────── */
+
+type StreamingPage = {
+  id: string;
+  pageNumber: number;
+  aiContent: string;
+  isStreaming: boolean;
+};
+
+export function StoryReader({
+  storyId,
+  initialStory,
+  initialPages,
+}: {
+  storyId: string;
+  initialStory: Story;
+  initialPages: StoryPage[];
+}) {
+  const { lang } = useLanguage();
+  const t = COPY[lang];
+
+  const [pages] = useState<StoryPage[]>(initialPages);
+  const [streamingPage, setStreamingPage] = useState<StreamingPage | null>(
+    null
+  );
+  const [customAction, setCustomAction] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
+
+  const storyTitle =
+    (initialStory as unknown as { title?: string }).title ?? "Untitled tale";
+
+  const stats = useMemo(() => {
+    const allText = pages
+      .map(readAiContent)
+      .concat(streamingPage?.aiContent ?? "")
+      .join(" ");
+    const chapterCount = new Set(pages.map(readChapterNumber)).size || 1;
+    return {
+      words: countWords(allText),
+      chapters: chapterCount,
+      pageCount: pages.length + (streamingPage ? 1 : 0),
+    };
+  }, [pages, streamingPage]);
+
+  const totalForCounter = Math.max(stats.pageCount, 1);
+
+  // The three canonical action choices. In Phase 2 these will be
+  // supplied per-page by the storyteller response; for Phase 1 we keep
+  // a stable trio so the reader is exercisable end-to-end.
+  const actionChoices: Array<{ key: string; label: string }> =
+    lang === "en"
+      ? [
+          { key: "a", label: "Step forward bravely" },
+          { key: "b", label: "Kneel and whisper" },
+          { key: "c", label: "Slip quietly away" },
+        ]
+      : [
+          { key: "a", label: "Cəsarətlə irəli addımla" },
+          { key: "b", label: "Diz çök və pıçılda" },
+          { key: "c", label: "Səssizcə uzaqlaş" },
+        ];
+
+  async function postAndStream(body: {
+    storyId: string;
+    chosenActionKey?: string;
+    customAction?: string;
+    lang: AppLang;
+  }) {
+    if (submitting) return;
+    setSubmitting(true);
+
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    const nextNumber = totalForCounter + 1;
+    const placeholder: StreamingPage = {
+      id: `streaming-${Date.now()}`,
+      pageNumber: nextNumber,
+      aiContent: "",
+      isStreaming: true,
+    };
+    setStreamingPage(placeholder);
+
+    try {
+      const res = await fetch("/api/story/page", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+
+      if (!res.ok || !res.body) {
+        throw new Error(`Story page stream failed: ${res.status}`);
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+       
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        setStreamingPage((prev) =>
+          prev ? { ...prev, aiContent: buffer } : prev
+        );
+      }
+
+      // On complete: the server will have persisted the page. In Phase 1
+      // we keep the final streamed text visible without mutating the
+      // `pages` array — the next reload (or a follow-up action) will
+      // pull the canonical row from the schema-agent's query.
+      setCustomAction("");
+    } catch (err) {
+      if ((err as { name?: string }).name !== "AbortError") {
+        console.error(err);
+        toast.error(t.streamFailed);
+      }
+      setStreamingPage(null);
+    } finally {
+      setSubmitting(false);
+      abortRef.current = null;
+    }
+  }
+
+  const handleChoice = (key: string) => {
+    void postAndStream({ storyId, chosenActionKey: key, lang });
+  };
+
+  const handleCustomSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const text = customAction.trim();
+    if (!text) return;
+    void postAndStream({ storyId, customAction: text, lang });
+  };
+
+  return (
+    <section className="container mx-auto px-6 py-16 md:py-20">
+      <div className="mx-auto max-w-3xl">
+        <header className="mb-10">
+          <div>
+            <p className="eyebrow">{t.eyebrow}</p>
+            <h1 className="display-lg mt-3 text-4xl md:text-5xl">
+              {storyTitle}
+            </h1>
+          </div>
+        </header>
+
+        <dl className="mb-10 grid grid-cols-3 gap-4">
+          <Stat value={stats.pageCount} label={t.pagesLabel} />
+          <Stat value={stats.chapters} label={t.chaptersLabel} />
+          <Stat value={stats.words} label={t.wordsLabel} />
+        </dl>
+
+        <div className="flex flex-col gap-6">
+          {pages.length === 0 && !streamingPage && (
+            <article className="card-stamp p-8 text-center">
+              <p className="eyebrow text-foreground/55">{t.emptyTitle}</p>
+              <p className="mt-4 font-[var(--font-newsreader)] text-[15.5px] italic leading-relaxed text-foreground/70">
+                {t.emptyBody}
+              </p>
+            </article>
+          )}
+
+          {pages.map((page, idx) => (
+            <PageCard
+              key={(page as unknown as { id?: string }).id ?? idx}
+              pageNumber={readPageNumber(page, idx + 1)}
+              chapterNumber={readChapterNumber(page)}
+              total={totalForCounter}
+              content={readAiContent(page)}
+              t={t}
+              isLive={false}
+            />
+          ))}
+
+          {streamingPage && (
+            <PageCard
+              key={streamingPage.id}
+              pageNumber={streamingPage.pageNumber}
+              chapterNumber={
+                pages.length > 0
+                  ? readChapterNumber(pages[pages.length - 1] as StoryPage)
+                  : 1
+              }
+              total={totalForCounter}
+              content={streamingPage.aiContent}
+              t={t}
+              isLive
+            />
+          )}
+        </div>
+
+        <article className="card-stamp mt-10 p-6 md:p-8">
+          <p className="eyebrow text-foreground/55">{t.whatNext}</p>
+
+          <div className="rule-ornament my-5">
+            <svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M12 2l2 7 7 2-7 2-2 7-2-7-7-2 7-2z"
+                fill="currentColor"
+              />
+            </svg>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-3">
+            {actionChoices.map((choice) => (
+              <button
+                key={choice.key}
+                type="button"
+                onClick={() => handleChoice(choice.key)}
+                disabled={submitting}
+                className="group flex w-full items-center justify-between rounded-sm border border-border/80 bg-background/60 px-3 py-2.5 text-left text-[14px] text-foreground/85 transition-all hover:-translate-y-[1px] hover:border-[color:var(--ember)] hover:bg-[color:var(--gold)]/20 disabled:opacity-50"
+              >
+                <span className="flex items-center gap-3">
+                  <span className="grid h-5 w-5 place-items-center rounded-full border border-border text-[10px] font-medium text-foreground/60 group-hover:border-[color:var(--ember)] group-hover:text-[color:var(--ember)]">
+                    {choice.key}
+                  </span>
+                  {choice.label}
+                </span>
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="text-foreground/30 transition-all group-hover:translate-x-1 group-hover:text-[color:var(--ember)]"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M5 12h14M13 6l6 6-6 6"
+                    stroke="currentColor"
+                    strokeWidth="1.75"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+            ))}
+          </div>
+
+          <form
+            onSubmit={handleCustomSubmit}
+            className="mt-6 flex flex-col gap-3"
+          >
+            <label
+              htmlFor="custom-action"
+              className="eyebrow text-foreground/60"
+            >
+              {t.orWriteYourOwn}
+            </label>
+            <Textarea
+              id="custom-action"
+              value={customAction}
+              onChange={(e) => setCustomAction(e.target.value)}
+              placeholder={t.customPlaceholder}
+              rows={3}
+              maxLength={400}
+              disabled={submitting}
+              className="font-[var(--font-newsreader)] text-[15px] leading-relaxed"
+            />
+            <div className="flex items-center justify-between gap-3">
+              <span className="eyebrow text-foreground/55 flex items-center gap-2">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-[color:var(--forest)]" />
+                {t.moderated}
+              </span>
+              <Button
+                type="submit"
+                disabled={!customAction.trim() || submitting}
+                className="btn-ember justify-center disabled:opacity-50"
+              >
+                {submitting ? t.sending : t.send}
+              </Button>
+            </div>
+          </form>
+        </article>
+      </div>
+    </section>
+  );
+}
+
+/* ── Sub-components ─────────────────────────────────────────────────── */
+
+function Stat({ value, label }: { value: number; label: string }) {
+  return (
+    <div className="border-l border-border/70 pl-4">
+      <dt className="eyebrow">{label}</dt>
+      <dd className="display-lg mt-1 text-4xl text-[color:var(--ember)]">
+        {value}
+      </dd>
+    </div>
+  );
+}
+
+function PageCard({
+  pageNumber,
+  chapterNumber,
+  total,
+  content,
+  t,
+  isLive,
+}: {
+  pageNumber: number;
+  chapterNumber: number;
+  total: number;
+  content: string;
+  t: (typeof COPY)[AppLang];
+  isLive: boolean;
+}) {
+  return (
+    <article className="card-stamp p-6 md:p-8">
+      <div className="flex items-baseline justify-between border-b border-border/60 pb-4">
+        <div className="flex items-baseline gap-3">
+          <span className="eyebrow">
+            Ch. {String(chapterNumber).padStart(2, "0")}
+          </span>
+          {isLive && (
+            <span className="font-mono text-[10.5px] uppercase tracking-widest text-[color:var(--ember)]">
+              &times; live
+            </span>
+          )}
+        </div>
+        <span className="eyebrow">{t.pageOf(pageNumber, total)}</span>
+      </div>
+
+      <div className="mt-5 whitespace-pre-wrap font-[var(--font-newsreader)] text-[17px] leading-[1.85] text-foreground/90">
+        {content || (
+          <span className="italic text-foreground/40">&hellip;</span>
+        )}
+      </div>
+    </article>
+  );
+}
