@@ -195,6 +195,9 @@ export async function POST(req: Request) {
     model: openrouter(modelId),
     system: systemPrompt,
     prompt: userPrompt,
+    // Cost guard: each page targets ~150 words of prose; 400 tokens provides
+    // comfortable buffer (avg English word ≈ 1.3 tokens).
+    maxOutputTokens: 400,
     // Layer 3 moderation runs after the full page is generated.
     onFinish: async ({ text, usage }) => {
       try {
@@ -209,6 +212,7 @@ export async function POST(req: Request) {
             model: openrouter(modelId),
             system: systemPrompt,
             prompt: userPrompt,
+            maxOutputTokens: 400, // Same cost guard as main call
           });
           // Drain retry to a full string.
           let retryText = "";

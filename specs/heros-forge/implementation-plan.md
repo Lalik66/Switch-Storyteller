@@ -25,6 +25,7 @@ Use this as a checklist when auditing; items reflect current `src/` structure.
 - [x] `src/app/(app)/story/new/page.tsx` — intake
 - [x] `src/app/(app)/story/[id]/page.tsx` + `_reader.tsx` — reader UI
 - [x] `src/app/(parent)/children/page.tsx` — child profile management
+- [x] `src/app/(parent)/stories/page.tsx` — parent's library with full verbatim story text (PRD §10)
 - [x] `src/app/(app)/stories/page.tsx` — story list (adjust as needed when parent dashboard expands)
 
 ### Tasks — remaining / hardening
@@ -35,9 +36,13 @@ Use this as a checklist when auditing; items reflect current `src/` structure.
   - ✅ Signup → child profile → story intake — all working
   - ✅ Rate-limit test — 429 returned correctly on 2nd story attempt within 7 days
   - ⚠️ **Fixed:** `env.ts` + `env.example` had invalid OpenRouter model IDs; updated defaults to `google/gemini-flash-1.5` (cheap) and `anthropic/claude-3-5-sonnet-20241022` (premium)
-  - ⚠️ **Note:** Page generation requires valid OpenRouter API key with sufficient credits; consider adding `max_tokens` to `streamText` call
-  - ⏳ Moderation logging + PDF download blocked pending working page generation (API credits issue)
-- [ ] **Parent verbatim visibility (PRD §10)** — Implement or extend a **parent** route so every story’s **full text** is readable (no summary-only UX). Options: evolve `src/app/dashboard/page.tsx` or add `src/app/(parent)/dashboard/page.tsx` with server-loaded stories + pages for the parent’s children.
+  - ✅ **Fixed:** Added `maxOutputTokens: 400` to `streamText` calls in story/page API for cost control (~150 words/page)
+  - ⏳ Moderation logging + PDF download blocked pending working page generation (need OpenRouter credits)
+- [x] **Parent verbatim visibility (PRD §10)** — Implement or extend a **parent** route so every story's **full text** is readable (no summary-only UX). Options: evolve `src/app/dashboard/page.tsx` or add `src/app/(parent)/dashboard/page.tsx` with server-loaded stories + pages for the parent's children.
+  - ✅ Created `src/app/(parent)/stories/page.tsx` — parent-only library showing all children's stories with full verbatim page content
+  - ✅ Session-safe (server component with auth check, parent ownership verification)
+  - ✅ Shows all pages with `aiContent` + optional `childContent` (custom input)
+  - ✅ Design system compliant: card-stamp, eyebrow, display-lg, rule-ornament
 - [ ] **Multi-child story creation** — Today `src/app/api/story/route.ts` uses the **first** child profile only. Add explicit `childProfileId` (or picker on new-story UI) so families with multiple children attach new stories to the correct profile.
 - [ ] **PWA manifest branding** — `src/app/manifest.ts` still uses boilerplate name/description; align copy/icons with Hero's Forge when ready for public beta.
 - [ ] **PostHog (PRD §12)** — Optional: add client snippet + server events for KPIs; defer if instrumentation is not Phase 1-critical.
