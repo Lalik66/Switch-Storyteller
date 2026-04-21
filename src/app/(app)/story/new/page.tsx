@@ -12,7 +12,7 @@
  * behind a TODO so that the sibling API agent can wire it up later.
  */
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useLanguage, type AppLang } from "@/components/language-provider";
@@ -26,6 +26,17 @@ import { useSession } from "@/lib/auth-client";
 // cleanly after the sibling agent's file lands on master.
 import { WORLDS, type World } from "@/lib/worlds";
 
+/**
+ * Minimal shape of a row returned by `GET /api/children`. The route
+ * serializes `childProfile` directly, so additional fields exist on the
+ * wire — we only narrow to what this page renders/consumes.
+ */
+type ChildProfile = {
+  id: string;
+  displayName: string;
+  age: number;
+};
+
 /* ── Localized copy (Phase 1 inline tables) ─────────────────────────── */
 
 const COPY: Record<
@@ -36,6 +47,8 @@ const COPY: Record<
     titleAccent: string;
     intro: string;
     stepLabel: (n: number, total: number) => string;
+    step0Label: string;
+    step0Hint: string;
     step1Label: string;
     step1Hint: string;
     step1Placeholder: string;
@@ -66,6 +79,8 @@ const COPY: Record<
     intro:
       "The drafting buddy will shape your hero, pick a world, and listen to the trouble they face. Nothing is saved until you press Begin.",
     stepLabel: (n, total) => `Question ${n} of ${total}`,
+    step0Label: "Whose story is this?",
+    step0Hint: "Pick a hero.",
     step1Label: "What is your hero\u2019s name?",
     step1Hint: "A first name is plenty. You can change it later.",
     step1Placeholder: "Maren",
@@ -97,6 +112,8 @@ const COPY: Record<
     intro:
       "Layihə dostu qəhrəmanını yaradacaq, bir dünya seçəcək və qarşılaşdığı çətinliyi dinləyəcək. Başla düyməsinə basana qədər heç nə saxlanmır.",
     stepLabel: (n, total) => `${total}-dən ${n}-ci sual`,
+    step0Label: "Bu kimin nağılıdır?",
+    step0Hint: "Qəhrəman seç.",
     step1Label: "Qəhrəmanının adı nədir?",
     step1Hint: "Yalnız ad bəsdir. Sonra dəyişə bilərsən.",
     step1Placeholder: "Maren",
@@ -137,6 +154,36 @@ export default function NewStoryPage() {
   const [worldKey, setWorldKey] = useState<string>("");
   const [problem, setProblem] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [children, setChildren] = useState<ChildProfile[]>([]);
+  const [childProfileId, setChildProfileId] = useState<string>("");
+
+  // Fetch the parent's child profiles once a session is available. The
+  // picker in Step 1 only renders when there is more than one child; for
+  // single-child families we auto-select silently so the UI stays calm.
+  useEffect(() => {
+    if (!session) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/children");
+        if (!res.ok) return;
+        const rows = (await res.json()) as ChildProfile[];
+        if (cancelled) return;
+        setChildren(rows);
+        if (rows.length === 1 && rows[0]) {
+          setChildProfileId(rows[0].id);
+        }
+      } catch (err) {
+        // Non-fatal: the API falls back to the first child when the id
+        // is omitted, so the form remains usable even if this fetch
+        // fails in a flaky-network scenario.
+        console.error(err);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [session]);
 
   // `WORLDS` is owned by the worlds-agent. Cast once locally so the rest
   // of the component stays strongly typed against the expected `World`.
@@ -213,6 +260,9 @@ export default function NewStoryPage() {
           worldKey,
           problem: problem.trim(),
           lang,
+          // Only include when explicitly selected; omitting preserves
+          // backward-compatible single-child fallback on the server.
+          ...(childProfileId ? { childProfileId } : {}),
         }),
       });
 
@@ -270,7 +320,43 @@ export default function NewStoryPage() {
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-6">
             {step === 1 && (
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-6">
+                {children.length > 1 && (
+                  <div className="flex flex-col gap-3">
+                    <p className="font-[var(--font-fraunces)] text-[15px] text-foreground">
+                      {t.step0Label}
+                    </p>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {children.map((c) => {
+                        const selected = childProfileId === c.id;
+                        return (
+                          <button
+                            key={c.id}
+                            type="button"
+                            onClick={() => setChildProfileId(c.id)}
+                            aria-pressed={selected}
+                            className={`card-stamp p-4 text-left transition-all duration-300 hover:-translate-y-0.5 ${
+                              selected
+                                ? "border-[color:var(--ember)] shadow-[0_14px_30px_-20px_rgba(200,62,30,0.55)]"
+                                : ""
+                            }`}
+                          >
+                            <p className="font-[var(--font-fraunces)] text-[16px] text-foreground">
+                              {c.displayName}
+                            </p>
+                            <p className="eyebrow mt-1 text-foreground/55">
+                              {c.age}
+                            </p>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <p className="font-[var(--font-newsreader)] text-[14px] italic text-foreground/55">
+                      {t.step0Hint}
+                    </p>
+                  </div>
+                )}
+                <div className="flex flex-col gap-3">
                 <Label
                   htmlFor="hero-name"
                   className="font-[var(--font-fraunces)] text-[15px]"
@@ -289,6 +375,7 @@ export default function NewStoryPage() {
                 <p className="font-[var(--font-newsreader)] text-[14px] italic text-foreground/55">
                   {t.step1Hint}
                 </p>
+                </div>
               </div>
             )}
 
