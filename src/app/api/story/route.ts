@@ -14,6 +14,7 @@ const bodySchema = z.object({
   worldKey: z.string().min(1).max(100),
   problem: z.string().min(1).max(2000),
   lang: z.enum(["en", "az"]),
+  childProfileId: z.string().uuid().optional(),
 });
 
 export async function POST(req: Request) {
@@ -48,7 +49,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const { heroName, worldKey, problem } = parsed.data;
+  const { heroName, worldKey, problem, childProfileId } = parsed.data;
 
   // Validate that the selected world exists in the static manifest.
   const world = getWorld(worldKey);
@@ -59,19 +60,43 @@ export async function POST(req: Request) {
     });
   }
 
-  // Phase 1 simplification: use the first child profile belonging to this parent.
-  const childRows = await db
-    .select()
-    .from(childProfile)
-    .where(eq(childProfile.parentUserId, session.user.id))
-    .limit(1);
+  // Resolve target child profile. When `childProfileId` is supplied,
+  // scope the lookup to this parent so a caller cannot attach a story to
+  // a sibling account's child. Otherwise fall back to the first child
+  // belonging to this parent (backward-compatible for single-child families).
+  let child: typeof childProfile.$inferSelect | undefined;
 
-  const child = childRows[0];
-  if (!child) {
-    return new Response(
-      JSON.stringify({ error: "No child profile found. Create one first." }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
-    );
+  if (childProfileId) {
+    const scopedRows = await db
+      .select()
+      .from(childProfile)
+      .where(
+        and(
+          eq(childProfile.id, childProfileId),
+          eq(childProfile.parentUserId, session.user.id),
+        ),
+      )
+      .limit(1);
+    child = scopedRows[0];
+    if (!child) {
+      return new Response(
+        JSON.stringify({ error: "Child profile not found" }),
+        { status: 400, headers: { "Content-Type": "application/json" } },
+      );
+    }
+  } else {
+    const childRows = await db
+      .select()
+      .from(childProfile)
+      .where(eq(childProfile.parentUserId, session.user.id))
+      .limit(1);
+    child = childRows[0];
+    if (!child) {
+      return new Response(
+        JSON.stringify({ error: "No child profile found. Create one first." }),
+        { status: 400, headers: { "Content-Type": "application/json" } },
+      );
+    }
   }
 
   // Rate-limit: free-tier users may only create a limited number of stories per week.

@@ -278,7 +278,7 @@ This project includes custom slash commands for [Claude Code](https://claude.ai/
 
 | Command | Description |
 |---------|-------------|
-| `/create-feature` | Create a new feature specification with requirements and implementation plan |
+| `/create-spec` | Create a new feature specification (`requirements.md`, `implementation-plan.md`, `action-required.md`) |
 | `/publish-to-github` | Publish a feature to GitHub Issues and Projects |
 | `/continue-feature` | Continue implementing the next task for a GitHub-published feature |
 | `/checkpoint` | Create a comprehensive checkpoint commit with all changes |
@@ -318,12 +318,17 @@ You: I want to add a user preferences page where users can update their display 
 Once you've discussed the requirements, run:
 
 ```
-/create-feature
+/create-spec
 ```
+
+(Older docs may say `/create-feature` — the command file is `create-spec.md`.)
 
 This creates a spec folder at `specs/{feature-name}/` containing:
 - `requirements.md` - What the feature does and acceptance criteria
 - `implementation-plan.md` - Phased tasks with checkboxes
+- `action-required.md` - Manual steps (API keys, OAuth, third-party dashboards)
+
+**Example:** [`specs/heros-forge/`](./specs/heros-forge/) (Hero's Forge — requirements + plan + action items).
 
 #### 3. Publish to GitHub
 
@@ -382,7 +387,7 @@ claude
 You: I need to add API rate limiting to protect our endpoints...
 
 # Claude helps plan, then you run:
-/create-feature
+/create-spec
 
 # Review the spec, then publish:
 /publish-to-github
@@ -400,7 +405,7 @@ git push
 
 ### Without GitHub Integration
 
-If you prefer not to use GitHub, you can still use `/create-feature` to create specs, then manually work through the `implementation-plan.md` checkboxes. The `/continue-feature` command also supports offline mode, tracking progress directly in the markdown file.
+If you prefer not to use GitHub, you can still use `/create-spec` to create specs, then manually work through the `implementation-plan.md` checkboxes. The `/continue-feature` command also supports offline mode, tracking progress directly in the markdown file.
 
 ### Command Files Location
 
@@ -409,8 +414,9 @@ Commands are defined in `.claude/commands/`:
 .claude/commands/
 ├── checkpoint.md
 ├── continue-feature.md
-├── create-feature.md
-└── publish-to-github.md
+├── create-spec.md
+├── publish-to-github.md
+└── review-pr.md
 ```
 
 You can customize these commands or add new ones following the [Claude Code documentation](https://docs.anthropic.com/en/docs/claude-code).

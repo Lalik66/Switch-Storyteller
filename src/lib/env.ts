@@ -22,10 +22,10 @@ const serverEnvSchema = z.object({
   OPENROUTER_MODEL: z.string().default("openai/gpt-5-mini"),
   OPENROUTER_STORY_MODEL_CHEAP: z
     .string()
-    .default("anthropic/claude-haiku-4.5"),
+    .default("google/gemini-flash-1.5"),
   OPENROUTER_STORY_MODEL_PREMIUM: z
     .string()
-    .default("anthropic/claude-sonnet-4-6"),
+    .default("anthropic/claude-3-5-sonnet-20241022"),
 
   // Moderation (child-safety critical — required, not optional)
   OPENAI_MODERATION_API_KEY: z

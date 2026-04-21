@@ -118,12 +118,20 @@ interface EnvStatus {
 }
 
 function checkEnvVariables(): EnvStatus {
-  const required = ["POSTGRES_URL", "BETTER_AUTH_SECRET"];
+  /** Matches src/lib/env.ts — required for DB, auth, and child-safety moderation. */
+  const required = [
+    "POSTGRES_URL",
+    "BETTER_AUTH_SECRET",
+    "OPENAI_MODERATION_API_KEY",
+  ];
+  /** Optional OAuth, AI models, storage, public URL — see env.example. */
   const optional = [
     "GOOGLE_CLIENT_ID",
     "GOOGLE_CLIENT_SECRET",
     "OPENROUTER_API_KEY",
     "OPENROUTER_MODEL",
+    "OPENROUTER_STORY_MODEL_CHEAP",
+    "OPENROUTER_STORY_MODEL_PREMIUM",
     "BLOB_READ_WRITE_TOKEN",
     "NEXT_PUBLIC_APP_URL",
   ];
@@ -201,12 +209,27 @@ function printNextSteps(envStatus: EnvStatus) {
     steps.push(`Configure required env vars in .env: ${envStatus.missing.join(", ")}`);
   }
 
-  if (envStatus.optional.includes("GOOGLE_CLIENT_ID")) {
+  if (envStatus.missing.includes("OPENAI_MODERATION_API_KEY")) {
+    steps.push(
+      "Create OPENAI_MODERATION_API_KEY at https://platform.openai.com/api-keys (used for omni-moderation in src/lib/moderation.ts)"
+    );
+  }
+
+  if (
+    envStatus.optional.includes("GOOGLE_CLIENT_ID") ||
+    envStatus.optional.includes("GOOGLE_CLIENT_SECRET")
+  ) {
     steps.push("Set up Google OAuth at https://console.cloud.google.com/");
   }
 
   if (envStatus.optional.includes("OPENROUTER_API_KEY")) {
     steps.push("Get an OpenRouter API key at https://openrouter.ai/settings/keys");
+  }
+
+  if (envStatus.optional.includes("BLOB_READ_WRITE_TOKEN")) {
+    steps.push(
+      "Optional: add BLOB_READ_WRITE_TOKEN for Vercel Blob; otherwise uploads use local storage (see src/lib/storage.ts)"
+    );
   }
 
   steps.push("Start the development server: pnpm dev");
