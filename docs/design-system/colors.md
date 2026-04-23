@@ -1,129 +1,81 @@
 # Colors
 
-All colors are defined in [`src/app/globals.css`](../../src/app/globals.css) using **OKLCH** for perceptual uniformity. Brand tokens are surfaced both as semantic shadcn tokens (`--background`, `--primary`, …) and as raw brand tokens (`--parchment`, `--ink`, `--ember`, `--gold`, `--forest`, `--dusk`).
+**Source of truth:** [`src/app/globals.css`](../../src/app/globals.css). Values below mirror `:root` and `.dark` there; if they disagree, the CSS file wins.
+
+The live app uses a **dark cosmic** base (`--navy`, `--starlight`) with **violet** as the shadcn primary, a fixed **ember** orange for accents, and **OKLCH** for most non-ember hues. `--gold` is currently an **alias of `--ember`** (same `rgb(239, 107, 49)`).
 
 ---
 
-## Brand palette — light mode
+## Brand tokens
 
-| Token | Role | OKLCH | Notes |
+| Token | Role | Implementation | Notes |
 |---|---|---|---|
-| `--parchment` | Page background | `oklch(0.948 0.028 82)` | Warm cream. Never pure white. |
-| `--ink` | Foreground text | `oklch(0.18 0.02 45)` | Warm near-black, slightly cooler than the background. |
-| `--ember` | Primary accent | `oklch(0.58 0.178 35)` | Wax-seal red-orange. Primary CTAs, emphasis, ornaments. |
-| `--gold` | Secondary accent | `oklch(0.76 0.128 80)` | Antique gold. Highlights, constellations, tilted backdrop cards. |
-| `--forest` | Tertiary | `oklch(0.42 0.072 155)` | Moonlit-forest world tiles, "safely reviewed" dot. |
-| `--dusk` | Tertiary | `oklch(0.4 0.082 325)` | Stardust Bazaar world tiles and dusk moments. |
+| `--navy` | Page / surface base | OKLCH (see CSS) | Deep blue-violet background. |
+| `--starlight` | Default text on dark | OKLCH | High-contrast light foreground. |
+| `--ember` | Brand orange accent | `rgb(239, 107, 49)` | Hero word, language pill, H mark, live badge, `var(--ember)` in UI. |
+| `--gold` | Accent alias | `var(--ember)` | Charts, highlights, `.heading-gold` (which sets `color: var(--ember)`). |
+| `--violet` | Primary “glow” hue | OKLCH | `--primary`, focus `--ring`, body gradient, **`.btn-ember` fill**. |
+| `--cyan` | Secondary chart / tone | OKLCH | Chart-2, accents. |
+| `--aurora` | Tertiary chart / tone | OKLCH | Chart-4. |
+| `--ink` | Semantic “dark ink” | `var(--navy)` | Parents band background, patterns that say `var(--ink)`. |
+| `--parchment` | Semantic “light paper” | `var(--starlight)` | Light text on ink band, `var(--parchment)`. |
+| `--forest` | World / success green | OKLCH | World tiles, status, “safely reviewed” dot. Light + dark values in CSS. |
+| `--dusk` | World purple | OKLCH | Space / bazaar worlds. Light + dark values in CSS. |
 
-### Why OKLCH?
-
-OKLCH is perceptually uniform — a lightness of `0.58` on ember feels the same brightness as `0.58` on forest. This makes it trivial to build accessible pairings without manually tweaking every combination. It also plays well with `color-mix(in oklch, …)`, which the component layer uses heavily for borders, shadows, and subtle tints.
+`@theme inline` exposes `--color-navy`, `--color-starlight`, `--color-ember`, `--color-gold`, `--color-violet`, `--color-cyan`, `--color-aurora`, and the semantic names above for Tailwind-style usage.
 
 ---
 
-## Semantic tokens — light mode
+## Semantic tokens (shadcn)
 
-Surfaced via `@theme inline` so Tailwind utilities like `bg-background`, `text-foreground`, `border-border` work as expected.
+Surfaced via `@theme inline` so utilities like `bg-background`, `text-foreground` work.
 
-| Token | Value | Use |
+| Token | Resolves to (concept) | Use |
 |---|---|---|
-| `--background` | `var(--parchment)` | Body |
-| `--foreground` | `var(--ink)` | Body text |
-| `--card` | `oklch(0.972 0.022 86)` | Slightly lighter parchment for cards |
-| `--popover` | `oklch(0.972 0.022 86)` | Dropdowns, tooltips |
-| `--primary` | `var(--ember)` | Primary CTAs |
-| `--primary-foreground` | `oklch(0.98 0.015 85)` | Text on ember |
-| `--secondary` | `oklch(0.9 0.034 78)` | Secondary surfaces |
-| `--secondary-foreground` | `var(--ink)` | Text on secondary |
-| `--muted` | `oklch(0.9 0.026 80)` | Quiet surfaces |
-| `--muted-foreground` | `oklch(0.44 0.028 55)` | Secondary text |
-| `--accent` | `var(--gold)` | Highlight surfaces |
-| `--accent-foreground` | `var(--ink)` | Text on gold |
-| `--destructive` | `oklch(0.55 0.22 27)` | Errors, destructive actions |
-| `--border` | `oklch(0.78 0.042 72)` | Warm sepia border |
-| `--input` | `oklch(0.85 0.032 75)` | Form field border |
-| `--ring` | `var(--ember)` | Focus rings |
+| `--background` | `var(--navy)` | Body |
+| `--foreground` | `var(--starlight)` | Body text |
+| `--card` / `--popover` | OKLCH purple-tinted surfaces | Cards, popovers |
+| `--primary` | `var(--violet)` | **Not** ember—violet is the main CTA / ring color in tokens |
+| `--primary-foreground` | `var(--starlight)` | Text on primary surfaces |
+| `--accent` | `var(--gold)` (= ember) | Accent surfaces; pairs with `--accent-foreground` on `navy` |
+| `--ring` | `var(--violet)` | Focus rings |
+| `--chart-1` … `--chart-5` | violet, cyan, gold, aurora, + one extra | Charts |
 
-Chart tokens (`--chart-1`…`--chart-5`) are mapped to ember, gold, forest, dusk, and a cool blue for future dashboards.
+The **named** CTA class `.btn-ember` in CSS is a **violet** pill (legacy name; see [`components.md`](./components.md)).
 
 ---
 
 ## Usage rules
 
-### Ember is load-bearing
+### Ember / gold (orange)
 
-Reserve `--ember` for:
+- One **hero** accent word: `.heading-gold` on a `<span>`, or inline `text-[color:var(--ember)]`.
+- Small UI: language switcher active state, header monogram, manuscript “live” line, eyebrow dot.
+- Do not flood the viewport—keep orange for emphasis and navigation affordances.
 
-- Primary CTAs (`.btn-ember`)
-- The wax-seal monogram in the header
-- Italic emphasis words inside headings (`.italic-wonk`)
-- Roman numerals in The Loop section
-- Folio badges and the Sample Page bookmark ribbon
-- Focus rings
+### Violet
 
-**Do not** dilute ember with decorative use. If it appears more than twice in a viewport outside of headings, the design is getting loud.
+- Default **primary** in design tokens, **primary CTA** (`.btn-ember`), and ambient **body** gradients.
+- Pairs with `next-themes` / `class="dark"` for Tailwind `dark:` utilities.
 
-### Gold is a highlight, never a surface
+### Forest / dusk
 
-Gold is perfect for:
+- Use for **world identity**, choice tiles, and green/purple status—not as a second orange.
 
-- Marker highlights on specific words: `bg-[color:var(--gold)]/40 px-0.5`
-- Constellation stars and twinkling ornaments
-- The tilted backdrop card behind the hero manuscript
-- Footer divider ornaments
+### `color-mix`
 
-Never use gold as a page background or a large surface. It loses its preciousness fast.
-
-### Forest and dusk are situational
-
-Only use forest and dusk to give **world tiles** identity in the Worlds Atlas. Do not promote them to UI accents; they will clash with ember.
-
-### Never pure white or pure black
-
-The warmth of parchment and ink is non-negotiable. Even icons default to `currentColor` inheriting from foreground, so they pick up the warm ink tone automatically.
-
-```html
-<!-- ✅ good -->
-<div class="bg-background text-foreground">…</div>
-
-<!-- ❌ bad -->
-<div class="bg-white text-black">…</div>
-```
-
----
-
-## Contrast reference
-
-| Pairing | Ratio | WCAG |
-|---|---|---|
-| `ink` on `parchment` | ~13:1 | AAA for all text |
-| `ember` on `parchment` | ~4.8:1 | AA normal, AAA large |
-| `ember-foreground` on `ember` (button fill) | ~5.1:1 | AA |
-| `muted-foreground` on `parchment` | ~6.9:1 | AAA large, AA normal |
-| `parchment` on `ink` (dark inverse) | ~13:1 | AAA |
-
-Any new token pairings must meet **AA for normal text** (4.5:1) at minimum. Use an OKLCH contrast checker such as [oklch.com](https://oklch.com) before adding pairings.
-
----
-
-## Working with `color-mix`
-
-The component layer uses `color-mix(in oklch, …)` heavily for subtle tints. Favor it over hardcoded hex values:
+Prefer `color-mix(in oklch, var(--foreground) N%, transparent)` (and similar) for borders and shadows so both themes stay coherent.
 
 ```css
-/* Soft border */
 border: 1px solid color-mix(in oklch, var(--foreground) 10%, transparent);
-
-/* Warm shadow */
-box-shadow: 0 14px 30px -18px
-  color-mix(in oklch, var(--foreground) 30%, transparent);
-
-/* Tinted card background */
-background: color-mix(in oklch, var(--forest) 14%, var(--card));
 ```
-
-This keeps dark mode and future palette shifts automatic.
 
 ---
 
-See [`dark-mode.md`](./dark-mode.md) for how each token flips in the "after-dark library" variant.
+## Contrast
+
+Re-check any new pair with an OKLCH or APCA tool. **Ember** on `--background` and **violet** on starlight-foreground for buttons are the main interactive pairings to validate when tokens change.
+
+---
+
+See [`dark-mode.md`](./dark-mode.md) for `class="dark"` on `<html>`, `ThemeProvider`, and what shifts between light and dark **classes** (the implementation uses the same `navy` / `starlight` names with different OKLCH numbers under `.dark`).

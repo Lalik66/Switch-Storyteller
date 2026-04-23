@@ -119,7 +119,7 @@ All hover effects use the same easing curve: `cubic-bezier(0.2, 0.8, 0.2, 1)`. S
 ### Rules
 
 - **Subtle lifts only:** never more than 2px translateY on hover.
-- **Tiny rotations** are encouraged on buttons (-0.4°) — they sell the wax-seal feel.
+- **Tiny rotations** are encouraged on the primary pill button (-0.4°) for a hand-finished feel.
 - **Always change color OR transform**, ideally both, so the hover state is felt by both motor and visual feedback.
 - **No scale jumps** on cards. Only the inner illustration scales (and only on world tiles, by 6%, over a slow 1.2s).
 

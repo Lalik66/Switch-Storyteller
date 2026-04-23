@@ -15,7 +15,7 @@ Three fonts, loaded via `next/font` in [`src/app/layout.tsx`](../../src/app/layo
 ### Why these specifically?
 
 - **Fraunces** has a variable `WONK` axis that introduces small, intentional irregularities to letterforms — perfect for the "hand-set type" aesthetic. Its `opsz` (optical size) axis adjusts contrast and stroke thickness automatically between small labels and giant headlines.
-- **Newsreader** was designed for on-screen editorial reading, with genuine italics (not slanted roman). At `text-[17px]` on parchment it reads like a book.
+- **Newsreader** was designed for on-screen editorial reading, with genuine italics (not slanted roman). At `text-[17px]` on the default `background` it reads like a book.
 - **JetBrains Mono** is reserved as a single "instrumental" voice — small uppercase labels that feel like letterpress metadata.
 
 ### Fallbacks
@@ -128,7 +128,7 @@ Always use HTML entities for proper typography. Straight quotes and hyphens brea
 
 ### Body copy is serif
 
-Do not reach for a sans-serif "for readability." Newsreader was chosen specifically because it is legible at 15.5px+ on parchment. Resist any instinct to mix in Inter, Geist, or system sans.
+Do not reach for a sans-serif "for readability." Newsreader was chosen specifically because it is legible at 15.5px+ on the default canvas. Resist any instinct to mix in Inter, Geist, or system sans.
 
 ### Optical sizing is on
 

@@ -8,22 +8,23 @@ For single primitives (buttons, cards, icons), see [`components.md`](./component
 
 ## Grain overlay
 
-The base texture of the entire app. Applied via a `.grain` class on `<body>` in [`src/app/layout.tsx`](../../src/app/layout.tsx).
+The base texture of the entire app. Applied via a `.grain` class on `<body>` in [`src/app/layout.tsx`](../../src/app/layout.tsx). **Authoritative values** (noise data URL, `opacity: 0.12` / `0.10`, `mix-blend-mode: overlay` for both light and dark) live in [`src/app/globals.css`](../../src/app/globals.css) under `.grain::before` and `.dark .grain::before`.
 
 ```css
+/* Paraphrased — see repo for the full inline SVG and exact numbers */
 .grain::before {
   content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 1;
-  opacity: 0.18;
-  mix-blend-mode: multiply;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.15 0 0 0 0 0.1 0 0 0 0 0.05 0 0 0 0.55 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  opacity: 0.12;
+  mix-blend-mode: overlay;
+  /* background-image: data-URL feTurbulence noise */
 }
 .dark .grain::before {
-  mix-blend-mode: screen;
-  opacity: 0.08;
+  mix-blend-mode: overlay;
+  opacity: 0.1;
 }
 ```
 
@@ -73,7 +74,7 @@ Asymmetric 7/5 split. Large display heading on the left, decorative `card-stamp`
    - A drifting gold ink swirl at `right-[-40px] top-[30%]`, `.drift` animation
 2. **Left column (`lg:col-span-7`):**
    - Eyebrow with a tiny ember dot bullet
-   - Huge display heading with clamp sizing
+   - Huge display heading with clamp sizing; **one** accent word uses `.heading-gold` (ember color) + `italic-wonk` — see [`HomeHeroLead`](../../src/components/marketing/home-hero-lead.tsx)
    - Body paragraph, `max-w-xl`
    - Button row: `.btn-ember` + `.btn-ghost-ink`
    - Proof row: three small shield/eye/feather icons
@@ -192,7 +193,9 @@ Values use `display-lg text-4xl text-[color:var(--ember)]`, labels use `.eyebrow
 
 ## Dark reading room section (Parents)
 
-Full-bleed dark-ink section inside an otherwise light page, used for the Parents pillars. Creates a deliberate "night" moment that makes the trust messaging feel gravitas-heavy.
+Full-bleed **dark band** for the Parents pillars. In the source, `bg-[color:var(--ink)]` and `text-[color:var(--parchment)]` (see `landing-below-fold`).
+
+In **[`globals.css`](../../src/app/globals.css)**, `--ink` and `--parchment` are **aliases** of `--navy` and `--starlight`, so the section stays aligned with the global canvas without duplicating hex values.
 
 ```tsx
 <section className="relative border-y border-border/60 bg-[color:var(--ink)] py-32 text-[color:var(--parchment)]">
@@ -202,11 +205,11 @@ Full-bleed dark-ink section inside an otherwise light page, used for the Parents
 
 ### Rules
 
-- **Background:** `bg-[color:var(--ink)]`
-- **Body color:** `text-[color:var(--parchment)]`
-- **Eyebrow color:** `text-[color:var(--gold)]` — swap from ember because ember against ink isn't distinctive enough
-- **Heading accent:** gold instead of ember for the `italic-wonk` word
-- **Pillars grid:** four items on a `bg-[color:var(--parchment)]/15` base, individual cells set back to `bg-[color:var(--ink)]` so the 1px gap between them reads as a warm hairline grid
+- **Background:** `bg-[color:var(--ink)]` → resolves like `navy`
+- **Body color:** `text-[color:var(--parchment)]` → resolves like `starlight`
+- **Eyebrow color:** `text-[color:var(--gold)]` (same hue as ember in the current system)
+- **Heading accent:** gold / italic treatment for the emphasized fragment
+- **Pillars grid:** four items on a `bg-[color:var(--parchment)]/15` base, individual cells set back to `bg-[color:var(--ink)]` so the 1px gap between them reads as a hairline grid
 - **Number style:** `font-mono text-xs text-[color:var(--gold)]` with `0` prefix ("01", "02", "03", "04")
 - **Link underline:** `border-b border-[color:var(--gold)]/60 pb-1` for the "See our safety commitments" link
 

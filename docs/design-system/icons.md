@@ -1,11 +1,13 @@
 # Icons & Ornaments
 
-Every visual mark in the Illuminated Grimoire is **inline SVG**. There are no icon fonts, no raster images, no emojis used as UI. This keeps the system crisp, color-themable via `currentColor`, and free of network dependencies.
+**Source of truth for colors:** [`src/app/globals.css`](../../src/app/globals.css) (`--navy`, `--starlight`, `--ember`, `--gold` = `--ember`, `--violet`, …).
+
+Every visual mark in **The Hero's Forge** UI is **inline SVG**. There are no icon fonts, no raster images, and no emojis used as UI. This keeps the system crisp, color-themable via `currentColor`, and free of network dependencies.
 
 The system has two kinds of marks:
 
 1. **Functional icons** — small UI marks like arrows, checks, eyes, shields. Inherit text color, sit inside buttons and links.
-2. **Decorative ornaments** — constellations, wax seals, ink swirls, dividers, world scenes. Stand on their own, often animated, always `aria-hidden="true"`.
+2. **Decorative ornaments** — constellations, seal marks, ink swirls, dividers, world scenes. Stand on their own, often animated, always `aria-hidden="true"` where purely decorative.
 
 ---
 
@@ -35,7 +37,7 @@ The system has two kinds of marks:
   - `1.75` for buttons, links, choice buttons, and most UI icons
   - `2` for strong checks (pricing tier feature lists)
 - **Line caps and joins are always `round`.** Nothing in this system has square line ends.
-- **Color via `currentColor`.** Never hardcode `#000` or hex. Always inherit from text color so the icon flips with the theme.
+- **Color via `currentColor`.** Avoid raw hex for theme-driven UI. Inherit from text color so icons track `foreground` and `dark:` as the page does.
 
 ### Sizing
 
@@ -43,11 +45,13 @@ The system has two kinds of marks:
 |---|---|
 | Inline with body text | `width="14" height="14"` |
 | Inside choice buttons | `width="14" height="14"` |
-| Inside `.btn-ember` / `.btn-ghost-ink` | `width="18" height="18"` |
+| Inside primary pill (`.btn-ember`) / `.btn-ghost-ink` | `width="18" height="18"` |
 | Inside Loop section step icons | `width="48" height="48"` |
 | Constellation ornaments | `className="h-28 w-28"` (responsive) |
-| Wax seal monogram | `width="40" height="40"` |
+| Header monogram | `width="40" height="40"` |
 | Rotating cursive seal | `className="h-28 w-28"` |
+
+> **Naming note:** `.btn-ember` is the **primary CTA class** in CSS but the **fill is `var(--violet)`**, not orange. See [`components.md`](./components.md).
 
 ---
 
@@ -111,7 +115,7 @@ const paths = {
 };
 ```
 
-Wrap in a 14×14 SVG with `text-[color:var(--ember)]` so they read as warm trust signals, not cold security badges.
+Wrap in a 14×14 SVG with `text-[color:var(--ember)]` (brand orange) so they read as warm trust signals, not cold security badges. Implemented in [`home-hero-lead`](../../src/components/marketing/home-hero-lead.tsx).
 
 ### Loop section step icons
 
@@ -134,9 +138,9 @@ const icons = [
 
 These are the moments of delight. Each appears at most a few times across the site — they earn their power from rarity.
 
-### Wax-seal monogram (header logo)
+### Header monogram (“H” mark)
 
-40×40 SVG. Solid ember circle, dashed inner stroke, italic Fraunces "H" centered. See [`src/components/site-header.tsx`](../../src/components/site-header.tsx).
+40×40 SVG. Circle fill uses **`text-[color:var(--ember)]`** on the root `<svg>` (`fill="currentColor"` on the disk). Dashed inner stroke, italic Fraunces **H** in **white** for emboss contrast. See [`src/components/site-header-home-link.tsx`](../../src/components/site-header-home-link.tsx).
 
 ```html
 <svg viewBox="0 0 40 40" className="h-10 w-10 text-[color:var(--ember)]">
@@ -148,11 +152,11 @@ These are the moments of delight. Each appears at most a few times across the si
 </svg>
 ```
 
-Hovers `-rotate-6` over 500ms. The white-text-on-ember pairing is the only place in the system where pure white is allowed, because it represents wax embossing.
+Hovers `-rotate-6` over 500ms. The **white** letter on **ember** is an intentional exception so the monogram reads as a seal on a colored roundel.
 
 ### Rotating cursive seal
 
-140×140 SVG with `textPath` tracing a circle. Fraunces italic 11px, letter-spaced 3. Used once, on the hero manuscript card.
+140×140 SVG with `textPath` tracing a circle. Fraunces italic 11px, letter-spaced 3. Used on the hero manuscript card. The ring text uses `currentColor`; parent uses **`text-[color:var(--ink)]`**, and **`--ink`** is an alias of **`--navy`** in [`globals.css`](../../src/app/globals.css).
 
 ```html
 <svg viewBox="0 0 140 140" className="h-28 w-28 text-[color:var(--ink)] slow-spin">
@@ -167,11 +171,11 @@ Hovers `-rotate-6` over 500ms. The white-text-on-ember pairing is the only place
 </svg>
 ```
 
-Center holds a 26×26 ember 5-point star.
+Center holds a 26×26 **ember** 5-point star (`fill="var(--ember)"` in [`manuscript-card-demo`](../../src/components/marketing/manuscript-card-demo.tsx)).
 
 ### Constellation
 
-Small inline SVG of 5–6 twinkling stars connected by dashed lines. Two variants (`a` and `b`) defined inline in `src/app/page.tsx`.
+Small inline SVG of twinkling stars connected by dashed lines. Variants are defined in [`src/components/marketing/hero-decorations.tsx`](../../src/components/marketing/hero-decorations.tsx) and composed on the landing page from [`src/app/page.tsx`](../../src/app/page.tsx).
 
 ```html
 <svg viewBox="0 0 100 100" className="h-28 w-28 text-[color:var(--ember)]/55" aria-hidden="true">
@@ -184,11 +188,11 @@ Small inline SVG of 5–6 twinkling stars connected by dashed lines. Two variant
 </svg>
 ```
 
-Use anywhere you need subtle visual interest without pulling focus. Stagger twinkle delays in 0.4s steps.
+Stagger twinkle delays in 0.4s steps.
 
-### Drifting ink swirl
+### Drifting gold swirl
 
-Decorative gold loop in the hero, abstract calligraphic stroke. 200×200 viewBox, `.drift` animation.
+Decorative loop in the hero, abstract calligraphic stroke. Uses **`var(--gold)`** — in the current system **`--gold` is the same hue as `--ember`**. 200×200 viewBox, `.drift` animation. Source: [`hero-decorations.tsx`](../../src/components/marketing/hero-decorations.tsx) (`HeroInkSwirl`).
 
 ```html
 <svg viewBox="0 0 200 200" className="absolute right-[-40px] top-[30%] hidden w-[260px] text-[color:var(--gold)] opacity-60 md:block drift">
@@ -203,7 +207,7 @@ Decorative gold loop in the hero, abstract calligraphic stroke. 200×200 viewBox
 
 ### Footer divider ornament
 
-Hand-drawn S-curve straddling the top border of the footer, with a hollow dot center and two end caps.
+Hand-drawn S-curve straddling the top border of the footer, with a hollow dot center and two end caps. Lives with the localized footer implementation.
 
 ```html
 <svg width="120" height="36" viewBox="0 0 120 36" fill="none" className="text-[color:var(--ember)]">
@@ -241,7 +245,7 @@ Background ornament for the Final CTA card. Two parallel dashed S-curves spannin
 
 ## World tile illustrations
 
-Each of the six worlds in the Atlas has a custom inline SVG scene at `viewBox="0 0 100 100"` with `preserveAspectRatio="xMidYMid slice"`. They are intentionally minimal — silhouettes, geometric primitives, gold accents — so they read at any size and inherit each world's tone color via `currentColor`.
+Each of the six worlds in the Atlas has a custom inline SVG scene at `viewBox="0 0 100 100"` with `preserveAspectRatio="xMidYMid slice"`. They are intentionally minimal — silhouettes, geometric primitives, warm accents — so they read at any size and inherit each world's tone color via `currentColor` (e.g. `var(--forest)`, `var(--dusk)` per [`colors.md`](./colors.md)).
 
 | World | Scene description |
 |---|---|
@@ -252,7 +256,9 @@ Each of the six worlds in the Atlas has a custom inline SVG scene at `viewBox="0
 | The Stardust Bazaar | Tent silhouettes with twinkling gold stars |
 | The Hollow Meadows | Rolling hills with tiny mushroom dots |
 
-When the real world manifest lands in `src/lib/worlds.ts`, these inline scenes will be replaced with proper artist-drawn assets — but the system contract stays: `viewBox="0 0 100 100"`, `currentColor`, gold accent color, no raster.
+When the real world manifest lands in `src/lib/worlds.ts`, these inline scenes may be replaced with proper artist-drawn assets — the system contract stays: `viewBox="0 0 100 100"`, `currentColor` for theming, no raster in icons.
+
+**Explicit fills:** a few scene accents may use `var(--ember)` or `var(--gold)` for stars or suns; that matches the **brand orange** in [`globals.css`](../../src/app/globals.css).
 
 ---
 
@@ -261,6 +267,6 @@ When the real world manifest lands in `src/lib/worlds.ts`, these inline scenes w
 - ❌ No icon fonts (Font Awesome, Material Icons, Heroicons via font).
 - ❌ No emojis (🔥, ✨, 📚) anywhere in the UI. They cannot be themed and they fight the aesthetic.
 - ❌ No PNG/JPG icons. Only SVG.
-- ❌ No hardcoded fill or stroke colors except for the wax-seal monogram (which uses white-on-ember intentionally) and the world tile gold accents.
+- ❌ No arbitrary hex in themeable UI. Allowed exceptions: **(1)** the header **H** monogram’s white text on an ember disk, **(2)** rare stroke/fill on ornaments where `currentColor` or CSS variables are not enough — prefer `var(--ember)`, `var(--gold)`, or `var(--background)` over raw `#…` when possible.
 - ❌ No square line caps. Round only.
 - ❌ No icon-only buttons without an `aria-label`.

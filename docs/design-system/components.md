@@ -6,7 +6,9 @@ Larger, multi-part arrangements (hero, sample page, parents section) are documen
 
 ---
 
-## `.btn-ember` — Primary wax-seal button
+## `.btn-ember` — Primary CTA (violet; legacy class name)
+
+The class is still called **`.btn-ember`**, but the implementation in [`globals.css`](../../src/app/globals.css) is a **violet** pill (matches `--primary: var(--violet)`), not `var(--ember)`.
 
 ```html
 <a href="#worlds" class="btn-ember">
@@ -15,32 +17,37 @@ Larger, multi-part arrangements (hero, sample page, parents section) are documen
 </a>
 ```
 
-Pill-shaped, ember-filled, with inset highlights (top white 35%, bottom black 25%) that read as a pressed wax seal. Hover lifts 2px and rotates `-0.4deg`.
+Pill-shaped, **violet**-filled, with inset highlights. Hover lifts 2px and rotates `-0.4deg`. Renaming the class (e.g. to `.btn-primary`) is a future cleanup.
 
 ```css
+/* From globals.css */
 .btn-ember {
   display: inline-flex;
   align-items: center;
   gap: 0.6rem;
   padding: 0.9rem 1.6rem;
-  background: var(--ember);
+  background: var(--violet);
   color: var(--primary-foreground);
   border-radius: 999px;
   font-family: var(--font-fraunces), Georgia, serif;
   font-weight: 500;
+  font-size: 1rem;
+  letter-spacing: -0.01em;
   box-shadow:
-    inset 0 1px 0 color-mix(in oklch, white 35%, transparent),
-    inset 0 -2px 0 color-mix(in oklch, black 25%, transparent),
-    0 10px 24px -12px color-mix(in oklch, var(--ember) 80%, transparent);
+    inset 0 1px 0 color-mix(in oklch, white 25%, transparent),
+    inset 0 -2px 0 color-mix(in oklch, black 35%, transparent),
+    0 10px 24px -12px color-mix(in oklch, var(--violet) 70%, transparent);
   transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s;
 }
 ```
 
+**Orange (`--ember`)** is for marketing emphasis and small affordances, not this CTA, unless the CSS is intentionally changed.
+
 ### Rules
 
-- **At most two instances per viewport.** Typically one in the hero, one in the final CTA. Overuse kills the seal metaphor.
-- **Always pair with a trailing arrow SVG.** Never text-only.
-- **Always pair with `.btn-ghost-ink`** as the secondary action — they are designed as a pair, not alone.
+- **At most two instances per viewport** where a primary is needed.
+- **Pair with a trailing arrow SVG** on key CTAs.
+- **Pair with `.btn-ghost-ink`** for secondary actions when offering a clear pair.
 
 ---
 
@@ -218,7 +225,7 @@ Includes a "Skip to main content" link that becomes visible on focus.
 
 ## Site footer
 
-Defined in [`src/components/site-footer.tsx`](../../src/components/site-footer.tsx).
+Implemented in [`src/components/localized-site-footer.tsx`](../../src/components/localized-site-footer.tsx) (`site-footer.tsx` re-exports for compatibility).
 
 ### Anatomy
 
@@ -262,11 +269,11 @@ Icon defaults:
 
 The shadcn primitives (`Input`, `Textarea`, `Label`, radio groups) still need to be restyled to match this system. When that lands:
 
-- Border: `1px solid var(--input)`, warm sepia
-- Background: `var(--card)` (slightly lighter parchment)
+- Border: `1px solid var(--input)`
+- Background: `var(--card)`
 - Font: Newsreader body
 - Labels: Fraunces at 14–15px, not uppercase
-- Focus ring: `2px var(--ring)` (ember) with `2px` offset against parchment
+- Focus ring: `2px var(--ring)` (violet in current tokens) with offset against `background`
 - Placeholder: `text-foreground/40` in italic Newsreader
 
 Document them here once built. See [`overview.md`](./overview.md) roadmap item #1.

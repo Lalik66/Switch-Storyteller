@@ -142,7 +142,7 @@ box-shadow:
 Two layers:
 
 1. A hairline bottom edge (`0 1px 0`) — simulates the top of a folio lifted slightly off the page.
-2. A soft warm drop (`0 14px 30px -18px`) — the parchment's shadow on the table beneath.
+2. A soft warm drop (`0 14px 30px -18px`) — the card’s shadow on the “table” (canvas) beneath.
 
 ### Featured pricing tier
 

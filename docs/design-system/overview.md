@@ -1,8 +1,8 @@
 # Overview — The Hero's Forge Design System
 
-**Codename:** Illuminated Grimoire
-**Version:** 0.1 (Landing page foundation)
-**Last updated:** 2026-04-14
+**Codename:** Illuminated Grimoire (cosmic / dark-canvas implementation in code: “Dream Forge Writer” in [`globals.css`](../../src/app/globals.css))
+**Version:** 0.2 (docs synced to `globals.css` + layout)
+**Last updated:** 2026-04-23
 
 A warm, editorial storybook aesthetic built for an AI storytelling studio for children (ages 7–12) and their parents. The system is designed to feel like a handcrafted illuminated manuscript reinterpreted for the modern web — respectful of kids' intelligence, reassuring for parents, distinct from every other "kids app" on the internet.
 
@@ -10,7 +10,7 @@ A warm, editorial storybook aesthetic built for an AI storytelling studio for ch
 
 ## Design principles
 
-1. **Warmth over neon.** Parchment, ink, gold, and ember beat any purple-gradient tech palette. The page should feel held, not beamed at.
+1. **Warmth over cold tech.** The live palette is **navy + starlight + ember** with **violet** primaries; it should still feel like a storybook, not a default SaaS template.
 2. **Craft is the feature.** Hand-drawn ornaments, variable typography, and asymmetric layouts signal that a person made this on purpose.
 3. **Reading is the hero.** Every page is a story page in spirit. Typography is sized, spaced, and weighted to invite slow reading.
 4. **Intentional asymmetry.** Grids are broken deliberately — tilted cards, roman numerals breaking the baseline, ornaments crossing gutters. Never generic.
@@ -24,7 +24,7 @@ A warm, editorial storybook aesthetic built for an AI storytelling studio for ch
 | Document | What's inside |
 |---|---|
 | [`overview.md`](./overview.md) | This file — principles, philosophy, file map |
-| [`colors.md`](./colors.md) | OKLCH brand palette, semantic tokens, usage rules |
+| [`colors.md`](./colors.md) | **Authoritative** — brand + semantic tokens (matches [`globals.css`](../../src/app/globals.css)) |
 | [`typography.md`](./typography.md) | Fraunces / Newsreader / JetBrains Mono, scale, rules |
 | [`spacing-and-layout.md`](./spacing-and-layout.md) | Grid, container, asymmetry, radius, shadow, borders |
 | [`components.md`](./components.md) | Buttons, cards, choice buttons, world tiles, header/footer |
@@ -45,13 +45,13 @@ Each document stands alone but cross-links liberally. Start here, then read in a
 - ✅ Use `§` + roman numerals for section markers (§ I, § II, § III…).
 - ✅ Tilt cards by 1–3 degrees when they need weight.
 - ✅ Break the grid with ornaments, numerals, and constellations.
-- ✅ Use ember for one primary action and one emphasis word per view.
+- ✅ Use **ember (orange)** for one headline accent word and small UI affordances; **violet** primaries and `.btn-ember` for the main CTA.
 - ✅ Use HTML entities (`&mdash;`, `&rsquo;`, `&middot;`) for typography.
 - ✅ Run `pnpm lint && pnpm typecheck` after every change.
 
 ### Don't
 
-- ❌ Don't use pure white or pure black — only parchment and ink.
+- ❌ Don't use raw `#fff` / `#000` for large surfaces—use `background` / `foreground` and brand tokens.
 - ❌ Don't use Inter, Roboto, or Geist Sans for anything visible.
 - ❌ Don't use sans-serif body copy.
 - ❌ Don't use purple gradients, glassmorphism, or neumorphism.
@@ -70,7 +70,7 @@ Each document stands alone but cross-links liberally. Start here, then read in a
 | [`src/app/layout.tsx`](../../src/app/layout.tsx) | Font loading, metadata, theme provider, `grain` body class. |
 | [`src/app/page.tsx`](../../src/app/page.tsx) | Landing page — reference implementation for every pattern in this system. |
 | [`src/components/site-header.tsx`](../../src/components/site-header.tsx) | Wax-seal monogram, nav. |
-| [`src/components/site-footer.tsx`](../../src/components/site-footer.tsx) | Ornate footer with hand-drawn divider ornament. |
+| [`src/components/localized-site-footer.tsx`](../../src/components/localized-site-footer.tsx) | Localized footer (re-exported from `site-footer.tsx` for legacy imports). |
 
 ---
 
