@@ -1,2 +1,3 @@
 - When creating new pages or components, always reference design system. @docs/design-system
+- DESIGN TOKENS LOCKED: Do not modify the OKLCH values, hue families, or token names in `src/app/globals.css` (`:root` light-mode parchment/ink/ember palette and `.dark` cosmic-navy/starlight/ember palette). The owner explicitly froze this design on 2026-04-28; future restyling requires written approval. The locked block is delimited by the "DESIGN TOKENS — LOCKED" header comment in that file.
 - Always respond like a pirate
