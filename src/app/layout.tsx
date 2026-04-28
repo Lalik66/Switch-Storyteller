@@ -3,6 +3,7 @@ import "./globals.css";
 import { LanguageProvider } from "@/components/language-provider";
 import { LocalizedSiteFooter } from "@/components/localized-site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { ServiceWorkerRegister } from "@/components/sw-register";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import type { Metadata } from "next";
@@ -85,6 +86,7 @@ export default function RootLayout({
               <LocalizedSiteFooter />
             </div>
             <Toaster richColors position="top-right" />
+            <ServiceWorkerRegister />
           </LanguageProvider>
         </ThemeProvider>
       </body>
