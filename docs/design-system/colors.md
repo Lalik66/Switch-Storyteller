@@ -7,7 +7,7 @@
 Hero's Forge ships **two coherent modes** keyed off `class="dark"` on `<html>`:
 
 - **Light mode** — warm **parchment** surface (`--parchment` cream) with deep **ink** text and **ember** orange accents. Reads like an illustrated children's folio.
-- **Dark mode** — deep **cosmic navy** surface (`--parchment` resolves to a near-midnight blue-violet) with cream **starlight** text (`--ink`), the same **ember** firelight accents, and a soft golden radial glow.
+- **Dark mode** — deep **midnight blue** surface (`--parchment` resolves to a near-midnight blue-violet) with cream **starlight** text (`--ink`), the same **ember** firelight accents, and a soft golden radial glow.
 
 Both modes share the brand tokens `--ember`, `--gold`, `--forest`, `--dusk` (with mode-specific OKLCH lightness so contrast stays legible in either). `--gold` is a distinct warm yellow, **not** an alias of ember.
 
@@ -17,7 +17,7 @@ Both modes share the brand tokens `--ember`, `--gold`, `--forest`, `--dusk` (wit
 
 | Token | Role | Light-mode value | Dark-mode value | Notes |
 |---|---|---|---|---|
-| `--parchment` | Page surface base | `oklch(0.948 0.028 82)` cream | `oklch(0.135 0.035 268)` cosmic navy | Drives `--background` in both modes. |
+| `--parchment` | Page surface base | `oklch(0.948 0.028 82)` cream | `oklch(0.1384 0.0574 234.64)` midnight blue | Drives `--background` in both modes. |
 | `--ink` | Default text | `oklch(0.18 0.02 45)` deep ink | `oklch(0.95 0.025 85)` cream starlight | Drives `--foreground`. |
 | `--ember` | Brand orange accent | `oklch(0.58 0.178 35)` | `oklch(0.68 0.18 38)` | Hero word, CTAs (`.btn-ember`), H mark, live badge, `var(--ember)` in UI. |
 | `--gold` | Highlight / chart-2 | `oklch(0.76 0.128 80)` | `oklch(0.82 0.13 82)` | Distinct warm yellow — used for `--accent`, world tiles, eyebrow ornaments. |

@@ -112,7 +112,7 @@
 .dark {
   /* Cosmic library — deep navy-violet night with ember firelight.
      Locked palette: see "DESIGN TOKENS — LOCKED" header above. */
-  --parchment: oklch(0.22 0.05 272);
+  --parchment: oklch(0.1384 0.0574 234.64);
   --ink: oklch(0.95 0.025 85);
   --ember: oklch(0.68 0.18 38);
   --gold: oklch(0.82 0.13 82);
@@ -121,15 +121,15 @@
 
   --background: var(--parchment);
   --foreground: var(--ink);
-  --card: oklch(0.27 0.058 272);
+  --card: oklch(0.188 0.0574 234.64);
   --card-foreground: var(--ink);
-  --popover: oklch(0.27 0.058 272);
+  --popover: oklch(0.188 0.0574 234.64);
   --popover-foreground: var(--ink);
   --primary: var(--ember);
   --primary-foreground: oklch(0.15 0.01 40);
-  --secondary: oklch(0.32 0.055 272);
+  --secondary: oklch(0.238 0.056 234.64);
   --secondary-foreground: var(--ink);
-  --muted: oklch(0.3 0.05 272);
+  --muted: oklch(0.218 0.056 234.64);
   --muted-foreground: oklch(0.74 0.03 85);
   --accent: var(--gold);
   --accent-foreground: oklch(0.15 0.01 40);
@@ -137,11 +137,11 @@
   --border: oklch(1 0 0 / 12%);
   --input: oklch(1 0 0 / 16%);
   --ring: var(--ember);
-  --sidebar: oklch(0.24 0.055 272);
+  --sidebar: oklch(0.158 0.0574 234.64);
   --sidebar-foreground: var(--ink);
   --sidebar-primary: var(--ember);
   --sidebar-primary-foreground: oklch(0.15 0.01 40);
-  --sidebar-accent: oklch(0.32 0.055 272);
+  --sidebar-accent: oklch(0.238 0.056 234.64);
   --sidebar-accent-foreground: var(--ink);
   --sidebar-border: oklch(1 0 0 / 12%);
   --sidebar-ring: var(--ember);
