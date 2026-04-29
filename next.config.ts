@@ -1,6 +1,28 @@
 import type { NextConfig } from "next";
+import withPWAInit from "@ducanh2912/next-pwa";
+
+const withPWA = withPWAInit({
+  dest: "public",
+  // Service worker + precache only in production; `next dev` stays fast and predictable.
+  disable: process.env.NODE_ENV === "development",
+  register: true,
+  reloadOnOnline: true,
+  cacheOnFrontEndNav: true,
+  fallbacks: {
+    document: "/offline",
+  },
+});
 
 const nextConfig: NextConfig = {
+  webpack(config, { dev, isServer }) {
+    // Workbox / next-pwa resolves webpack chunks vs filesystem paths against output.publicPath.
+    // Rare builds expose undefined here → manifest logic can throw (e.g. `.length` on undefined).
+    if (!dev && !isServer && config.output && config.output.publicPath === undefined) {
+      config.output.publicPath = "/_next/";
+    }
+    return config;
+  },
+
   // Image optimization configuration
   images: {
     remotePatterns: [
@@ -54,4 +76,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withPWA(nextConfig);

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useLanguage } from "@/components/language-provider";
 import { SiteHeaderBrand } from "@/components/site-header-brand";
@@ -10,35 +11,19 @@ export function SiteHeaderHomeLink() {
   const aria = LANDING_COPY[lang].chrome.ariaHome;
 
   return (
-    <Link href="/" className="group flex items-center gap-3" aria-label={aria}>
-      <span className="relative inline-flex h-10 w-10 items-center justify-center">
-        <svg
-          viewBox="0 0 40 40"
-          className="h-10 w-10 text-[color:var(--ember)] drop-shadow-[0_2px_6px_rgba(0,0,0,0.15)] transition-transform duration-500 group-hover:-rotate-6"
-          aria-hidden="true"
-        >
-          <circle cx="20" cy="20" r="17" fill="currentColor" />
-          <circle
-            cx="20"
-            cy="20"
-            r="15"
-            fill="none"
-            stroke="rgba(255,255,255,0.35)"
-            strokeDasharray="2 3"
-          />
-          <text
-            x="20"
-            y="26"
-            textAnchor="middle"
-            fontFamily="var(--font-fraunces), Georgia, serif"
-            fontSize="18"
-            fontStyle="italic"
-            fill="#fff"
-            fontWeight="500"
-          >
-            H
-          </text>
-        </svg>
+    <Link href="/" className="group flex items-center gap-3.5" aria-label={aria}>
+      <span
+        className="relative h-22 w-22 shrink-0 overflow-hidden rounded-full border border-[color:color-mix(in_oklch,var(--ember)_45%,transparent)] bg-[color:var(--card)] shadow-[0_0_18px_-4px_color-mix(in_oklch,var(--ember)_55%,transparent),0_4px_12px_-4px_rgba(0,0,0,0.35)] transition-[transform,box-shadow] duration-300 group-hover:-rotate-6 group-hover:shadow-[0_0_22px_-3px_color-mix(in_oklch,var(--ember)_65%,transparent)]"
+        aria-hidden={true}
+      >
+        <Image
+          src="/brand/heros-forge-logo.svg"
+          alt=""
+          fill
+          sizes="96px"
+          className="object-cover object-top"
+          priority
+        />
       </span>
       <SiteHeaderBrand />
     </Link>
