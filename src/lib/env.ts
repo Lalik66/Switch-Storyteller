@@ -26,6 +26,11 @@ const serverEnvSchema = z.object({
   OPENROUTER_STORY_MODEL_PREMIUM: z
     .string()
     .default("anthropic/claude-3-5-sonnet-20241022"),
+  // Phase 2: image generation model via OpenRouter images API.
+  // Re-verify model ID availability at Phase 2 kickoff (PRD §Open items).
+  OPENROUTER_IMAGE_MODEL: z
+    .string()
+    .default("openai/dall-e-3"),
 
   // Moderation (child-safety critical — required, not optional)
   OPENAI_MODERATION_API_KEY: z

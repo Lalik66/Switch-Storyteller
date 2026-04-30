@@ -12,7 +12,7 @@
  *     the streaming pattern used by `src/app/chat/page.tsx`.
  */
 
-import { useMemo, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { useLanguage, type AppLang } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
@@ -43,6 +43,10 @@ const COPY: Record<
     streamFailed: string;
     emptyTitle: string;
     emptyBody: string;
+    generateImages: string;
+    generatingImages: string;
+    illustrationsReady: string;
+    imageGenFailed: string;
   }
 > = {
   en: {
@@ -61,6 +65,10 @@ const COPY: Record<
     emptyTitle: "A blank folio.",
     emptyBody:
       "No pages yet. Pick an action below to begin the first page of this tale.",
+    generateImages: "Illustrate this tale",
+    generatingImages: "Painting the scenes…",
+    illustrationsReady: "Illustrated ✓",
+    imageGenFailed: "The illustrator stumbled. Try again.",
   },
   az: {
     eyebrow: "\u00a7 Nağıl \u00b7 Davam edir",
@@ -78,6 +86,10 @@ const COPY: Record<
     emptyTitle: "Boş folio.",
     emptyBody:
       "Hələ səhifə yoxdur. Bu nağılın ilk səhifəsinə başlamaq üçün aşağıdan bir hərəkət seç.",
+    generateImages: "Bu nağılı illüstrasiya et",
+    generatingImages: "Səhnələr rənglənir…",
+    illustrationsReady: "İllüstrasiya edilib ✓",
+    imageGenFailed: "İllüstrator büdrədi. Yenə cəhd et.",
   },
 };
 
@@ -139,6 +151,45 @@ export function StoryReader({
   const [customAction, setCustomAction] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+
+  // Phase 2: illustrations — keyed by 1-indexed page number.
+  const [images, setImages] = useState<Map<number, string>>(new Map());
+  const [generatingImages, setGeneratingImages] = useState(false);
+
+  // Fetch already-generated images on mount (non-blocking).
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/story/${storyId}/images`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then(
+        (data: { images: Array<{ pageNumber: number; url: string }> } | null) => {
+          if (cancelled || !data?.images.length) return;
+          setImages(new Map(data.images.map((i) => [i.pageNumber, i.url])));
+        },
+      )
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [storyId]);
+
+  async function handleGenerateImages() {
+    setGeneratingImages(true);
+    try {
+      const res = await fetch(`/api/story/${storyId}/images`, {
+        method: "POST",
+      });
+      if (!res.ok) throw new Error(`Image generation failed: ${res.status}`);
+      const data = (await res.json()) as {
+        images: Array<{ pageNumber: number; url: string }>;
+      };
+      setImages(new Map(data.images.map((i) => [i.pageNumber, i.url])));
+    } catch {
+      toast.error(t.imageGenFailed);
+    } finally {
+      setGeneratingImages(false);
+    }
+  }
 
   const storyTitle =
     (initialStory as unknown as { title?: string }).title ?? "Untitled tale";
@@ -261,11 +312,31 @@ export function StoryReader({
           </div>
         </header>
 
-        <dl className="mb-10 grid grid-cols-3 gap-4">
+        <dl className="mb-6 grid grid-cols-3 gap-4">
           <Stat value={stats.pageCount} label={t.pagesLabel} />
           <Stat value={stats.chapters} label={t.chaptersLabel} />
           <Stat value={stats.words} label={t.wordsLabel} />
         </dl>
+
+        {pages.length >= 8 && (
+          <div className="mb-8 flex items-center gap-4">
+            {images.size > 0 ? (
+              <span className="eyebrow flex items-center gap-2 text-[color:var(--forest)]">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-[color:var(--forest)]" />
+                {t.illustrationsReady}
+              </span>
+            ) : (
+              <Button
+                type="button"
+                onClick={() => void handleGenerateImages()}
+                disabled={generatingImages}
+                className="btn-ember justify-center disabled:opacity-50"
+              >
+                {generatingImages ? t.generatingImages : t.generateImages}
+              </Button>
+            )}
+          </div>
+        )}
 
         <div className="flex flex-col gap-6">
           {pages.length === 0 && !streamingPage && (
@@ -277,17 +348,21 @@ export function StoryReader({
             </article>
           )}
 
-          {pages.map((page, idx) => (
-            <PageCard
-              key={(page as unknown as { id?: string }).id ?? idx}
-              pageNumber={readPageNumber(page, idx + 1)}
-              chapterNumber={readChapterNumber(page)}
-              total={totalForCounter}
-              content={readAiContent(page)}
-              t={t}
-              isLive={false}
-            />
-          ))}
+          {pages.map((page, idx) => {
+            const pNum = readPageNumber(page, idx + 1);
+            return (
+              <PageCard
+                key={(page as unknown as { id?: string }).id ?? idx}
+                pageNumber={pNum}
+                chapterNumber={readChapterNumber(page)}
+                total={totalForCounter}
+                content={readAiContent(page)}
+                imageUrl={images.get(pNum)}
+                t={t}
+                isLive={false}
+              />
+            );
+          })}
 
           {streamingPage && (
             <PageCard
@@ -300,6 +375,7 @@ export function StoryReader({
               }
               total={totalForCounter}
               content={streamingPage.aiContent}
+              imageUrl={undefined}
               t={t}
               isLive
             />
@@ -411,6 +487,7 @@ function PageCard({
   chapterNumber,
   total,
   content,
+  imageUrl,
   t,
   isLive,
 }: {
@@ -418,29 +495,42 @@ function PageCard({
   chapterNumber: number;
   total: number;
   content: string;
+  imageUrl: string | undefined;
   t: (typeof COPY)[AppLang];
   isLive: boolean;
 }) {
   return (
-    <article className="card-stamp p-6 md:p-8">
-      <div className="flex items-baseline justify-between border-b border-border/60 pb-4">
-        <div className="flex items-baseline gap-3">
-          <span className="eyebrow">
-            Ch. {String(chapterNumber).padStart(2, "0")}
-          </span>
-          {isLive && (
-            <span className="font-mono text-[10.5px] uppercase tracking-widest text-[color:var(--ember)]">
-              &times; live
+    <article className="card-stamp overflow-hidden p-0">
+      {imageUrl && (
+        <div className="aspect-[4/3] w-full overflow-hidden bg-muted">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={imageUrl}
+            alt={`Illustration for page ${pageNumber}`}
+            className="h-full w-full object-cover transition-transform duration-700 hover:scale-[1.03]"
+          />
+        </div>
+      )}
+      <div className="p-6 md:p-8">
+        <div className="flex items-baseline justify-between border-b border-border/60 pb-4">
+          <div className="flex items-baseline gap-3">
+            <span className="eyebrow">
+              Ch. {String(chapterNumber).padStart(2, "0")}
             </span>
+            {isLive && (
+              <span className="font-mono text-[10.5px] uppercase tracking-widest text-[color:var(--ember)]">
+                &times; live
+              </span>
+            )}
+          </div>
+          <span className="eyebrow">{t.pageOf(pageNumber, total)}</span>
+        </div>
+
+        <div className="mt-5 whitespace-pre-wrap font-[var(--font-newsreader)] text-[17px] leading-[1.85] text-foreground/90">
+          {content || (
+            <span className="italic text-foreground/40">&hellip;</span>
           )}
         </div>
-        <span className="eyebrow">{t.pageOf(pageNumber, total)}</span>
-      </div>
-
-      <div className="mt-5 whitespace-pre-wrap font-[var(--font-newsreader)] text-[17px] leading-[1.85] text-foreground/90">
-        {content || (
-          <span className="italic text-foreground/40">&hellip;</span>
-        )}
       </div>
     </article>
   );

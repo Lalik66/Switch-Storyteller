@@ -4,12 +4,7 @@
  * Drafting Buddy — 3-question intake for a new tale.
  *
  * PRD references: §4.1 (onboarding flow), §5 (story creation intake),
- * §6 (world selection), §11 (bilingual EN/AZ copy). See
- * `.claude/plans/sequential-bubbling-horizon.md`.
- *
- * Phase 1 scope note: this page posts to a placeholder `/api/story`
- * endpoint that is NOT part of Phase 1 for any agent. The POST is left
- * behind a TODO so that the sibling API agent can wire it up later.
+ * §6 (world selection), §11 (bilingual EN/AZ copy).
  */
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
@@ -248,10 +243,6 @@ export default function NewStoryPage() {
 
     setSubmitting(true);
     try {
-      // TODO(phase-2, api-agent): POST /api/story is NOT in Phase 1 scope
-      // for any agent. The sibling API agent will own this route. For now
-      // this fetch is intentionally unguarded — it will 404 in dev — so
-      // the shape is visible in the network tab for the next agent.
       const res = await fetch("/api/story", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

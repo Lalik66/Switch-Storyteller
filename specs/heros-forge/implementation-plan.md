@@ -43,8 +43,8 @@ Use this as a checklist when auditing; items reflect current `src/` structure.
   - ✅ Session-safe (server component with auth check, parent ownership verification)
   - ✅ Shows all pages with `aiContent` + optional `childContent` (custom input)
   - ✅ Design system compliant: card-stamp, eyebrow, display-lg, rule-ornament
-- [ ] **Multi-child story creation** — Today `src/app/api/story/route.ts` uses the **first** child profile only. Add explicit `childProfileId` (or picker on new-story UI) so families with multiple children attach new stories to the correct profile.
-- [ ] **PWA manifest branding** — `src/app/manifest.ts` still uses boilerplate name/description; align copy/icons with Hero's Forge when ready for public beta.
+- [x] **Multi-child story creation** — `src/app/api/story/route.ts` uses the submitted `childProfileId` (scoped to parent for safety) and falls back to first child only when omitted. `story/new/page.tsx` auto-selects for single-child families and shows an explicit picker when `children.length > 1`.
+- [x] **PWA manifest branding** — `src/app/manifest.ts` already uses Hero's Forge name, description, and brand colours (`#c83e1e` / `#faf7f2`). Not boilerplate.
 - [ ] **PostHog (PRD §12)** — Optional: add client snippet + server events for KPIs; defer if instrumentation is not Phase 1-critical.
 
 ### Technical details
@@ -59,9 +59,11 @@ Use this as a checklist when auditing; items reflect current `src/` structure.
 
 ### Tasks
 
-- [ ] **`pgvector` / embedding pipeline** — Enable Postgres extension; add `character` + `description_embedding`; migration strategy for Drizzle.
-- [ ] **`story_image` table** — `scene_hash` index; cache lookup before calling image API.
-- [ ] **`src/app/api/story/[id]/images/route.ts`** — OpenRouter image model(s); persist via `src/lib/storage.ts`; trigger policy (e.g. on story complete, 5 images per 8 pages on pages 1/3/5/7/8 per PRD §8).
+- [x] **`story_image` table + `character` table + `parentReport` table** — Added in `src/lib/schema.ts` Phase 2 section. `scene_hash` unique index on `story_image`; `character_child_profile_id_idx` on `character`. `description_embedding` (pgvector) deferred — requires separate `ALTER TABLE` migration once pgvector extension is confirmed on the Postgres instance.
+- [x] **`src/lib/image-prompts.ts`** — `buildScenePrompt()` (world-aware, G-rated, watercolour style) + `sceneHash()` (SHA-256, normalised).
+- [x] **`src/app/api/story/[id]/images/route.ts`** — `GET` returns existing images; `POST` generates for pages 1/3/5/7/8, checks `scene_hash` cache first, calls OpenRouter images API, uploads via `storage.ts`, persists to `story_image`.
+- [x] **`OPENROUTER_IMAGE_MODEL`** env var added to `src/lib/env.ts` (default `openai/dall-e-3`; re-verify at kickoff per PRD §Open items).
+- [x] **Story reader illustration UI** — `_reader.tsx` updated: fetches existing images on mount, shows "Illustrate this tale" button when `pages.length >= 8`, `PageCard` renders image above text with hover-scale animation.
 - [ ] **Character vault UX + prompt injection** — CRUD or auto-extract character descriptions; inject into story system prompt.
 - [ ] **`parent_report` table + weekly rollup** — Aggregate words/stories/moderation stats per child.
 - [ ] **`src/app/api/cron/parent-digest/route.ts`** — Vercel Cron; Resend; React Email template `src/emails/parent-digest.tsx` (create if missing).

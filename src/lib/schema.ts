@@ -252,6 +252,83 @@ export const moderationEvent = pgTable(
 );
 
 // ---------------------------------------------------------------------------
+// The Hero's Forge — Phase 2 domain tables
+// ---------------------------------------------------------------------------
+
+export const character = pgTable(
+  "character",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    childProfileId: uuid("child_profile_id")
+      .notNull()
+      .references(() => childProfile.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    description: text("description").notNull(),
+    // description_embedding (pgvector 1536-dim) is deferred until the
+    // pgvector extension is confirmed enabled on the target Postgres instance.
+    // Add via a separate migration: ALTER TABLE character ADD COLUMN
+    // description_embedding vector(1536).
+    imageUrl: text("image_url"),
+    appearanceCount: integer("appearance_count").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index("character_child_profile_id_idx").on(table.childProfileId),
+  ]
+);
+
+export const storyImage = pgTable(
+  "story_image",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    storyPageId: uuid("story_page_id")
+      .notNull()
+      .references(() => storyPage.id, { onDelete: "cascade" }),
+    url: text("url").notNull(),
+    // SHA-256 of the normalised scene prompt — cache key for reuse across stories.
+    sceneHash: text("scene_hash").notNull().unique(),
+    modelUsed: text("model_used").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index("story_image_scene_hash_idx").on(table.sceneHash),
+  ]
+);
+
+export const parentReport = pgTable(
+  "parent_report",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    parentUserId: text("parent_user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    childProfileId: uuid("child_profile_id")
+      .notNull()
+      .references(() => childProfile.id, { onDelete: "cascade" }),
+    weekEnding: timestamp("week_ending", { withTimezone: true }).notNull(),
+    storiesCreated: integer("stories_created").notNull().default(0),
+    totalWordsWritten: integer("total_words_written").notNull().default(0),
+    vocabularyHighlights: jsonb("vocabulary_highlights"),
+    moderationIncidents: integer("moderation_incidents").notNull().default(0),
+    sentAt: timestamp("sent_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index("parent_report_parent_child_week_idx").on(
+      table.parentUserId,
+      table.childProfileId,
+      table.weekEnding
+    ),
+  ]
+);
+
+// ---------------------------------------------------------------------------
 // Drizzle inferred types (consumed by downstream agents / route handlers)
 // ---------------------------------------------------------------------------
 
@@ -269,3 +346,12 @@ export type NewPromptLog = typeof promptLog.$inferInsert;
 
 export type ModerationEvent = typeof moderationEvent.$inferSelect;
 export type NewModerationEvent = typeof moderationEvent.$inferInsert;
+
+export type Character = typeof character.$inferSelect;
+export type NewCharacter = typeof character.$inferInsert;
+
+export type StoryImage = typeof storyImage.$inferSelect;
+export type NewStoryImage = typeof storyImage.$inferInsert;
+
+export type ParentReport = typeof parentReport.$inferSelect;
+export type NewParentReport = typeof parentReport.$inferInsert;
