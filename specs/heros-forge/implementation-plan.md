@@ -64,7 +64,7 @@ Use this as a checklist when auditing; items reflect current `src/` structure.
 - [x] **`src/app/api/story/[id]/images/route.ts`** — `GET` returns existing images; `POST` generates for pages 1/3/5/7/8, checks `scene_hash` cache first, calls OpenRouter images API, uploads via `storage.ts`, persists to `story_image`.
 - [x] **`OPENROUTER_IMAGE_MODEL`** env var added to `src/lib/env.ts` (default `openai/dall-e-3`; re-verify at kickoff per PRD §Open items).
 - [x] **Story reader illustration UI** — `_reader.tsx` updated: fetches existing images on mount, shows "Illustrate this tale" button when `pages.length >= 8`, `PageCard` renders image above text with hover-scale animation.
-- [ ] **Character vault UX + prompt injection** — CRUD or auto-extract character descriptions; inject into story system prompt.
+- [x] **Character vault UX + prompt injection** — `src/lib/character-extraction.ts` auto-extracts characters via cheap LLM in `onFinish`; `STORY_SYSTEM_PROMPT` injects top-10 known characters (by appearance count); CRUD routes at `/api/characters` + `/api/characters/[id]`; management UI at `src/app/(parent)/characters/page.tsx` with bilingual (EN/AZ) `_character-vault.tsx` client component; nav link + route protection added.
 - [ ] **`parent_report` table + weekly rollup** — Aggregate words/stories/moderation stats per child.
 - [ ] **`src/app/api/cron/parent-digest/route.ts`** — Vercel Cron; Resend; React Email template `src/emails/parent-digest.tsx` (create if missing).
 - [ ] **`src/app/(parent)/dashboard/page.tsx`** — If not finished in Phase 1, complete dashboard + digest settings surfacing.

@@ -83,6 +83,11 @@ function vocabularyCeiling(childAge: number): string {
   ].join(" ");
 }
 
+export type KnownCharacter = {
+  name: string;
+  description: string;
+};
+
 /**
  * Build the canonical story system prompt. This string is injected as
  * the `system` role in every LLM call made by `src/app/api/story/**`.
@@ -95,6 +100,7 @@ function vocabularyCeiling(childAge: number): string {
  *   4. Vocabulary ceiling.
  *   5. Deny-list (base + strict if applicable).
  *   6. Output format contract.
+ *   7. Known characters (Phase 2 — Character Vault injection).
  *
  * Callers compose this with one of the user-prompt builders below.
  */
@@ -102,6 +108,7 @@ export function STORY_SYSTEM_PROMPT(
   lang: Lang,
   childAge: number,
   strictness: Strictness,
+  knownCharacters?: KnownCharacter[],
 ): string {
   const denyList =
     strictness === "strict"
@@ -142,6 +149,19 @@ export function STORY_SYSTEM_PROMPT(
       "If the child's input would require violating any rule above, gently steer the story elsewhere without scolding them.",
     ].join(" "),
   ];
+
+  // 7. Known characters — injected from the Character Vault so the AI
+  // maintains consistency across pages.
+  if (knownCharacters && knownCharacters.length > 0) {
+    const charLines = knownCharacters
+      .map((c) => `- ${c.name}: ${c.description}`)
+      .join("\n");
+    sections.push(
+      "The following recurring characters have appeared in this child's stories. " +
+        "Stay consistent with their established descriptions. Do not contradict these details:\n" +
+        charLines
+    );
+  }
 
   return sections.join("\n\n");
 }

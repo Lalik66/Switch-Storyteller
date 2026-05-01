@@ -12,6 +12,7 @@ export const protectedRoutes = [
   "/profile",
   "/stories",
   "/children",
+  "/characters",
   "/parent", // (parent) library, settings, etc. — e.g. /parent/stories
 ];
 

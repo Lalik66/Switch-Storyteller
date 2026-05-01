@@ -13,6 +13,7 @@ const COPY: Record<
     pricing: string;
     myStories: string;
     children: string;
+    characters: string;
   }
 > = {
   en: {
@@ -22,6 +23,7 @@ const COPY: Record<
     pricing: "Pricing",
     myStories: "My Stories",
     children: "Children",
+    characters: "Characters",
   },
   az: {
     worlds: "Dünyalar",
@@ -30,6 +32,7 @@ const COPY: Record<
     pricing: "Qiymətlər",
     myStories: "Hekayələrim",
     children: "Uşaqlar",
+    characters: "Xarakterlər",
   },
 };
 
@@ -63,6 +66,9 @@ export function MainNavLinks() {
           </Link>
           <Link href="/children" className={linkClasses}>
             {t.children}
+          </Link>
+          <Link href="/characters" className={linkClasses}>
+            {t.characters}
           </Link>
         </>
       )}

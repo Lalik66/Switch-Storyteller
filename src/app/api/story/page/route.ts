@@ -1,9 +1,10 @@
 import { headers } from "next/headers";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { streamText } from "ai";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
+import { extractAndUpsertCharacters } from "@/lib/character-extraction";
 import { db } from "@/lib/db";
 import { getServerEnv } from "@/lib/env";
 import { moderatePrompt, moderateOutput } from "@/lib/moderation";
@@ -13,6 +14,7 @@ import {
   promptLog,
   moderationEvent,
   childProfile,
+  character,
 } from "@/lib/schema";
 import {
   STORY_SYSTEM_PROMPT,
@@ -185,10 +187,20 @@ export async function POST(req: Request) {
         ...(customAction !== undefined && { customAction }),
       });
 
+  // Phase 2: query the Character Vault for this child's known characters.
+  // Top 10 by appearance count keeps prompt size bounded.
+  const knownChars = await db
+    .select({ name: character.name, description: character.description })
+    .from(character)
+    .where(eq(character.childProfileId, child.id))
+    .orderBy(sql`${character.appearanceCount} desc`)
+    .limit(10);
+
   const systemPrompt = STORY_SYSTEM_PROMPT(
     lang,
     child.age,
-    child.contentStrictness
+    child.contentStrictness,
+    knownChars.length > 0 ? knownChars : undefined,
   );
 
   const result = streamText({
@@ -247,6 +259,17 @@ export async function POST(req: Request) {
           modelUsed: modelId,
           tokenUsage: usage ? JSON.parse(JSON.stringify(usage)) : null,
         });
+
+        // Phase 2: extract characters from the generated page (fire-and-forget).
+        if (moderationStatus === "safe") {
+          extractAndUpsertCharacters(
+            finalText,
+            child.id,
+            storyRow.heroName,
+          ).catch((e) =>
+            console.error("[story/page] character extraction error", e)
+          );
+        }
       } catch (err) {
         // Never throw from onFinish — the stream is already delivered.
         console.error("[story/page] onFinish persistence error", err);
