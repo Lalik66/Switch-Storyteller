@@ -11,6 +11,7 @@ const COPY: Record<
     loop: string;
     parents: string;
     pricing: string;
+    dashboard: string;
     myStories: string;
     children: string;
     characters: string;
@@ -21,6 +22,7 @@ const COPY: Record<
     loop: "How it works",
     parents: "For parents",
     pricing: "Pricing",
+    dashboard: "Dashboard",
     myStories: "My Stories",
     children: "Children",
     characters: "Characters",
@@ -30,6 +32,7 @@ const COPY: Record<
     loop: "Necə işləyir",
     parents: "Valideynlər üçün",
     pricing: "Qiymətlər",
+    dashboard: "İdarə paneli",
     myStories: "Hekayələrim",
     children: "Uşaqlar",
     characters: "Xarakterlər",
@@ -61,6 +64,9 @@ export function MainNavLinks() {
 
       {session && (
         <>
+          <Link href="/parent/dashboard" className={linkClasses}>
+            {t.dashboard}
+          </Link>
           <Link href="/stories" className={linkClasses}>
             {t.myStories}
           </Link>

@@ -37,6 +37,12 @@ const serverEnvSchema = z.object({
     .string()
     .min(1, "OPENAI_MODERATION_API_KEY is required for child safety moderation"),
 
+  // Email (Phase 2: parent digest)
+  RESEND_API_KEY: z.string().optional(),
+
+  // Cron auth (Phase 2: Vercel Cron invocations)
+  CRON_SECRET: z.string().optional(),
+
   // Storage
   BLOB_READ_WRITE_TOKEN: z.string().optional(),
 

@@ -65,9 +65,9 @@ Use this as a checklist when auditing; items reflect current `src/` structure.
 - [x] **`OPENROUTER_IMAGE_MODEL`** env var added to `src/lib/env.ts` (default `openai/dall-e-3`; re-verify at kickoff per PRD §Open items).
 - [x] **Story reader illustration UI** — `_reader.tsx` updated: fetches existing images on mount, shows "Illustrate this tale" button when `pages.length >= 8`, `PageCard` renders image above text with hover-scale animation.
 - [x] **Character vault UX + prompt injection** — `src/lib/character-extraction.ts` auto-extracts characters via cheap LLM in `onFinish`; `STORY_SYSTEM_PROMPT` injects top-10 known characters (by appearance count); CRUD routes at `/api/characters` + `/api/characters/[id]`; management UI at `src/app/(parent)/characters/page.tsx` with bilingual (EN/AZ) `_character-vault.tsx` client component; nav link + route protection added.
-- [ ] **`parent_report` table + weekly rollup** — Aggregate words/stories/moderation stats per child.
-- [ ] **`src/app/api/cron/parent-digest/route.ts`** — Vercel Cron; Resend; React Email template `src/emails/parent-digest.tsx` (create if missing).
-- [ ] **`src/app/(parent)/dashboard/page.tsx`** — If not finished in Phase 1, complete dashboard + digest settings surfacing.
+- [x] **`parent_report` table + weekly rollup** — `src/lib/parent-report.ts` aggregates stories/words/pages/moderation incidents per child per week; persists to `parent_report` table; marks rows as sent after email delivery.
+- [x] **`src/app/api/cron/parent-digest/route.ts`** — Vercel Cron (`vercel.json`, Sundays 9 AM UTC); authenticates via `CRON_SECRET`; iterates all parents, builds digest, renders `src/emails/parent-digest.tsx` (React Email), sends via Resend, skips inactive parents. `RESEND_API_KEY` + `CRON_SECRET` added to `src/lib/env.ts`.
+- [x] **`src/app/(parent)/parent/dashboard/page.tsx`** — Full parent dashboard: per-child stats (stories, words, pages, characters, moderation incidents this week), aggregate totals, quick links to stories library / character vault / children manager, last digest sent date. Design-system compliant (card-stamp, eyebrow, StatCard, DashboardStat). Nav link added.
 - [ ] **`src/app/api/story/[id]/audio/route.ts`** — ElevenLabs; cache audio in Blob; env `ELEVENLABS_API_KEY` (or project convention).
 - [ ] **PWA** — `next-pwa` or equivalent service worker strategy for Next 16; icons and manifest for install; test add-to-home-screen.
 
