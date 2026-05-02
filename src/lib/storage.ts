@@ -38,6 +38,8 @@ const DEFAULT_CONFIG: Required<StorageConfig> = {
     "text/plain",
     "text/csv",
     "application/json",
+    // Audio
+    "audio/mpeg",
   ],
 };
 
@@ -55,6 +57,7 @@ const ALLOWED_EXTENSIONS = new Set([
   ".txt",
   ".csv",
   ".json",
+  ".mp3",
 ]);
 
 /**

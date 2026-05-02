@@ -299,6 +299,25 @@ export const storyImage = pgTable(
   ]
 );
 
+export const storyAudio = pgTable(
+  "story_audio",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    storyPageId: uuid("story_page_id")
+      .notNull()
+      .references(() => storyPage.id, { onDelete: "cascade" }),
+    url: text("url").notNull(),
+    // SHA-256 of (voiceId | modelUsed | normalised text) — cache key for reuse.
+    audioHash: text("audio_hash").notNull().unique(),
+    voiceId: text("voice_id").notNull(),
+    modelUsed: text("model_used").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [index("story_audio_audio_hash_idx").on(table.audioHash)]
+);
+
 export const parentReport = pgTable(
   "parent_report",
   {
@@ -352,6 +371,9 @@ export type NewCharacter = typeof character.$inferInsert;
 
 export type StoryImage = typeof storyImage.$inferSelect;
 export type NewStoryImage = typeof storyImage.$inferInsert;
+
+export type StoryAudio = typeof storyAudio.$inferSelect;
+export type NewStoryAudio = typeof storyAudio.$inferInsert;
 
 export type ParentReport = typeof parentReport.$inferSelect;
 export type NewParentReport = typeof parentReport.$inferInsert;

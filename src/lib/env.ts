@@ -37,6 +37,12 @@ const serverEnvSchema = z.object({
     .string()
     .min(1, "OPENAI_MODERATION_API_KEY is required for child safety moderation"),
 
+  // ElevenLabs (Phase 2: audio narrator)
+  ELEVENLABS_API_KEY: z.string().optional(),
+  // Default voice "Rachel" — warm, calm, kid-friendly. Override per-deployment.
+  ELEVENLABS_VOICE_ID: z.string().default("21m00Tcm4TlvDq8ikWAM"),
+  ELEVENLABS_MODEL_ID: z.string().default("eleven_turbo_v2_5"),
+
   // Email (Phase 2: parent digest)
   RESEND_API_KEY: z.string().optional(),
 

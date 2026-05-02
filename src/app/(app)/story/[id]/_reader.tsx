@@ -47,6 +47,9 @@ const COPY: Record<
     generatingImages: string;
     illustrationsReady: string;
     imageGenFailed: string;
+    narrate: string;
+    narrating: string;
+    audioFailed: string;
   }
 > = {
   en: {
@@ -69,6 +72,9 @@ const COPY: Record<
     generatingImages: "Painting the scenes…",
     illustrationsReady: "Illustrated ✓",
     imageGenFailed: "The illustrator stumbled. Try again.",
+    narrate: "Narrate this page",
+    narrating: "Summoning the storyteller…",
+    audioFailed: "The storyteller's voice cracked. Try again.",
   },
   az: {
     eyebrow: "\u00a7 Nağıl \u00b7 Davam edir",
@@ -90,6 +96,9 @@ const COPY: Record<
     generatingImages: "Səhnələr rənglənir…",
     illustrationsReady: "İllüstrasiya edilib ✓",
     imageGenFailed: "İllüstrator büdrədi. Yenə cəhd et.",
+    narrate: "Bu səhifəni səsləndir",
+    narrating: "Nağılçı çağırılır…",
+    audioFailed: "Nağılçının səsi titrədi. Yenə cəhd et.",
   },
 };
 
@@ -156,7 +165,11 @@ export function StoryReader({
   const [images, setImages] = useState<Map<number, string>>(new Map());
   const [generatingImages, setGeneratingImages] = useState(false);
 
-  // Fetch already-generated images on mount (non-blocking).
+  // Phase 2: narration — keyed by 1-indexed page number.
+  const [audio, setAudio] = useState<Map<number, string>>(new Map());
+  const [loadingAudio, setLoadingAudio] = useState<Set<number>>(new Set());
+
+  // Fetch already-generated images + audio on mount (non-blocking).
   useEffect(() => {
     let cancelled = false;
     fetch(`/api/story/${storyId}/images`)
@@ -168,10 +181,47 @@ export function StoryReader({
         },
       )
       .catch(() => {});
+    fetch(`/api/story/${storyId}/audio`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then(
+        (data: { tracks: Array<{ pageNumber: number; url: string }> } | null) => {
+          if (cancelled || !data?.tracks.length) return;
+          setAudio(new Map(data.tracks.map((tr) => [tr.pageNumber, tr.url])));
+        },
+      )
+      .catch(() => {});
     return () => {
       cancelled = true;
     };
   }, [storyId]);
+
+  async function handleNarrate(pageNumber: number) {
+    setLoadingAudio((prev) => new Set(prev).add(pageNumber));
+    try {
+      const res = await fetch(`/api/story/${storyId}/audio`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pageNumber }),
+      });
+      if (!res.ok) throw new Error(`Audio generation failed: ${res.status}`);
+      const data = (await res.json()) as {
+        tracks: Array<{ pageNumber: number; url: string }>;
+      };
+      setAudio((prev) => {
+        const next = new Map(prev);
+        for (const tr of data.tracks) next.set(tr.pageNumber, tr.url);
+        return next;
+      });
+    } catch {
+      toast.error(t.audioFailed);
+    } finally {
+      setLoadingAudio((prev) => {
+        const next = new Set(prev);
+        next.delete(pageNumber);
+        return next;
+      });
+    }
+  }
 
   async function handleGenerateImages() {
     setGeneratingImages(true);
@@ -358,6 +408,9 @@ export function StoryReader({
                 total={totalForCounter}
                 content={readAiContent(page)}
                 imageUrl={images.get(pNum)}
+                audioUrl={audio.get(pNum)}
+                isLoadingAudio={loadingAudio.has(pNum)}
+                onNarrate={() => void handleNarrate(pNum)}
                 t={t}
                 isLive={false}
               />
@@ -376,6 +429,9 @@ export function StoryReader({
               total={totalForCounter}
               content={streamingPage.aiContent}
               imageUrl={undefined}
+              audioUrl={undefined}
+              isLoadingAudio={false}
+              onNarrate={undefined}
               t={t}
               isLive
             />
@@ -488,6 +544,9 @@ function PageCard({
   total,
   content,
   imageUrl,
+  audioUrl,
+  isLoadingAudio,
+  onNarrate,
   t,
   isLive,
 }: {
@@ -496,6 +555,9 @@ function PageCard({
   total: number;
   content: string;
   imageUrl: string | undefined;
+  audioUrl: string | undefined;
+  isLoadingAudio: boolean;
+  onNarrate: (() => void) | undefined;
   t: (typeof COPY)[AppLang];
   isLive: boolean;
 }) {
@@ -531,6 +593,38 @@ function PageCard({
             <span className="italic text-foreground/40">&hellip;</span>
           )}
         </div>
+
+        {!isLive && (audioUrl || onNarrate) && (
+          <div className="mt-6 border-t border-border/60 pt-4">
+            {audioUrl ? (
+              <audio
+                controls
+                preload="none"
+                src={audioUrl}
+                className="w-full"
+                aria-label={`Narration for page ${pageNumber}`}
+              />
+            ) : (
+              <button
+                type="button"
+                onClick={onNarrate}
+                disabled={isLoadingAudio}
+                className="eyebrow flex items-center gap-2 text-[color:var(--ember)] transition-opacity hover:opacity-70 disabled:opacity-50"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+                {isLoadingAudio ? t.narrating : t.narrate}
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </article>
   );

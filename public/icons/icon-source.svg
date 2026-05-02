@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!--
+    Hero's Forge PWA icon source.
+    - Ember background (#c83e1e) and parchment mark (#faf7f2) per locked design tokens.
+    - Mark = serif "F" with a four-pointed spark above (mirrors the rule-ornament motif).
+    - Designed inside the 80% maskable safe-area: the main glyph occupies ~52% of the canvas,
+      so Android can crop to circles/rounded squares without clipping the letterform.
+  -->
+  <rect width="512" height="512" fill="#c83e1e"/>
+
+  <!-- Spark / four-pointed star, above the F. Centered horizontally. -->
+  <g transform="translate(256 142)" fill="#faf7f2">
+    <path d="M0 -34 L8 -8 L34 0 L8 8 L0 34 L-8 8 L-34 0 L-8 -8 Z"/>
+  </g>
+
+  <!--
+    Stylized serif "F" — bracketed terminals, generous serifs, brand-aligned.
+    Glyph bbox: 192x224, centered around (256, 304).
+    All coords below are in icon space (origin top-left, +y down).
+  -->
+  <g fill="#faf7f2">
+    <!-- Vertical stem with top + bottom serifs -->
+    <path d="
+      M 174 200
+      L 222 200
+      L 222 408
+      L 246 408
+      L 246 432
+      L 150 432
+      L 150 408
+      L 174 408
+      Z" />
+    <!-- Top horizontal arm -->
+    <path d="
+      M 174 200
+      L 354 200
+      L 354 246
+      L 330 246
+      L 330 224
+      L 222 224
+      L 222 200
+      Z" />
+    <!-- Middle crossbar (shorter) -->
+    <path d="
+      M 222 296
+      L 314 296
+      L 314 320
+      L 296 320
+      L 296 308
+      L 222 308
+      Z" />
+  </g>
+</svg>
