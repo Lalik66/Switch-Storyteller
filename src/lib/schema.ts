@@ -13,6 +13,10 @@ import {
 
 // IMPORTANT! ID fields should ALWAYS use UUID types, EXCEPT the BetterAuth tables.
 
+// Phase 4 (Layer 4 moderation): role distinguishes a parent / regular user
+// from a human reviewer who can access the admin moderation queue.
+// Default "user" so existing rows back-fill safely.
+export const userRoleEnum = pgEnum("user_role", ["user", "admin"]);
 
 export const user = pgTable(
   "user",
@@ -22,6 +26,7 @@ export const user = pgTable(
     email: text("email").notNull().unique(),
     emailVerified: boolean("email_verified").default(false).notNull(),
     image: text("image"),
+    role: userRoleEnum("role").notNull().default("user"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
       .defaultNow()
@@ -238,6 +243,14 @@ export const moderationEvent = pgTable(
     severity: moderationSeverityEnum("severity").notNull(),
     actionTaken: text("action_taken").notNull(),
     reviewedByHuman: boolean("reviewed_by_human").notNull().default(false),
+    // Phase 4: Layer 4 reviewer audit trail. `reviewedBy` is set-null on
+    // user delete so we keep the historical event row even if the
+    // reviewer is later removed.
+    reviewedBy: text("reviewed_by").references(() => user.id, {
+      onDelete: "set null",
+    }),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    reviewerNotes: text("reviewer_notes"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
@@ -246,6 +259,11 @@ export const moderationEvent = pgTable(
     // Admin review queue: highest severity, most recent first.
     index("moderation_event_severity_created_at_idx").on(
       table.severity,
+      sql`${table.createdAt} desc`
+    ),
+    // Filter the queue to "still needs review" — the most common admin query.
+    index("moderation_event_unreviewed_idx").on(
+      table.reviewedByHuman,
       sql`${table.createdAt} desc`
     ),
   ]

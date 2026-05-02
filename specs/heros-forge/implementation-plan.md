@@ -97,15 +97,32 @@ Use this as a checklist when auditing; items reflect current `src/` structure.
 
 ---
 
-## Phase 4 (Backlog): Admin & Layer 4 moderation
+## Phase 4: Admin & Layer 4 moderation
 
-PRD §9 — human review queue for high-severity `moderation_event` rows.
+PRD §9/§10 — human review queue for high-severity `moderation_event` rows. **Built before Phase 3 community feed** because the feed cannot ship without a Layer 4 reviewer workflow under COPPA.
 
 ### Tasks
 
-- [ ] Add `role` on `user` (or separate admin table) — see PRD open items.
-- [ ] `src/app/(admin)/moderation/page.tsx` — gated admin UI; reviewer workflow.
+- [x] **`role` on `user` table** — Postgres enum `user_role` (`user` | `admin`), default `user`. Added in `src/lib/schema.ts`. Migration `0005_fantastic_wild_child.sql` creates the enum and column.
+- [x] **Reviewer audit columns on `moderation_event`** — added `reviewedBy` (FK→user.id, set-null on delete), `reviewedAt`, `reviewerNotes`. Kept the existing `reviewedByHuman` boolean for back-compat (set true when a review is recorded). New `moderation_event_unreviewed_idx` on `(reviewedByHuman, createdAt desc)` for the queue's most-common filter.
+- [x] **`requireAdmin()` helper** — `src/lib/session.ts`; loads role via Drizzle, redirects non-admins to `/dashboard` (never tells a parent the admin route exists). `protectedRoutes` and `src/proxy.ts` matcher both extended with `/admin` + `/admin/:path*` for the optimistic-redirect layer.
+- [x] **(admin) route group** — `src/app/(admin)/layout.tsx` calls `requireAdmin()` on every render; gates everything under it.
+- [x] **`src/app/(admin)/admin/moderation/page.tsx`** — Server Component queue. Loads up to 100 events in one query, ordered: unreviewed-first (boolean ASC) → severity bucket (high → low via `CASE` expression — Postgres enums sort lexicographically by default, which would put "low" above "medium") → `createdAt desc`. LEFT JOIN to `user` exposes the reviewer's name for already-resolved rows. Client child `_queue.tsx` renders each event as a card with severity chip, verbatim flagged content, action taken, link back to the story, and a per-row notes textarea + "Mark reviewed" button.
+- [x] **`POST /api/admin/moderation/[id]/review`** — `src/app/api/admin/moderation/[id]/review/route.ts`. Re-checks `requireAdmin()` (route handlers don't run inside the (admin) layout — belt and braces). Zod-validated body `{ notes? max 500 chars }`. Updates the row with reviewerId/timestamp/notes; returns the new audit fields. 403 on non-admin (clean JSON, not a redirect HTML body), 404 on missing event.
 
 ### Technical details
 
-- Access control middleware or server-only layout; audit log for reviewer actions.
+- **Severity ranking:** explicit `CASE` expression in the queue query — never trust enum default sort.
+- **Audit shape:** denormalised onto `moderation_event` rather than a separate `moderation_review` table. v1 captures who/when/why; a per-event reviewer history isn't needed yet (PRD §10 calls for an audit trail, not a changelog).
+- **Nav surfacing:** intentionally NOT added to `MainNavLinks` — the BetterAuth client session doesn't carry the role yet (would need `additionalFields` config). Reviewers bookmark `/admin/moderation`. Add a nav link in a follow-up if reviewer roster grows.
+- **Verification:** `pnpm typecheck` clean; `pnpm lint` 0 errors; `pnpm db:generate` produced `0005_fantastic_wild_child.sql`; preview server confirmed (admin) layout + page + API route all compile cleanly; proxy emits 3xx `opaqueredirect` for unauthenticated `/admin` and `/admin/moderation` requests.
+
+### Promoting your first admin
+
+The role column ships with default `user`. To promote yourself after `pnpm db:migrate`:
+
+```sql
+UPDATE "user" SET role = 'admin' WHERE email = 'you@example.com';
+```
+
+No UI for role grants in v1 — deliberate. Admin promotion is a privileged operation and should leave a SQL trail.
