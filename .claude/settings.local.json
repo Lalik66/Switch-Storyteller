@@ -40,7 +40,8 @@
       "Bash(curl -s -o /tmp/sess.json -w 'GET get-session: %{http_code}\\\\n' -H 'Cookie: better-auth.session_token=__TRACKED_VAR__' http://localhost:3001/api/auth/get-session)",
       "Bash(git status *)",
       "Bash(pnpm tsc *)",
-      "Bash(git check-ignore *)"
+      "Bash(git check-ignore *)",
+      "Bash(git commit -m ' *)"
     ]
   },
   "enableAllProjectMcpServers": true,

@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useLanguage, type AppLang } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
+import { BADGES_BY_KEY, isKnownBadgeKey } from "@/lib/badges";
 import { story, storyPage } from "@/lib/schema";
 import { getWorld } from "@/lib/worlds";
 import type { InferSelectModel } from "drizzle-orm";
@@ -99,7 +100,22 @@ export function PublicReader({
         return;
       }
       if (!res.ok) throw new Error(`Remix failed: ${res.status}`);
-      const data = (await res.json()) as { storyId: string };
+      const data = (await res.json()) as {
+        storyId: string;
+        newBadges?: string[];
+      };
+      // Surface a celebratory toast for any newly-earned badges before
+      // routing the parent into the new draft.
+      if (Array.isArray(data.newBadges)) {
+        for (const key of data.newBadges) {
+          if (typeof key !== "string" || !isKnownBadgeKey(key)) continue;
+          const badge = BADGES_BY_KEY[key];
+          const i18n = badge.i18n[lang];
+          toast.success(`${badge.icon}  ${i18n.name}`, {
+            description: i18n.description,
+          });
+        }
+      }
       router.push(`/story/${data.storyId}`);
     } catch {
       toast.error(t.remixFailed);

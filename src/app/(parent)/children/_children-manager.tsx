@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { BADGES_BY_KEY, isKnownBadgeKey } from "@/lib/badges";
 // NOTE: `@/lib/schema` is owned by the schema-agent.
 import { childProfile } from "@/lib/schema";
 import type { InferSelectModel } from "drizzle-orm";
@@ -190,8 +191,14 @@ function readField<T>(
 
 export function ChildrenManager({
   initialChildren,
+  badgesByChild = {},
 }: {
   initialChildren: ChildProfile[];
+  /**
+   * Map of `childProfileId` → array of earned `badge_key` slugs (newest first).
+   * Server-loaded; defaults to `{}` so older callers keep compiling.
+   */
+  badgesByChild?: Record<string, string[]>;
 }) {
   const { lang } = useLanguage();
   const t = COPY[lang];
@@ -498,6 +505,11 @@ export function ChildrenManager({
                           }
                         />
                       </div>
+                      {/* Earned-badge row — only renders when at least one is awarded. */}
+                      <BadgeRow
+                        badgeKeys={badgesByChild[id] ?? []}
+                        lang={lang}
+                      />
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
@@ -525,6 +537,37 @@ export function ChildrenManager({
         </ul>
       )}
     </>
+  );
+}
+
+/* ── Earned-badge row (read-only chip strip) ───────────────────────── */
+
+function BadgeRow({
+  badgeKeys,
+  lang,
+}: {
+  badgeKeys: string[];
+  lang: AppLang;
+}) {
+  const knownBadges = badgeKeys.filter(isKnownBadgeKey);
+  if (knownBadges.length === 0) return null;
+  return (
+    <div className="mt-3 flex flex-wrap items-center gap-1.5">
+      {knownBadges.map((key) => {
+        const badge = BADGES_BY_KEY[key];
+        const i18n = badge.i18n[lang];
+        return (
+          <span
+            key={key}
+            title={i18n.description}
+            className="inline-flex items-center gap-1 rounded-full border border-[color:var(--gold)]/40 bg-[color:var(--gold)]/15 px-2.5 py-0.5 text-[12px] text-[color:var(--ember)]"
+          >
+            <span aria-hidden="true">{badge.icon}</span>
+            <span className="font-medium">{i18n.name}</span>
+          </span>
+        );
+      })}
+    </div>
   );
 }
 

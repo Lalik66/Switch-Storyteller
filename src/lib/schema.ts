@@ -5,6 +5,7 @@ import {
   timestamp,
   boolean,
   index,
+  uniqueIndex,
   uuid,
   integer,
   jsonb,
@@ -345,6 +346,45 @@ export const storyAudio = pgTable(
   (table) => [index("story_audio_audio_hash_idx").on(table.audioHash)]
 );
 
+// ---------------------------------------------------------------------------
+// Phase 3: Achievement Badges
+// ---------------------------------------------------------------------------
+// The badge *catalog* (key → name/description/icon/criteria) lives as a
+// code constant in `src/lib/badges.ts` rather than in the DB. We only
+// need to track *which child has earned which badge*, hence this single
+// junction-style table. Promoting the catalog to a `badge` table is
+// straightforward later if we ever need admin-driven badge management.
+
+export const childBadge = pgTable(
+  "child_badge",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    childProfileId: uuid("child_profile_id")
+      .notNull()
+      .references(() => childProfile.id, { onDelete: "cascade" }),
+    // `badge_key` is a slug (e.g. "first-tale") that resolves against the
+    // BADGES catalog at render time. Plain text — no FK to a `badge` table
+    // because the catalog is in code, not DB. Drift between code and stored
+    // keys is handled at render time (unknown keys render as "Unknown badge").
+    badgeKey: text("badge_key").notNull(),
+    awardedAt: timestamp("awarded_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    // Each child can earn each badge exactly once — DB-level uniqueness so
+    // a race condition in the awarder cannot create duplicate awards.
+    uniqueIndex("child_badge_child_key_unique_idx").on(
+      table.childProfileId,
+      table.badgeKey,
+    ),
+    index("child_badge_child_awarded_idx").on(
+      table.childProfileId,
+      sql`${table.awardedAt} desc`,
+    ),
+  ]
+);
+
 export const parentReport = pgTable(
   "parent_report",
   {
@@ -404,3 +444,6 @@ export type NewStoryAudio = typeof storyAudio.$inferInsert;
 
 export type ParentReport = typeof parentReport.$inferSelect;
 export type NewParentReport = typeof parentReport.$inferInsert;
+
+export type ChildBadge = typeof childBadge.$inferSelect;
+export type NewChildBadge = typeof childBadge.$inferInsert;

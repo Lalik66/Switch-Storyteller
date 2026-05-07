@@ -50,6 +50,13 @@
       "when": 1777978584161,
       "tag": "0006_open_mentallo",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1778140831912,
+      "tag": "0007_aspiring_marvel_zombies",
+      "breakpoints": true
     }
   ]
 }

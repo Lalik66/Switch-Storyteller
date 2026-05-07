@@ -17,6 +17,7 @@ import { headers } from "next/headers";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
+import { awardBadges } from "@/lib/badges";
 import { db } from "@/lib/db";
 import { childProfile, story, storyPage } from "@/lib/schema";
 
@@ -135,7 +136,7 @@ export async function POST(
 
   // Idempotent — publishing an already-published story is a no-op success.
   if (targetStory.status === "published") {
-    return json({ status: "published" }, 200);
+    return json({ status: "published", newBadges: [] }, 200);
   }
 
   await db
@@ -143,5 +144,8 @@ export async function POST(
     .set({ status: "published" })
     .where(eq(story.id, storyId));
 
-  return json({ status: "published" }, 200);
+  // Phase 3: re-evaluate badges (`published-author` becomes earnable here).
+  const newBadges = await awardBadges(db, child.id);
+
+  return json({ status: "published", newBadges }, 200);
 }

@@ -12,6 +12,7 @@ import { headers } from "next/headers";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
+import { awardBadges } from "@/lib/badges";
 import { db } from "@/lib/db";
 import { childProfile, story } from "@/lib/schema";
 
@@ -33,9 +34,10 @@ export async function POST(
     return json({ error: "Invalid story id" }, 400);
   }
 
-  // Verify ownership in a single query.
+  // Verify ownership in a single query — also fetch childProfileId so we
+  // can re-evaluate badges for that child after the milestone.
   const rows = await db
-    .select({ story })
+    .select({ story, childProfileId: childProfile.id })
     .from(story)
     .innerJoin(childProfile, eq(childProfile.id, story.childProfileId))
     .where(
@@ -60,5 +62,9 @@ export async function POST(
     .set({ status: "complete" })
     .where(eq(story.id, storyId));
 
-  return json({ status: "complete" }, 200);
+  // Phase 3: re-evaluate badges. `awardBadges` is idempotent under the
+  // unique index, so concurrent requests can't double-award.
+  const newBadges = await awardBadges(db, row.childProfileId);
+
+  return json({ status: "complete", newBadges }, 200);
 }

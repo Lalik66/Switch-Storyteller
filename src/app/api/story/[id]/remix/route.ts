@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { and, asc, count, eq, gte } from "drizzle-orm";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
+import { awardBadges } from "@/lib/badges";
 import { db } from "@/lib/db";
 import { childProfile, story, storyPage } from "@/lib/schema";
 
@@ -181,5 +182,15 @@ export async function POST(
     return created.id;
   });
 
-  return json({ storyId: newStoryId, clonedPageCount: eligiblePages.length }, 201);
+  // Phase 3: re-evaluate badges (`remix-master` becomes earnable here).
+  const newBadges = await awardBadges(db, remixerChild.id);
+
+  return json(
+    {
+      storyId: newStoryId,
+      clonedPageCount: eligiblePages.length,
+      newBadges,
+    },
+    201,
+  );
 }
