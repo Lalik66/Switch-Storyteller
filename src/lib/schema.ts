@@ -171,6 +171,13 @@ export const story = pgTable(
     status: storyStatusEnum("status").notNull().default("draft"),
     wordCount: integer("word_count").notNull().default(0),
     chapterCount: integer("chapter_count").notNull().default(0),
+    // Phase 3 (Remix): when this row was cloned from another story, this
+    // points back to the source. `set null` so a remix outlives its parent
+    // if the source is deleted — the cloned pages are still the child's work.
+    parentStoryId: uuid("parent_story_id").references(
+      (): import("drizzle-orm/pg-core").AnyPgColumn => story.id,
+      { onDelete: "set null" }
+    ),
     moderationFlags: jsonb("moderation_flags"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
@@ -186,6 +193,8 @@ export const story = pgTable(
       table.childProfileId,
       sql`${table.createdAt} desc`
     ),
+    // Lookup all remixes of a given source story.
+    index("story_parent_story_id_idx").on(table.parentStoryId),
   ]
 );
 

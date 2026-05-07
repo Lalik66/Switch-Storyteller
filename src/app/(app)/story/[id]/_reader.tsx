@@ -13,6 +13,7 @@
  */
 
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useLanguage, type AppLang } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
@@ -50,6 +51,27 @@ const COPY: Record<
     narrate: string;
     narrating: string;
     audioFailed: string;
+    remix: string;
+    remixing: string;
+    remixFailed: string;
+    remixRateLimited: string;
+    finish: string;
+    finishing: string;
+    finished: string;
+    finishHint: string;
+    completeHint: string;
+    publishedHint: string;
+    finishFailed: string;
+    publish: string;
+    publishing: string;
+    publishSucceeded: string;
+    unpublish: string;
+    unpublishing: string;
+    unpublishSucceeded: string;
+    publishGenericFailed: string;
+    publishDisallowedHint: string;
+    completeBanner: string;
+    publishedBanner: string;
   }
 > = {
   en: {
@@ -75,6 +97,33 @@ const COPY: Record<
     narrate: "Narrate this page",
     narrating: "Summoning the storyteller…",
     audioFailed: "The storyteller's voice cracked. Try again.",
+    remix: "Remix this tale",
+    remixing: "Forging your remix…",
+    remixFailed: "The forge ran cold. Try again.",
+    remixRateLimited:
+      "You've already started a story this week — come back next week for a new adventure.",
+    finish: "Finish this tale",
+    finishing: "Sealing the last page…",
+    finished:
+      "Marked complete! You can publish it to the community now.",
+    finishHint:
+      "Done writing? Mark it complete and then publish to the community.",
+    completeHint:
+      "This tale is sealed. Hit Publish to send it to the community ledger.",
+    publishedHint:
+      "This tale is in the community ledger. Other parents can read it.",
+    finishFailed: "Couldn't seal the tale. Try again.",
+    publish: "Publish to community",
+    publishing: "Hoisting the sails…",
+    publishSucceeded: "Published! Find it in the community ledger.",
+    unpublish: "Unpublish",
+    unpublishing: "Lowering the sails…",
+    unpublishSucceeded: "Unpublished. Only you can see it now.",
+    publishGenericFailed: "Couldn't publish. Try again.",
+    publishDisallowedHint:
+      "Enable the Publishing pill on this child's profile first.",
+    completeBanner: "Complete",
+    publishedBanner: "Published",
   },
   az: {
     eyebrow: "\u00a7 Nağıl \u00b7 Davam edir",
@@ -99,6 +148,33 @@ const COPY: Record<
     narrate: "Bu səhifəni səsləndir",
     narrating: "Nağılçı çağırılır…",
     audioFailed: "Nağılçının səsi titrədi. Yenə cəhd et.",
+    remix: "Bu nağılı remiks et",
+    remixing: "Remiks hazırlanır…",
+    remixFailed: "Dəmirçi soyudu. Yenə cəhd et.",
+    remixRateLimited:
+      "Bu həftə artıq bir nağıl başlatmısan — gələn həftə yeni macəra üçün geri qayıt.",
+    finish: "Nağılı bitir",
+    finishing: "Son səhifə möhürlənir…",
+    finished:
+      "Tamamlandı! İndi icmaya nəşr edə bilərsən.",
+    finishHint:
+      "Yazmağı bitirdin? Tamamla və icmaya nəşr et.",
+    completeHint:
+      "Bu nağıl möhürlənib. İcma jurnalına göndərmək üçün Nəşr et.",
+    publishedHint:
+      "Bu nağıl icma jurnalındadır. Digər valideynlər oxuya bilər.",
+    finishFailed: "Nağıl möhürlənmədi. Yenə cəhd et.",
+    publish: "İcmaya nəşr et",
+    publishing: "Yelkən qaldırılır…",
+    publishSucceeded: "Nəşr edildi! İcma jurnalında görə bilərsən.",
+    unpublish: "Geri çək",
+    unpublishing: "Yelkən endirilir…",
+    unpublishSucceeded: "Geri çəkildi. İndi yalnız sən görürsən.",
+    publishGenericFailed: "Nəşr edilmədi. Yenə cəhd et.",
+    publishDisallowedHint:
+      "Əvvəlcə uşaq profilində Nəşr açıq pillini aktiv et.",
+    completeBanner: "Tamamlandı",
+    publishedBanner: "Nəşr edildi",
   },
 };
 
@@ -145,13 +221,17 @@ export function StoryReader({
   storyId,
   initialStory,
   initialPages,
+  canRemix = false,
 }: {
   storyId: string;
   initialStory: Story;
   initialPages: StoryPage[];
+  /** Source story meets the Phase 3 remix-eligibility gate. Server-computed. */
+  canRemix?: boolean;
 }) {
   const { lang } = useLanguage();
   const t = COPY[lang];
+  const router = useRouter();
 
   const [pages] = useState<StoryPage[]>(initialPages);
   const [streamingPage, setStreamingPage] = useState<StreamingPage | null>(
@@ -159,7 +239,99 @@ export function StoryReader({
   );
   const [customAction, setCustomAction] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [remixing, setRemixing] = useState(false);
+  const [storyStatus, setStoryStatus] = useState<string>(
+    (initialStory as unknown as { status?: string }).status ?? "draft",
+  );
+  const [finishing, setFinishing] = useState(false);
+  const [publishingState, setPublishingState] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+
+  async function handleFinish() {
+    if (finishing || storyStatus !== "draft") return;
+    setFinishing(true);
+    try {
+      const res = await fetch(`/api/story/${storyId}/complete`, {
+        method: "POST",
+      });
+      if (!res.ok) throw new Error(`Finish failed: ${res.status}`);
+      const data = (await res.json()) as { status: string };
+      setStoryStatus(data.status);
+      toast.success(t.finished);
+    } catch {
+      toast.error(t.finishFailed);
+    } finally {
+      setFinishing(false);
+    }
+  }
+
+  async function handlePublishToggle() {
+    if (publishingState) return;
+    const wantPublish = storyStatus !== "published";
+    setPublishingState(true);
+    try {
+      const res = await fetch(`/api/story/${storyId}/publish`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ publish: wantPublish }),
+      });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as {
+          error?: string;
+          message?: string;
+          currentPageCount?: number;
+          requiredPageCount?: number;
+        };
+        // Surface the server's specific reason when known.
+        if (body.error === "publish_disallowed") {
+          toast.error(t.publishDisallowedHint);
+        } else if (body.error === "too_short") {
+          toast.error(
+            body.message ?? t.publishGenericFailed,
+          );
+        } else if (body.error === "moderation_pending") {
+          toast.error(
+            body.message ?? t.publishGenericFailed,
+          );
+        } else {
+          toast.error(body.message ?? t.publishGenericFailed);
+        }
+        return;
+      }
+      const data = (await res.json()) as { status: string };
+      setStoryStatus(data.status);
+      toast.success(
+        wantPublish ? t.publishSucceeded : t.unpublishSucceeded,
+      );
+    } catch {
+      toast.error(t.publishGenericFailed);
+    } finally {
+      setPublishingState(false);
+    }
+  }
+
+  async function handleRemix() {
+    if (remixing) return;
+    setRemixing(true);
+    try {
+      const res = await fetch(`/api/story/${storyId}/remix`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}",
+      });
+      if (res.status === 429) {
+        toast.error(t.remixRateLimited);
+        return;
+      }
+      if (!res.ok) throw new Error(`Remix failed: ${res.status}`);
+      const data = (await res.json()) as { storyId: string };
+      router.push(`/story/${data.storyId}`);
+    } catch {
+      toast.error(t.remixFailed);
+    } finally {
+      setRemixing(false);
+    }
+  }
 
   // Phase 2: illustrations — keyed by 1-indexed page number.
   const [images, setImages] = useState<Map<number, string>>(new Map());
@@ -310,22 +482,73 @@ export function StoryReader({
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
-      let buffer = "";
+      // The server sends Vercel AI SDK's UI-message-stream protocol — SSE
+      // events of the form `data: <json>\n\n` plus a terminal `data: [DONE]`.
+      // Parse them properly: append `text-delta` deltas to display, surface
+      // `error` events as a toast, ignore the rest. (Earlier this loop just
+      // dumped the raw bytes onto the page, which made errors look like
+      // garbage and successful streams look like JSON soup.)
+      let sseBuf = "";
+      let assembled = "";
+      let streamError: string | null = null;
+      let redirectMessage: string | null = null;
 
-       
+      const handleEvent = (rawJson: string) => {
+        // Sentinel marking end-of-stream.
+        if (rawJson === "[DONE]") return;
+        let parsed: { type?: string; delta?: string; errorText?: string; redirect?: boolean; message?: string };
+        try {
+          parsed = JSON.parse(rawJson) as typeof parsed;
+        } catch {
+          return; // Skip malformed events silently.
+        }
+        if (parsed.type === "text-delta" && typeof parsed.delta === "string") {
+          assembled += parsed.delta;
+          setStreamingPage((prev) =>
+            prev ? { ...prev, aiContent: assembled } : prev,
+          );
+        } else if (parsed.type === "error") {
+          streamError =
+            parsed.errorText ?? "The scribe stumbled.";
+        } else if (parsed.redirect && typeof parsed.message === "string") {
+          // Layer 1 moderation kid-friendly redirect (200 JSON, not SSE).
+          redirectMessage = parsed.message;
+        }
+      };
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        setStreamingPage((prev) =>
-          prev ? { ...prev, aiContent: buffer } : prev
-        );
+        sseBuf += decoder.decode(value, { stream: true });
+        // Events terminate with a blank line ("\n\n").
+        let sep: number;
+        while ((sep = sseBuf.indexOf("\n\n")) !== -1) {
+          const block = sseBuf.slice(0, sep);
+          sseBuf = sseBuf.slice(sep + 2);
+          for (const line of block.split("\n")) {
+            const trimmed = line.trim();
+            if (!trimmed.startsWith("data:")) continue;
+            handleEvent(trimmed.slice(5).trim());
+          }
+        }
       }
 
-      // On complete: the server will have persisted the page. In Phase 1
-      // we keep the final streamed text visible without mutating the
-      // `pages` array — the next reload (or a follow-up action) will
-      // pull the canonical row from the schema-agent's query.
+      if (streamError) {
+        // The server will not have persisted a page on error — drop the
+        // streaming placeholder and surface the reason via toast.
+        setStreamingPage(null);
+        toast.error(streamError);
+        return;
+      }
+      if (redirectMessage) {
+        // Moderation soft-block: no page persisted, show the kid-friendly redirect.
+        setStreamingPage(null);
+        toast(redirectMessage);
+        return;
+      }
+      // On complete: the server has persisted the page. We keep the final
+      // streamed text visible without mutating the `pages` array — the
+      // next reload (or a follow-up action) will pull the canonical row.
       setCustomAction("");
     } catch (err) {
       if ((err as { name?: string }).name !== "AbortError") {
@@ -353,14 +576,79 @@ export function StoryReader({
   return (
     <section className="container mx-auto px-6 py-16 md:py-20">
       <div className="mx-auto max-w-3xl">
-        <header className="mb-10">
+        <header className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="eyebrow">{t.eyebrow}</p>
             <h1 className="display-lg mt-3 text-4xl md:text-5xl">
               {storyTitle}
             </h1>
+            {/* Status banner for non-draft states. */}
+            {storyStatus === "complete" && (
+              <span className="eyebrow mt-3 inline-block rounded-sm border border-[color:var(--forest)]/40 px-2.5 py-1 text-[color:var(--forest)]">
+                ✓ {t.completeBanner}
+              </span>
+            )}
+            {storyStatus === "published" && (
+              <span className="eyebrow mt-3 inline-block rounded-sm bg-[color:var(--ember)] px-2.5 py-1 text-[color:var(--primary-foreground)]">
+                ✦ {t.publishedBanner}
+              </span>
+            )}
+          </div>
+          <div className="flex flex-wrap items-end gap-3">
+            {/* Draft → "Finish this tale" */}
+            {storyStatus === "draft" && pages.length > 0 && (
+              <Button
+                type="button"
+                onClick={() => void handleFinish()}
+                disabled={finishing || submitting}
+                className="btn-ember justify-center disabled:opacity-50"
+              >
+                {finishing ? t.finishing : t.finish}
+              </Button>
+            )}
+            {/* Complete → "Publish to community"; Published → "Unpublish" */}
+            {(storyStatus === "complete" || storyStatus === "published") && (
+              <Button
+                type="button"
+                onClick={() => void handlePublishToggle()}
+                disabled={publishingState}
+                className={
+                  storyStatus === "published"
+                    ? "eyebrow rounded-md border border-border/70 bg-transparent px-4 py-2 text-foreground/70 hover:border-[color:var(--ember)] hover:text-[color:var(--ember)] disabled:opacity-50"
+                    : "btn-ember justify-center disabled:opacity-50"
+                }
+              >
+                {publishingState
+                  ? storyStatus === "published"
+                    ? t.unpublishing
+                    : t.publishing
+                  : storyStatus === "published"
+                    ? t.unpublish
+                    : t.publish}
+              </Button>
+            )}
+            {canRemix && (
+              <Button
+                type="button"
+                onClick={() => void handleRemix()}
+                disabled={remixing}
+                className="btn-ember justify-center disabled:opacity-50"
+              >
+                {remixing ? t.remixing : t.remix}
+              </Button>
+            )}
           </div>
         </header>
+        {/* Status-aware hint line. */}
+        {storyStatus === "draft" && pages.length > 0 && (
+          <p className="eyebrow mb-6 text-foreground/55">{t.finishHint}</p>
+        )}
+        {storyStatus === "complete" && (
+          <p className="eyebrow mb-6 text-foreground/55">{t.completeHint}</p>
+        )}
+        {storyStatus === "published" && (
+          <p className="eyebrow mb-6 text-foreground/55">{t.publishedHint}</p>
+        )}
 
         <dl className="mb-6 grid grid-cols-3 gap-4">
           <Stat value={stats.pageCount} label={t.pagesLabel} />
@@ -438,6 +726,7 @@ export function StoryReader({
           )}
         </div>
 
+        {storyStatus === "draft" && (
         <article className="card-stamp mt-10 p-6 md:p-8">
           <p className="eyebrow text-foreground/55">{t.whatNext}</p>
 
@@ -520,6 +809,7 @@ export function StoryReader({
             </div>
           </form>
         </article>
+        )}
       </div>
     </section>
   );

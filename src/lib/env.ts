@@ -20,9 +20,13 @@ const serverEnvSchema = z.object({
   // AI
   OPENROUTER_API_KEY: z.string().optional(),
   OPENROUTER_MODEL: z.string().default("openai/gpt-5-mini"),
+  // Per PRD §4.1: cheap = Claude Haiku for per-page generation, premium =
+  // Claude Sonnet for chapter openers/finales. Use OpenRouter slugs that
+  // are confirmed live (the older `google/gemini-flash-1.5` was deprecated
+  // and now returns "No endpoints found"). Override per-deployment via .env.
   OPENROUTER_STORY_MODEL_CHEAP: z
     .string()
-    .default("google/gemini-flash-1.5"),
+    .default("anthropic/claude-3.5-haiku"),
   OPENROUTER_STORY_MODEL_PREMIUM: z
     .string()
     .default("anthropic/claude-3-5-sonnet-20241022"),

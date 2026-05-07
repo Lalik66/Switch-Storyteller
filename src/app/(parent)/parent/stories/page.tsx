@@ -22,6 +22,7 @@ import {
 } from "@/lib/schema";
 import { requireAuth } from "@/lib/session";
 import { getWorld } from "@/lib/worlds";
+import { PublishToggle } from "./_publish-toggle";
 
 /* ── Data fetching ─────────────────────────────────────────────────── */
 
@@ -215,14 +216,20 @@ export default async function ParentStoriesPage() {
                                     </div>
                                   </dl>
                                 </div>
-                                <div className="flex items-center gap-3">
-                                  <span className={`eyebrow ${statusDisplay.colorClass}`}>
-                                    {statusDisplay.label}
-                                  </span>
-                                  <span className="eyebrow text-foreground/40">
-                                    {storyPages.length}{" "}
-                                    {storyPages.length === 1 ? "page" : "pages"}
-                                  </span>
+                                <div className="flex flex-col items-end gap-2">
+                                  <div className="flex items-center gap-3">
+                                    <span className={`eyebrow ${statusDisplay.colorClass}`}>
+                                      {statusDisplay.label}
+                                    </span>
+                                    <span className="eyebrow text-foreground/40">
+                                      {storyPages.length}{" "}
+                                      {storyPages.length === 1 ? "page" : "pages"}
+                                    </span>
+                                  </div>
+                                  <PublishToggle
+                                    storyId={s.id}
+                                    currentStatus={s.status}
+                                  />
                                 </div>
                               </div>
 

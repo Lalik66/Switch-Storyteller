@@ -8,7 +8,8 @@
  * later phase). All localized copy ships as an inline EN/AZ table.
  */
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, useTransition, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useLanguage, type AppLang } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
@@ -59,6 +60,12 @@ const COPY: Record<
     yearsLabel: string;
     saveFailed: string;
     deleteFailed: string;
+    sharingLabel: string;
+    publishingOn: string;
+    publishingOff: string;
+    remixingOn: string;
+    remixingOff: string;
+    toggleFailed: string;
   }
 > = {
   en: {
@@ -93,6 +100,12 @@ const COPY: Record<
     yearsLabel: "yrs",
     saveFailed: "Could not save. Try again.",
     deleteFailed: "Could not delete. Try again.",
+    sharingLabel: "Sharing",
+    publishingOn: "Publishing on",
+    publishingOff: "Publishing off",
+    remixingOn: "Remixing on",
+    remixingOff: "Remixing off",
+    toggleFailed: "Could not update. Try again.",
   },
   az: {
     addChild: "Uşaq əlavə et",
@@ -126,6 +139,12 @@ const COPY: Record<
     yearsLabel: "yaş",
     saveFailed: "Saxlanılmadı. Yenə cəhd et.",
     deleteFailed: "Silinmədi. Yenə cəhd et.",
+    sharingLabel: "Paylaşma",
+    publishingOn: "Nəşr açıq",
+    publishingOff: "Nəşr bağlı",
+    remixingOn: "Remiks açıq",
+    remixingOff: "Remiks bağlı",
+    toggleFailed: "Yenilənmədi. Yenə cəhd et.",
   },
 };
 
@@ -176,11 +195,20 @@ export function ChildrenManager({
 }) {
   const { lang } = useLanguage();
   const t = COPY[lang];
+  const router = useRouter();
+  const [, startTransition] = useTransition();
 
   const [children, setChildren] = useState<ChildProfile[]>(initialChildren);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<ChildForm>(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
+
+  // When the Server Component re-renders after `router.refresh()`, the
+  // new `initialChildren` reflects fresh DB rows — sync it into local state
+  // so pills always show the authoritative server-side value.
+  useEffect(() => {
+    setChildren(initialChildren);
+  }, [initialChildren]);
 
   const openForNew = () => {
     setForm(EMPTY_FORM);
@@ -274,6 +302,53 @@ export function ChildrenManager({
     }
   };
 
+  /**
+   * Inline single-flag toggle (allowPublish OR allowRemix). PATCHes the
+   * one flag, replaces the row in local state, and triggers a server
+   * refresh so any other Server Components on the page (and the Story
+   * Reader's `canRemix`/`canPublish` derivations) re-derive from fresh
+   * DB rows.
+   */
+  const handleSharingToggle = async (
+    row: ChildProfile,
+    flag: "allowPublish" | "allowRemix",
+    next: boolean,
+  ) => {
+    const id = readField<string | undefined>(row, "id", "id", undefined);
+    if (!id) return;
+    try {
+      const res = await fetch(`/api/children/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [flag]: next }),
+      });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as {
+          error?: string;
+          details?: Record<string, string[]>;
+        };
+        console.error("[children] toggle failed", res.status, body);
+        throw new Error(`Toggle failed: ${res.status}`);
+      }
+      const updated = (await res.json()) as ChildProfile;
+      setChildren((prev) =>
+        prev.map((r) =>
+          readField<string | undefined>(r, "id", "id", undefined) === id
+            ? updated
+            : r,
+        ),
+      );
+      // Force Server Component re-render so other pages (parent stories,
+      // story reader) re-derive their gates from fresh DB rows.
+      startTransition(() => {
+        router.refresh();
+      });
+    } catch (err) {
+      console.error(err);
+      toast.error(t.toggleFailed);
+    }
+  };
+
   const handleDelete = async (row: ChildProfile) => {
     const id = readField<string | undefined>(row, "id", "id", undefined);
     if (!id) return;
@@ -353,6 +428,18 @@ export function ChildrenManager({
               "daily_minute_limit",
               null
             );
+            const allowPublish = readField<boolean>(
+              row,
+              "allowPublish",
+              "allow_publish",
+              false
+            );
+            const allowRemix = readField<boolean>(
+              row,
+              "allowRemix",
+              "allow_remix",
+              false
+            );
             return (
               <li key={id}>
                 <article className="card-stamp flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between">
@@ -382,6 +469,35 @@ export function ChildrenManager({
                           </div>
                         )}
                       </dl>
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <span className="eyebrow text-foreground/55">
+                          {t.sharingLabel}
+                        </span>
+                        <SharingPill
+                          on={allowPublish}
+                          onLabel={t.publishingOn}
+                          offLabel={t.publishingOff}
+                          onClick={() =>
+                            void handleSharingToggle(
+                              row,
+                              "allowPublish",
+                              !allowPublish,
+                            )
+                          }
+                        />
+                        <SharingPill
+                          on={allowRemix}
+                          onLabel={t.remixingOn}
+                          offLabel={t.remixingOff}
+                          onClick={() =>
+                            void handleSharingToggle(
+                              row,
+                              "allowRemix",
+                              !allowRemix,
+                            )
+                          }
+                        />
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
@@ -409,6 +525,35 @@ export function ChildrenManager({
         </ul>
       )}
     </>
+  );
+}
+
+/* ── Sharing pill (inline allowPublish / allowRemix toggle) ─────────── */
+
+function SharingPill({
+  on,
+  onLabel,
+  offLabel,
+  onClick,
+}: {
+  on: boolean;
+  onLabel: string;
+  offLabel: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={
+        on
+          ? "eyebrow rounded-sm bg-[color:var(--ember)] px-2.5 py-1 text-[color:var(--primary-foreground)] transition-opacity hover:opacity-90"
+          : "eyebrow rounded-sm border border-border/70 px-2.5 py-1 text-foreground/65 transition-colors hover:border-[color:var(--ember)] hover:text-[color:var(--ember)]"
+      }
+      aria-pressed={on}
+    >
+      {on ? `✓ ${onLabel}` : offLabel}
+    </button>
   );
 }
 

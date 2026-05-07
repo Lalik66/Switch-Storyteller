@@ -113,6 +113,21 @@ export async function POST(req: Request) {
     });
   }
 
+  // Phase 3: refuse to continue a story that is no longer a draft. The
+  // reader UI already hides the continue surface when status != 'draft',
+  // but the API enforces the same gate so direct API hits can't bypass it.
+  if (storyRow.status !== "draft") {
+    return new Response(
+      JSON.stringify({
+        error: "story_not_draft",
+        message:
+          "This tale is sealed. Unpublish it first if you want to keep writing.",
+        currentStatus: storyRow.status,
+      }),
+      { status: 409, headers: { "Content-Type": "application/json" } },
+    );
+  }
+
   // Layer 1 moderation — pre-prompt on any user-authored text.
   const userInput = (customAction ?? chosenActionKey ?? "").trim();
   if (userInput.length > 0) {

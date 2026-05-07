@@ -28,6 +28,9 @@ export const config = {
     "/stories",
     "/children",
     "/parent",
+    "/community",
+    "/community/:path*",
+    "/characters",
     // Role gating happens in (admin)/layout via requireAdmin().
     // Match both exact and nested paths so a no-cookie hit on
     // /admin/moderation gets the optimistic redirect too.

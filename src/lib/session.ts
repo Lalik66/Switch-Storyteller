@@ -17,6 +17,7 @@ export const protectedRoutes = [
   "/children",
   "/characters",
   "/parent", // (parent) library, settings, etc. — e.g. /parent/stories
+  "/community", // Phase 3: community feed + public reader
   "/admin", // (admin) Layer 4 moderation queue — additionally role-gated
 ];
 

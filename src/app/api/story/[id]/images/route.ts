@@ -2,10 +2,10 @@ import { headers } from "next/headers";
 import { and, eq, inArray } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { childProfile, story, storyImage, storyPage } from "@/lib/schema";
-import { upload } from "@/lib/storage";
 import { getServerEnv } from "@/lib/env";
 import { buildScenePrompt, sceneHash } from "@/lib/image-prompts";
+import { childProfile, story, storyImage, storyPage } from "@/lib/schema";
+import { upload } from "@/lib/storage";
 
 // Pages to illustrate (1-indexed page numbers, per PRD §8: pages 1/3/5/7/8).
 const ILLUSTRATED_PAGES = [1, 3, 5, 7, 8] as const;

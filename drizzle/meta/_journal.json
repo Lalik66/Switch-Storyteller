@@ -43,6 +43,13 @@
       "when": 1777721309165,
       "tag": "0005_fantastic_wild_child",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1777978584161,
+      "tag": "0006_open_mentallo",
+      "breakpoints": true
     }
   ]
 }
