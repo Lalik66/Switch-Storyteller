@@ -59,6 +59,7 @@ const COPY: Record<
     missingWorld: string;
     missingProblem: string;
     submitFailed: string;
+    rateLimited: string;
     lockedEyebrow: string;
     lockedTitle: string;
     lockedTitleAccent: string;
@@ -92,6 +93,8 @@ const COPY: Record<
     missingWorld: "Pick a world to set the scene.",
     missingProblem: "Describe the trouble, even briefly.",
     submitFailed: "The scribe stumbled. Try again in a moment.",
+    rateLimited:
+      "You've already started a tale this week! Continue an existing draft from My Stories, or come back next week for a new adventure.",
     lockedEyebrow: "\u00a7 Threshold \u00b7 A locked folio",
     lockedTitle: "This page is",
     lockedTitleAccent: "by invitation.",
@@ -125,6 +128,8 @@ const COPY: Record<
     missingWorld: "Səhnəni qurmaq üçün bir dünya seç.",
     missingProblem: "Dərdi qısa da olsa təsvir et.",
     submitFailed: "Yazıçı büdrədi. Bir az sonra yenə cəhd et.",
+    rateLimited:
+      "Bu həftə artıq bir nağıl başlatmısan! 'Hekayələrim' bölməsindən mövcud qaralamanı davam etdir, ya da yeni macəra üçün gələn həftə geri qayıt.",
     lockedEyebrow: "\u00a7 Astana \u00b7 Bağlı folio",
     lockedTitle: "Bu səhifə",
     lockedTitleAccent: "dəvətlidir.",
@@ -258,7 +263,23 @@ export default function NewStoryPage() {
       });
 
       if (!res.ok) {
-        throw new Error(`Story create failed: ${res.status}`);
+        // Surface the rate-limit message as a friendly toast rather than
+        // throwing a stack trace into the dev overlay.
+        if (res.status === 429) {
+          const body = (await res.json().catch(() => ({}))) as {
+            message?: string;
+          };
+          toast.error(body.message ?? t.rateLimited);
+          return;
+        }
+        // Generic non-OK: log the body for debugging, show generic toast.
+        const body = (await res.json().catch(() => ({}))) as {
+          error?: string;
+          message?: string;
+        };
+        console.warn("[story/new] create non-ok", res.status, body);
+        toast.error(body.message ?? t.submitFailed);
+        return;
       }
 
       const json = (await res.json()) as { storyId?: string };

@@ -119,18 +119,28 @@ export default async function StoriesListPage() {
   return (
     <section className="container mx-auto px-6 py-16 md:py-24">
       <div className="mx-auto max-w-4xl">
-        <header className="mb-12 max-w-2xl">
-          <p className="eyebrow">&sect; The library &middot; All stories</p>
-          <h1 className="display-lg mt-4 text-4xl md:text-5xl">
-            Your children&rsquo;s{" "}
-            <span className="italic-wonk text-[color:var(--ember)]">
-              stories.
-            </span>
-          </h1>
-          <p className="mt-5 font-[var(--font-newsreader)] text-[15.5px] leading-relaxed text-foreground/70">
-            Every tale your little scribes have started or finished, gathered
-            in one place. Tap any card to continue reading.
-          </p>
+        <header className="mb-12 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+          <div className="max-w-2xl">
+            <p className="eyebrow">&sect; The library &middot; All stories</p>
+            <h1 className="display-lg mt-4 text-4xl md:text-5xl">
+              Your children&rsquo;s{" "}
+              <span className="italic-wonk text-[color:var(--ember)]">
+                stories.
+              </span>
+            </h1>
+            <p className="mt-5 font-[var(--font-newsreader)] text-[15.5px] leading-relaxed text-foreground/70">
+              Every tale your little scribes have started or finished, gathered
+              in one place. Tap any card to continue reading.
+            </p>
+          </div>
+          {grouped.length > 0 && (
+            <Link
+              href="/story/new"
+              className="inline-flex h-10 shrink-0 items-center justify-center rounded-md bg-[color:var(--ember)] px-5 text-sm font-medium text-[color:var(--primary-foreground)] transition-opacity hover:opacity-90 md:self-end"
+            >
+              Start a new tale
+            </Link>
+          )}
         </header>
 
         {!hasAnyStories ? (

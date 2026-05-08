@@ -26,14 +26,22 @@ type StoryPage = InferSelectModel<typeof storyPage>;
  * Authorization: JOINs through `childProfile` to verify the parent
  * owns the child profile attached to this story. Returns `null` when
  * the story does not exist or does not belong to the caller.
+ *
+ * Also returns `canRemix` — whether this story currently meets the
+ * Phase 3 remix-eligibility gate (status=published + allowPublish +
+ * allowRemix). Computed server-side so the client never decides.
  */
 async function loadStoryWithPages(
   storyId: string,
   userId: string
-): Promise<{ story: Story; pages: StoryPage[] } | null> {
+): Promise<{ story: Story; pages: StoryPage[]; canRemix: boolean } | null> {
   // Verify story exists AND the parent owns the linked child profile.
   const storyRows = await db
-    .select({ story })
+    .select({
+      story,
+      allowPublish: childProfile.allowPublish,
+      allowRemix: childProfile.allowRemix,
+    })
     .from(story)
     .innerJoin(childProfile, eq(childProfile.id, story.childProfileId))
     .where(and(eq(story.id, storyId), eq(childProfile.parentUserId, userId)))
@@ -49,7 +57,12 @@ async function loadStoryWithPages(
     .where(eq(storyPage.storyId, storyId))
     .orderBy(asc(storyPage.pageNumber));
 
-  return { story: storyRow.story, pages };
+  const canRemix =
+    storyRow.story.status === "published" &&
+    storyRow.allowPublish &&
+    storyRow.allowRemix;
+
+  return { story: storyRow.story, pages, canRemix };
 }
 
 export default async function StoryReaderPage({
@@ -74,6 +87,7 @@ export default async function StoryReaderPage({
       storyId={id}
       initialStory={result.story}
       initialPages={result.pages}
+      canRemix={result.canRemix}
     />
   );
 }

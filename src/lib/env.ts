@@ -20,9 +20,13 @@ const serverEnvSchema = z.object({
   // AI
   OPENROUTER_API_KEY: z.string().optional(),
   OPENROUTER_MODEL: z.string().default("openai/gpt-5-mini"),
+  // Per PRD §4.1: cheap = Claude Haiku for per-page generation, premium =
+  // Claude Sonnet for chapter openers/finales. Use OpenRouter slugs that
+  // are confirmed live (the older `google/gemini-flash-1.5` was deprecated
+  // and now returns "No endpoints found"). Override per-deployment via .env.
   OPENROUTER_STORY_MODEL_CHEAP: z
     .string()
-    .default("google/gemini-flash-1.5"),
+    .default("anthropic/claude-3.5-haiku"),
   OPENROUTER_STORY_MODEL_PREMIUM: z
     .string()
     .default("anthropic/claude-3-5-sonnet-20241022"),
@@ -36,6 +40,12 @@ const serverEnvSchema = z.object({
   OPENAI_MODERATION_API_KEY: z
     .string()
     .min(1, "OPENAI_MODERATION_API_KEY is required for child safety moderation"),
+
+  // ElevenLabs (Phase 2: audio narrator)
+  ELEVENLABS_API_KEY: z.string().optional(),
+  // Default voice "Rachel" — warm, calm, kid-friendly. Override per-deployment.
+  ELEVENLABS_VOICE_ID: z.string().default("21m00Tcm4TlvDq8ikWAM"),
+  ELEVENLABS_MODEL_ID: z.string().default("eleven_turbo_v2_5"),
 
   // Email (Phase 2: parent digest)
   RESEND_API_KEY: z.string().optional(),

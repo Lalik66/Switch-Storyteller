@@ -1,6 +1,9 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { user } from "@/lib/schema";
 
 /**
  * Protected routes that require authentication.
@@ -14,6 +17,8 @@ export const protectedRoutes = [
   "/children",
   "/characters",
   "/parent", // (parent) library, settings, etc. — e.g. /parent/stories
+  "/community", // Phase 3: community feed + public reader
+  "/admin", // (admin) Layer 4 moderation queue — additionally role-gated
 ];
 
 /**
@@ -41,6 +46,36 @@ export async function requireAuth() {
  */
 export async function getOptionalSession() {
   return await auth.api.getSession({ headers: await headers() });
+}
+
+/**
+ * Loads the role for the current authenticated user. Returns "user" if
+ * the column is missing (back-compat) or the row cannot be found.
+ */
+async function loadUserRole(userId: string): Promise<"user" | "admin"> {
+  const [row] = await db
+    .select({ role: user.role })
+    .from(user)
+    .where(eq(user.id, userId))
+    .limit(1);
+  return row?.role ?? "user";
+}
+
+/**
+ * Server-Component / Route-Handler guard for the (admin) area. Redirects
+ * unauthenticated users to "/" and non-admin users to "/dashboard" so we
+ * never leak the existence of the admin route to a parent who happens to
+ * type "/admin/moderation" into the URL bar.
+ *
+ * Returns the session augmented with the resolved role for downstream use.
+ */
+export async function requireAdmin() {
+  const session = await requireAuth();
+  const role = await loadUserRole(session.user.id);
+  if (role !== "admin") {
+    redirect("/dashboard");
+  }
+  return { ...session, role };
 }
 
 /**

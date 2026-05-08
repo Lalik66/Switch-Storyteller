@@ -12,9 +12,9 @@
  */
 
 
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { childProfile } from "@/lib/schema";
+import { childBadge, childProfile } from "@/lib/schema";
 import { requireAuth } from "@/lib/session";
 import { ChildrenManager } from "./_children-manager";
 import type { InferSelectModel } from "drizzle-orm";
@@ -35,9 +35,35 @@ async function loadChildrenForParent(
     .orderBy(desc(childProfile.createdAt));
 }
 
+/**
+ * Loads every awarded badge for the given children, ordered newest first.
+ * Returns a map keyed by `childProfileId` for O(1) lookup at render time.
+ */
+async function loadBadgesByChild(
+  childIds: string[],
+): Promise<Record<string, string[]>> {
+  if (childIds.length === 0) return {};
+  const rows = await db
+    .select({
+      childProfileId: childBadge.childProfileId,
+      badgeKey: childBadge.badgeKey,
+      awardedAt: childBadge.awardedAt,
+    })
+    .from(childBadge)
+    .where(inArray(childBadge.childProfileId, childIds))
+    .orderBy(desc(childBadge.awardedAt));
+
+  const map: Record<string, string[]> = {};
+  for (const r of rows) {
+    (map[r.childProfileId] ??= []).push(r.badgeKey);
+  }
+  return map;
+}
+
 export default async function ParentChildrenPage() {
   const session = await requireAuth();
   const children = await loadChildrenForParent(session.user.id);
+  const badgesByChild = await loadBadgesByChild(children.map((c) => c.id));
 
   const parentFirstName = session.user.name?.split(" ")[0] ?? "friend";
 
@@ -61,7 +87,10 @@ export default async function ParentChildrenPage() {
           </p>
         </header>
 
-        <ChildrenManager initialChildren={children} />
+        <ChildrenManager
+          initialChildren={children}
+          badgesByChild={badgesByChild}
+        />
       </div>
     </section>
   );

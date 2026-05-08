@@ -5,6 +5,7 @@ import {
   timestamp,
   boolean,
   index,
+  uniqueIndex,
   uuid,
   integer,
   jsonb,
@@ -13,6 +14,10 @@ import {
 
 // IMPORTANT! ID fields should ALWAYS use UUID types, EXCEPT the BetterAuth tables.
 
+// Phase 4 (Layer 4 moderation): role distinguishes a parent / regular user
+// from a human reviewer who can access the admin moderation queue.
+// Default "user" so existing rows back-fill safely.
+export const userRoleEnum = pgEnum("user_role", ["user", "admin"]);
 
 export const user = pgTable(
   "user",
@@ -22,6 +27,7 @@ export const user = pgTable(
     email: text("email").notNull().unique(),
     emailVerified: boolean("email_verified").default(false).notNull(),
     image: text("image"),
+    role: userRoleEnum("role").notNull().default("user"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
       .defaultNow()
@@ -166,6 +172,13 @@ export const story = pgTable(
     status: storyStatusEnum("status").notNull().default("draft"),
     wordCount: integer("word_count").notNull().default(0),
     chapterCount: integer("chapter_count").notNull().default(0),
+    // Phase 3 (Remix): when this row was cloned from another story, this
+    // points back to the source. `set null` so a remix outlives its parent
+    // if the source is deleted — the cloned pages are still the child's work.
+    parentStoryId: uuid("parent_story_id").references(
+      (): import("drizzle-orm/pg-core").AnyPgColumn => story.id,
+      { onDelete: "set null" }
+    ),
     moderationFlags: jsonb("moderation_flags"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
@@ -181,6 +194,8 @@ export const story = pgTable(
       table.childProfileId,
       sql`${table.createdAt} desc`
     ),
+    // Lookup all remixes of a given source story.
+    index("story_parent_story_id_idx").on(table.parentStoryId),
   ]
 );
 
@@ -238,6 +253,14 @@ export const moderationEvent = pgTable(
     severity: moderationSeverityEnum("severity").notNull(),
     actionTaken: text("action_taken").notNull(),
     reviewedByHuman: boolean("reviewed_by_human").notNull().default(false),
+    // Phase 4: Layer 4 reviewer audit trail. `reviewedBy` is set-null on
+    // user delete so we keep the historical event row even if the
+    // reviewer is later removed.
+    reviewedBy: text("reviewed_by").references(() => user.id, {
+      onDelete: "set null",
+    }),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    reviewerNotes: text("reviewer_notes"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
@@ -246,6 +269,11 @@ export const moderationEvent = pgTable(
     // Admin review queue: highest severity, most recent first.
     index("moderation_event_severity_created_at_idx").on(
       table.severity,
+      sql`${table.createdAt} desc`
+    ),
+    // Filter the queue to "still needs review" — the most common admin query.
+    index("moderation_event_unreviewed_idx").on(
+      table.reviewedByHuman,
       sql`${table.createdAt} desc`
     ),
   ]
@@ -296,6 +324,64 @@ export const storyImage = pgTable(
   },
   (table) => [
     index("story_image_scene_hash_idx").on(table.sceneHash),
+  ]
+);
+
+export const storyAudio = pgTable(
+  "story_audio",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    storyPageId: uuid("story_page_id")
+      .notNull()
+      .references(() => storyPage.id, { onDelete: "cascade" }),
+    url: text("url").notNull(),
+    // SHA-256 of (voiceId | modelUsed | normalised text) — cache key for reuse.
+    audioHash: text("audio_hash").notNull().unique(),
+    voiceId: text("voice_id").notNull(),
+    modelUsed: text("model_used").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [index("story_audio_audio_hash_idx").on(table.audioHash)]
+);
+
+// ---------------------------------------------------------------------------
+// Phase 3: Achievement Badges
+// ---------------------------------------------------------------------------
+// The badge *catalog* (key → name/description/icon/criteria) lives as a
+// code constant in `src/lib/badges.ts` rather than in the DB. We only
+// need to track *which child has earned which badge*, hence this single
+// junction-style table. Promoting the catalog to a `badge` table is
+// straightforward later if we ever need admin-driven badge management.
+
+export const childBadge = pgTable(
+  "child_badge",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    childProfileId: uuid("child_profile_id")
+      .notNull()
+      .references(() => childProfile.id, { onDelete: "cascade" }),
+    // `badge_key` is a slug (e.g. "first-tale") that resolves against the
+    // BADGES catalog at render time. Plain text — no FK to a `badge` table
+    // because the catalog is in code, not DB. Drift between code and stored
+    // keys is handled at render time (unknown keys render as "Unknown badge").
+    badgeKey: text("badge_key").notNull(),
+    awardedAt: timestamp("awarded_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    // Each child can earn each badge exactly once — DB-level uniqueness so
+    // a race condition in the awarder cannot create duplicate awards.
+    uniqueIndex("child_badge_child_key_unique_idx").on(
+      table.childProfileId,
+      table.badgeKey,
+    ),
+    index("child_badge_child_awarded_idx").on(
+      table.childProfileId,
+      sql`${table.awardedAt} desc`,
+    ),
   ]
 );
 
@@ -353,5 +439,11 @@ export type NewCharacter = typeof character.$inferInsert;
 export type StoryImage = typeof storyImage.$inferSelect;
 export type NewStoryImage = typeof storyImage.$inferInsert;
 
+export type StoryAudio = typeof storyAudio.$inferSelect;
+export type NewStoryAudio = typeof storyAudio.$inferInsert;
+
 export type ParentReport = typeof parentReport.$inferSelect;
 export type NewParentReport = typeof parentReport.$inferInsert;
+
+export type ChildBadge = typeof childBadge.$inferSelect;
+export type NewChildBadge = typeof childBadge.$inferInsert;

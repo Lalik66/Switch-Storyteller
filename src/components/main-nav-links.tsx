@@ -15,6 +15,7 @@ const COPY: Record<
     myStories: string;
     children: string;
     characters: string;
+    community: string;
   }
 > = {
   en: {
@@ -26,6 +27,7 @@ const COPY: Record<
     myStories: "My Stories",
     children: "Children",
     characters: "Characters",
+    community: "Community",
   },
   az: {
     worlds: "Dünyalar",
@@ -36,6 +38,7 @@ const COPY: Record<
     myStories: "Hekayələrim",
     children: "Uşaqlar",
     characters: "Xarakterlər",
+    community: "İcma",
   },
 };
 
@@ -75,6 +78,9 @@ export function MainNavLinks() {
           </Link>
           <Link href="/characters" className={linkClasses}>
             {t.characters}
+          </Link>
+          <Link href="/community" className={linkClasses}>
+            {t.community}
           </Link>
         </>
       )}

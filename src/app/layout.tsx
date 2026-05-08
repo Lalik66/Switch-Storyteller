@@ -6,7 +6,7 @@ import { SiteHeader } from "@/components/site-header";
 import { ServiceWorkerRegister } from "@/components/sw-register";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 
 const fraunces = Fraunces({
   variable: "--font-fraunces",
@@ -59,6 +59,26 @@ export const metadata: Metadata = {
       "Co-author illustrated adventures with an AI storyteller. Safe, kid-first, parent-trusted.",
   },
   robots: { index: true, follow: true },
+  icons: {
+    icon: [
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      { url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
+  appleWebApp: {
+    capable: true,
+    title: "Hero's Forge",
+    statusBarStyle: "default",
+  },
+};
+
+// Locks the browser chrome (address bar, status bar) to the brand ember
+// when installed as a PWA on Android / Edge. iOS reads this via appleWebApp.
+export const viewport: Viewport = {
+  themeColor: "#c83e1e",
 };
 
 export default function RootLayout({

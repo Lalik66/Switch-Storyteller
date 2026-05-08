@@ -68,8 +68,8 @@ Use this as a checklist when auditing; items reflect current `src/` structure.
 - [x] **`parent_report` table + weekly rollup** — `src/lib/parent-report.ts` aggregates stories/words/pages/moderation incidents per child per week; persists to `parent_report` table; marks rows as sent after email delivery.
 - [x] **`src/app/api/cron/parent-digest/route.ts`** — Vercel Cron (`vercel.json`, Sundays 9 AM UTC); authenticates via `CRON_SECRET`; iterates all parents, builds digest, renders `src/emails/parent-digest.tsx` (React Email), sends via Resend, skips inactive parents. `RESEND_API_KEY` + `CRON_SECRET` added to `src/lib/env.ts`.
 - [x] **`src/app/(parent)/parent/dashboard/page.tsx`** — Full parent dashboard: per-child stats (stories, words, pages, characters, moderation incidents this week), aggregate totals, quick links to stories library / character vault / children manager, last digest sent date. Design-system compliant (card-stamp, eyebrow, StatCard, DashboardStat). Nav link added.
-- [ ] **`src/app/api/story/[id]/audio/route.ts`** — ElevenLabs; cache audio in Blob; env `ELEVENLABS_API_KEY` (or project convention).
-- [ ] **PWA** — `next-pwa` or equivalent service worker strategy for Next 16; icons and manifest for install; test add-to-home-screen.
+- [x] **`src/app/api/story/[id]/audio/route.ts`** — ElevenLabs TTS via `src/lib/audio.ts` (`audioHash` SHA-256 cache key on text+voice+model, `synthesize()` calls `POST /v1/text-to-speech/{voice}?output_format=mp3_44100_128`). New `story_audio` table (migration `0004_friendly_iron_fist.sql`) caches MP3s by hash so identical pages reuse a single Blob upload. `GET` lists cached tracks; `POST { pageNumber? }` synthesises one page or all. Env vars: `ELEVENLABS_API_KEY` (optional), `ELEVENLABS_VOICE_ID` (default Rachel `21m00Tcm4TlvDq8ikWAM`), `ELEVENLABS_MODEL_ID` (default `eleven_turbo_v2_5`). Storage allowlist extended to `audio/mpeg` + `.mp3`. Reader UI (`_reader.tsx`) wires per-page narrate button → inline `<audio controls preload="none">` once URL is known; bilingual EN/AZ copy.
+- [x] **PWA install** — `@ducanh2912/next-pwa` already configured in `next.config.ts` (dev-disabled, offline fallback `/offline`). Closed remaining install gaps: rasterized brand icon (`public/icons/icon-source.svg` + `scripts/generate-pwa-icons.mjs` using `sharp`) into `icon-192.png`, `icon-512.png`, `icon-maskable-512.png` (purpose `maskable`), `apple-touch-icon.png` (180×180). Manifest (`src/app/manifest.ts`) updated with `id`, `scope`, `orientation`, `categories`, three properly-sized icons. Layout metadata (`src/app/layout.tsx`) adds `icons.icon` / `icons.apple` / `appleWebApp.{capable,title,statusBarStyle}` + `viewport.themeColor`. Verified: manifest serves 200, all icon files serve 200, head emits `<link rel="manifest">`, `<link rel="icon" sizes="192x192|512x512">`, `<link rel="apple-touch-icon" sizes="180x180">`, `<meta name="mobile-web-app-capable">` (Next 16 uses W3C-standard name; Safari ≥16.4 reads it), `<meta name="apple-mobile-web-app-status-bar-style|title">`, `<meta name="theme-color" content="#c83e1e">`.
 
 ### Technical details
 
@@ -97,15 +97,32 @@ Use this as a checklist when auditing; items reflect current `src/` structure.
 
 ---
 
-## Phase 4 (Backlog): Admin & Layer 4 moderation
+## Phase 4: Admin & Layer 4 moderation
 
-PRD §9 — human review queue for high-severity `moderation_event` rows.
+PRD §9/§10 — human review queue for high-severity `moderation_event` rows. **Built before Phase 3 community feed** because the feed cannot ship without a Layer 4 reviewer workflow under COPPA.
 
 ### Tasks
 
-- [ ] Add `role` on `user` (or separate admin table) — see PRD open items.
-- [ ] `src/app/(admin)/moderation/page.tsx` — gated admin UI; reviewer workflow.
+- [x] **`role` on `user` table** — Postgres enum `user_role` (`user` | `admin`), default `user`. Added in `src/lib/schema.ts`. Migration `0005_fantastic_wild_child.sql` creates the enum and column.
+- [x] **Reviewer audit columns on `moderation_event`** — added `reviewedBy` (FK→user.id, set-null on delete), `reviewedAt`, `reviewerNotes`. Kept the existing `reviewedByHuman` boolean for back-compat (set true when a review is recorded). New `moderation_event_unreviewed_idx` on `(reviewedByHuman, createdAt desc)` for the queue's most-common filter.
+- [x] **`requireAdmin()` helper** — `src/lib/session.ts`; loads role via Drizzle, redirects non-admins to `/dashboard` (never tells a parent the admin route exists). `protectedRoutes` and `src/proxy.ts` matcher both extended with `/admin` + `/admin/:path*` for the optimistic-redirect layer.
+- [x] **(admin) route group** — `src/app/(admin)/layout.tsx` calls `requireAdmin()` on every render; gates everything under it.
+- [x] **`src/app/(admin)/admin/moderation/page.tsx`** — Server Component queue. Loads up to 100 events in one query, ordered: unreviewed-first (boolean ASC) → severity bucket (high → low via `CASE` expression — Postgres enums sort lexicographically by default, which would put "low" above "medium") → `createdAt desc`. LEFT JOIN to `user` exposes the reviewer's name for already-resolved rows. Client child `_queue.tsx` renders each event as a card with severity chip, verbatim flagged content, action taken, link back to the story, and a per-row notes textarea + "Mark reviewed" button.
+- [x] **`POST /api/admin/moderation/[id]/review`** — `src/app/api/admin/moderation/[id]/review/route.ts`. Re-checks `requireAdmin()` (route handlers don't run inside the (admin) layout — belt and braces). Zod-validated body `{ notes? max 500 chars }`. Updates the row with reviewerId/timestamp/notes; returns the new audit fields. 403 on non-admin (clean JSON, not a redirect HTML body), 404 on missing event.
 
 ### Technical details
 
-- Access control middleware or server-only layout; audit log for reviewer actions.
+- **Severity ranking:** explicit `CASE` expression in the queue query — never trust enum default sort.
+- **Audit shape:** denormalised onto `moderation_event` rather than a separate `moderation_review` table. v1 captures who/when/why; a per-event reviewer history isn't needed yet (PRD §10 calls for an audit trail, not a changelog).
+- **Nav surfacing:** intentionally NOT added to `MainNavLinks` — the BetterAuth client session doesn't carry the role yet (would need `additionalFields` config). Reviewers bookmark `/admin/moderation`. Add a nav link in a follow-up if reviewer roster grows.
+- **Verification:** `pnpm typecheck` clean; `pnpm lint` 0 errors; `pnpm db:generate` produced `0005_fantastic_wild_child.sql`; preview server confirmed (admin) layout + page + API route all compile cleanly; proxy emits 3xx `opaqueredirect` for unauthenticated `/admin` and `/admin/moderation` requests.
+
+### Promoting your first admin
+
+The role column ships with default `user`. To promote yourself after `pnpm db:migrate`:
+
+```sql
+UPDATE "user" SET role = 'admin' WHERE email = 'you@example.com';
+```
+
+No UI for role grants in v1 — deliberate. Admin promotion is a privileged operation and should leave a SQL trail.
