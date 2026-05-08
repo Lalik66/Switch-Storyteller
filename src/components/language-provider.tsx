@@ -11,7 +11,8 @@ import {
   type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
-import { LOCALE_COOKIE } from "@/i18n/config";
+import { useLocale } from "next-intl";
+import { LOCALE_COOKIE, isLocale } from "@/i18n/config";
 
 export const APP_LANGS = ["en", "az"] as const;
 export type AppLang = (typeof APP_LANGS)[number];
@@ -68,11 +69,16 @@ function persistLang(lang: AppLang): void {
 }
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  /** SSR and first client paint stay `en` to avoid hydration mismatches. */
-  const [lang, setLangState] = useState<AppLang>("en");
+  // Initialise from next-intl's server-resolved locale so SSR and first client
+  // paint agree, and so `useLanguage()` consumers don't flash the default
+  // locale for AZ users. Falls back to "en" if next-intl somehow yields a
+  // value outside our enum (defensive — shouldn't happen given config.ts).
+  const serverLocale = useLocale();
+  const initialLang: AppLang = isLocale(serverLocale) ? serverLocale : "en";
+  const [lang, setLangState] = useState<AppLang>(initialLang);
   const router = useRouter();
   /** Tracks the lang at last server render so we only refresh on real change. */
-  const lastSyncedRef = useRef<AppLang>("en");
+  const lastSyncedRef = useRef<AppLang>(initialLang);
 
   useEffect(() => {
     const syncFromStorage = () => {
