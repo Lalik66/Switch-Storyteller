@@ -48,6 +48,31 @@
       ["Müəllimlər", "#"]
     ]
   },
+  "Hero": {
+    "eyebrow": "Gənc müəlliflər studiyası · 7–12 yaş",
+    "titleLine1": "Sənin hekayələrin",
+    "titleLine2": "",
+    "titleAccent": "qəhrəman yaradır",
+    "titleLine3": "",
+    "body": "Qəhrəmanın Döyməxanası uşaqların yumşaq bir süni nağılçı ilə sehrli macəralar birgə yazdığı təsvirli studiyadır. Hər səhifə onlarındır. Hər seçim vacibdir. Hər nağıl əllərində tuta biləcəkləri əsl çap kitabına çevrilir.",
+    "ctaTale": "Nağıla başla",
+    "ctaParents": "Valideynlər üçün",
+    "proofShield": "COPPA uyğun",
+    "proofEye": "İnsan nəzarəti",
+    "proofFeather": "Reklamsız, həmişəlik"
+  },
+  "PublicReader": {
+    "eyebrow": "§ İcma jurnalı · Dərc edilmiş nağıl",
+    "by": "Müəllif",
+    "world": "Dünya",
+    "hero": "Qəhrəman",
+    "backToFeed": "← Jurnala qayıt",
+    "remix": "Bu nağılı remiks et",
+    "remixing": "Remiks hazırlanır…",
+    "remixFailed": "Dəmirçi soyudu. Yenə cəhd et.",
+    "remixRateLimited": "Bu həftə artıq bir nağıl başlatmısan — gələn həftə yeni macəra üçün geri qayıt.",
+    "pageLabel": "Səhifə {n}"
+  },
   "Manuscript": {
     "sealText": "· Fəsil I · Qapı açıqdır · Fəsil I ·",
     "folioMeta": "Folio I · səh. 03",

@@ -48,6 +48,31 @@
       ["Educators", "#"]
     ]
   },
+  "Hero": {
+    "eyebrow": "A studio for young authors · Ages 7–12",
+    "titleLine1": "Where young",
+    "titleLine2": "heroes are",
+    "titleAccent": "forged",
+    "titleLine3": "in ink.",
+    "body": "The Hero's Forge is an illustrated storytelling studio where children co-write magical adventures with a gentle AI storyteller. Every page is theirs. Every choice matters. Every tale becomes a real, printed book they can hold.",
+    "ctaTale": "Begin a tale",
+    "ctaParents": "For parents",
+    "proofShield": "COPPA compliant",
+    "proofEye": "Human-reviewed",
+    "proofFeather": "Ad-free, forever"
+  },
+  "PublicReader": {
+    "eyebrow": "§ The community ledger · A published tale",
+    "by": "By",
+    "world": "World",
+    "hero": "Hero",
+    "backToFeed": "← Back to the ledger",
+    "remix": "Remix this tale",
+    "remixing": "Forging your remix…",
+    "remixFailed": "The forge ran cold. Try again.",
+    "remixRateLimited": "You've already started a story this week — come back next week for a new adventure.",
+    "pageLabel": "Page {n}"
+  },
   "Manuscript": {
     "sealText": "· Chapter One · The door is open · Chapter One ·",
     "folioMeta": "Folio I · page 03",
