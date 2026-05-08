@@ -6,15 +6,19 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
+import { useRouter } from "next/navigation";
+import { LOCALE_COOKIE } from "@/i18n/config";
 
 export const APP_LANGS = ["en", "az"] as const;
 export type AppLang = (typeof APP_LANGS)[number];
 
-const STORAGE_KEY = "heros-forge-ui-lang";
+const STORAGE_KEY = LOCALE_COOKIE;
 const LANG_EVENT = "heros-forge-lang-change";
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 year, in seconds.
 
 type LanguageContextValue = {
   lang: AppLang;
@@ -35,6 +39,14 @@ function readStoredLang(): AppLang | null {
   return null;
 }
 
+function readCookieLang(): AppLang | null {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie.match(
+    new RegExp(`(?:^|; )${STORAGE_KEY}=(en|az)(?:;|$)`),
+  );
+  return (match?.[1] as AppLang | undefined) ?? null;
+}
+
 function detectBrowserLang(): AppLang {
   if (typeof navigator === "undefined") return "en";
   return navigator.language.toLowerCase().startsWith("az") ? "az" : "en";
@@ -46,6 +58,10 @@ function persistLang(lang: AppLang): void {
   } catch {
     /* ignore */
   }
+  // Also write a cookie so server components (next-intl) read the same locale.
+  if (typeof document !== "undefined") {
+    document.cookie = `${STORAGE_KEY}=${lang}; path=/; max-age=${COOKIE_MAX_AGE}; samesite=lax`;
+  }
   if (typeof window !== "undefined") {
     window.dispatchEvent(new Event(LANG_EVENT));
   }
@@ -54,10 +70,17 @@ function persistLang(lang: AppLang): void {
 export function LanguageProvider({ children }: { children: ReactNode }) {
   /** SSR and first client paint stay `en` to avoid hydration mismatches. */
   const [lang, setLangState] = useState<AppLang>("en");
+  const router = useRouter();
+  /** Tracks the lang at last server render so we only refresh on real change. */
+  const lastSyncedRef = useRef<AppLang>("en");
 
   useEffect(() => {
     const syncFromStorage = () => {
-      const next = readStoredLang() ?? detectBrowserLang();
+      // Cookie is the canonical source — written by both this provider and the
+      // server. localStorage is a legacy mirror; browser-language is the cold-
+      // start fallback when neither is set.
+      const next =
+        readCookieLang() ?? readStoredLang() ?? detectBrowserLang();
       setLangState((prev) => (prev === next ? prev : next));
     };
     syncFromStorage();
@@ -71,7 +94,18 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     document.documentElement.lang = lang === "az" ? "az" : "en";
-  }, [lang]);
+    // First mount: align cookie with whatever we resolved (covers the case
+    // where a returning visitor has localStorage='az' but no cookie yet).
+    if (typeof document !== "undefined" && readCookieLang() !== lang) {
+      document.cookie = `${STORAGE_KEY}=${lang}; path=/; max-age=${COOKIE_MAX_AGE}; samesite=lax`;
+    }
+    // If the resolved locale differs from what the server rendered with,
+    // ask Next to refetch server components so next-intl picks up the cookie.
+    if (lastSyncedRef.current !== lang) {
+      lastSyncedRef.current = lang;
+      router.refresh();
+    }
+  }, [lang, router]);
 
   const setLang = useCallback((next: AppLang) => {
     persistLang(next);

@@ -1,0 +1,16 @@
+{
+  "Common": {
+    "skipToContent": "Skip to main content"
+  },
+  "Nav": {
+    "worlds": "Worlds",
+    "loop": "How it works",
+    "parents": "For parents",
+    "pricing": "Pricing",
+    "dashboard": "Dashboard",
+    "myStories": "My Stories",
+    "children": "Children",
+    "characters": "Characters",
+    "community": "Community"
+  }
+}

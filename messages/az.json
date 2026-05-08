@@ -1,0 +1,16 @@
+{
+  "Common": {
+    "skipToContent": "Əsas məzmuna keç"
+  },
+  "Nav": {
+    "worlds": "Dünyalar",
+    "loop": "Necə işləyir",
+    "parents": "Valideynlər üçün",
+    "pricing": "Qiymətlər",
+    "dashboard": "İdarə paneli",
+    "myStories": "Hekayələrim",
+    "children": "Uşaqlar",
+    "characters": "Xarakterlər",
+    "community": "İcma"
+  }
+}
