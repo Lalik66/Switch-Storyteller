@@ -1,11 +1,8 @@
-"use client";
+import { getTranslations } from "next-intl/server";
 
-import { useLanguage } from "@/components/language-provider";
-import { LANDING_COPY } from "@/lib/landing-copy";
-
-export function ManuscriptCardDemo() {
-  const { lang } = useLanguage();
-  const m = LANDING_COPY[lang].manuscript;
+export async function ManuscriptCardDemo() {
+  const t = await getTranslations("Manuscript");
+  const choices = t.raw("choices") as string[];
 
   return (
     <div className="relative mx-auto w-full max-w-md">
@@ -28,7 +25,7 @@ export function ManuscriptCardDemo() {
             fill="currentColor"
             fontStyle="italic"
           >
-            <textPath href="#circle">{m.sealText}</textPath>
+            <textPath href="#circle">{t("sealText")}</textPath>
           </text>
         </svg>
         <div className="absolute inset-0 grid place-items-center">
@@ -45,16 +42,22 @@ export function ManuscriptCardDemo() {
 
       <div className="card-stamp relative rotate-[-1.5deg] p-7">
         <div className="flex items-center justify-between">
-          <span className="eyebrow">{m.folioMeta}</span>
-          <span className="eyebrow text-[color:var(--ember)]">{m.liveBadge}</span>
+          <span className="eyebrow">{t("folioMeta")}</span>
+          <span className="eyebrow text-[color:var(--ember)]">
+            {t("liveBadge")}
+          </span>
         </div>
 
         <p className="mt-5 font-[var(--font-newsreader)] text-[15.5px] leading-[1.7] text-foreground/90">
-          {m.p1Before}{" "}
-          <span className="bg-[color:var(--gold)]/40 px-0.5">{m.p1Highlight}</span>{" "}
-          {m.p1After}{" "}
-          <em className="italic text-[color:var(--ember)]">&ldquo;{m.quote}&rdquo;</em>{" "}
-          {m.p1End}
+          {t("p1Before")}{" "}
+          <span className="bg-[color:var(--gold)]/40 px-0.5">
+            {t("p1Highlight")}
+          </span>{" "}
+          {t("p1After")}{" "}
+          <em className="italic text-[color:var(--ember)]">
+            &ldquo;{t("quote")}&rdquo;
+          </em>{" "}
+          {t("p1End")}
         </p>
 
         <div className="rule-ornament my-6">
@@ -66,9 +69,9 @@ export function ManuscriptCardDemo() {
           </svg>
         </div>
 
-        <p className="eyebrow mb-3">{m.question}</p>
+        <p className="eyebrow mb-3">{t("question")}</p>
         <div className="space-y-2">
-          {m.choices.map((choice, i) => (
+          {choices.map((choice, i) => (
             <button
               key={choice}
               type="button"
@@ -100,10 +103,10 @@ export function ManuscriptCardDemo() {
         </div>
 
         <div className="mt-5 flex items-center justify-between text-[11px] text-foreground/55">
-          <span>{m.footerLeft}</span>
+          <span>{t("footerLeft")}</span>
           <span className="flex items-center gap-1.5">
             <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--forest)]" />
-            {m.footerRight}
+            {t("footerRight")}
           </span>
         </div>
       </div>

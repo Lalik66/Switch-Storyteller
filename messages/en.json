@@ -12,5 +12,58 @@
     "children": "Children",
     "characters": "Characters",
     "community": "Community"
+  },
+  "Brand": {
+    "eyebrow": "Est. MMXXVI",
+    "before": "The Hero's",
+    "accent": "Forge",
+    "ariaHome": "The Hero's Forge — home"
+  },
+  "LanguageSwitcher": {
+    "ariaGroup": "Interface language",
+    "ariaEn": "English interface",
+    "ariaAz": "Azerbaijani interface"
+  },
+  "Footer": {
+    "blurb": "A small studio building a safer, more imaginative internet for young readers. COPPA-compliant. Moderated by humans. Loved by families.",
+    "tagline": "— Forged in warm ink —",
+    "col1Title": "The Tale",
+    "col2Title": "For Grown-ups",
+    "col3Title": "The Scribes",
+    "copyright": "The Hero's Forge. All tales reserved.",
+    "finePrint": "Bound in parchment · Printed with ember",
+    "links1": [
+      ["How it works", "#loop"],
+      ["Worlds", "#worlds"],
+      ["Sample page", "#sample"]
+    ],
+    "links2": [
+      ["Parents", "#parents"],
+      ["Safety & COPPA", "#safety"],
+      ["Pricing", "#pricing"]
+    ],
+    "links3": [
+      ["Contact", "#"],
+      ["Press kit", "#"],
+      ["Educators", "#"]
+    ]
+  },
+  "Manuscript": {
+    "sealText": "· Chapter One · The door is open · Chapter One ·",
+    "folioMeta": "Folio I · page 03",
+    "liveBadge": "× live excerpt",
+    "p1Before": "Maren pressed her palm against the glowing door. The",
+    "p1Highlight": "moonlit forest",
+    "p1After": "hummed behind it, full of things that had waited a very long time to meet her.",
+    "quote": "You're late,",
+    "p1End": "whispered a small voice near her boots.",
+    "question": "What will Maren do?",
+    "footerLeft": "or — write your own",
+    "footerRight": "Safely reviewed",
+    "choices": [
+      "Kneel and whisper back",
+      "Step through the door",
+      "Ask its name"
+    ]
   }
 }

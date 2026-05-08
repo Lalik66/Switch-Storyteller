@@ -12,5 +12,58 @@
     "children": "Uşaqlar",
     "characters": "Xarakterlər",
     "community": "İcma"
+  },
+  "Brand": {
+    "eyebrow": "Est. MMXXVI",
+    "before": "Qəhrəmanın",
+    "accent": "Döyməxanası",
+    "ariaHome": "Qəhrəmanın Döyməxanası — ana səhifə"
+  },
+  "LanguageSwitcher": {
+    "ariaGroup": "İnterfeys dili",
+    "ariaEn": "İngilis interfeysi",
+    "ariaAz": "Azərbaycan interfeysi"
+  },
+  "Footer": {
+    "blurb": "Gənc oxucular üçün daha təhlükəsiz və təxəyyüllü internet tikən kiçik studiya. COPPA uyğun. İnsan moderatorlu. Ailələrin sevimlisi.",
+    "tagline": "— İsti mürəkkəbdə döyülür —",
+    "col1Title": "Nağıl",
+    "col2Title": "Böyüklər üçün",
+    "col3Title": "Yazıçılar",
+    "copyright": "Qəhrəmanın Döyməxanası. Bütün nağıllar saxlanılır.",
+    "finePrint": "Parşömenə bağlanıb · Kölgədə çap olunub",
+    "links1": [
+      ["Necə işləyir", "#loop"],
+      ["Dünyalar", "#worlds"],
+      ["Nümunə səhifə", "#sample"]
+    ],
+    "links2": [
+      ["Valideynlər", "#parents"],
+      ["Təhlükəsizlik və COPPA", "#safety"],
+      ["Qiymətlər", "#pricing"]
+    ],
+    "links3": [
+      ["Əlaqə", "#"],
+      ["Mətbuat dəsti", "#"],
+      ["Müəllimlər", "#"]
+    ]
+  },
+  "Manuscript": {
+    "sealText": "· Fəsil I · Qapı açıqdır · Fəsil I ·",
+    "folioMeta": "Folio I · səh. 03",
+    "liveBadge": "× canlı parça",
+    "p1Before": "Maren parlaq qapıya əlini sürtdü.",
+    "p1Highlight": "Ay işığı meşəsi",
+    "p1After": "onun arxasında uğuldayırdı — onu çoxdan gözləyən şeylərlə dolu idi.",
+    "quote": "Gecikdin,",
+    "p1End": "çəkmələrinin yanında kiçik bir səs pıçıldadı.",
+    "question": "Maren nə edəcək?",
+    "footerLeft": "və ya — özün yaz",
+    "footerRight": "Təhlükəsiz yoxlanılıb",
+    "choices": [
+      "Diz çöküb pıçıldamaq",
+      "Qapıdan keçmək",
+      "Adını sormaq"
+    ]
   }
 }

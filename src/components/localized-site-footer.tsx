@@ -1,13 +1,15 @@
-"use client";
-
 import Link from "next/link";
-import { useLanguage } from "@/components/language-provider";
-import { LANDING_COPY } from "@/lib/landing-copy";
+import { getTranslations } from "next-intl/server";
 
-export function LocalizedSiteFooter() {
-  const { lang } = useLanguage();
-  const f = LANDING_COPY[lang].footer;
-  const ch = LANDING_COPY[lang].chrome;
+export async function LocalizedSiteFooter() {
+  const tFooter = await getTranslations("Footer");
+  const tBrand = await getTranslations("Brand");
+
+  // `t.raw()` returns the structured value (array of [label, href] tuples)
+  // verbatim from the JSON, bypassing ICU formatting.
+  const links1 = tFooter.raw("links1") as [string, string][];
+  const links2 = tFooter.raw("links2") as [string, string][];
+  const links3 = tFooter.raw("links3") as [string, string][];
 
   return (
     <footer className="relative mt-32 border-t border-border/60">
@@ -44,25 +46,25 @@ export function LocalizedSiteFooter() {
         <div className="grid gap-10 md:grid-cols-[2fr_1fr_1fr_1fr]">
           <div>
             <p className="display-lg text-3xl leading-none text-foreground">
-              {ch.brandBefore}{" "}
-              <em className="italic-wonk">{ch.brandAccent}</em>
+              {tBrand("before")}{" "}
+              <em className="italic-wonk">{tBrand("accent")}</em>
             </p>
             <p className="mt-3 max-w-sm text-[15px] leading-relaxed text-foreground/70">
-              {f.blurb}
+              {tFooter("blurb")}
             </p>
-            <p className="eyebrow mt-6">{f.tagline}</p>
+            <p className="eyebrow mt-6">{tFooter("tagline")}</p>
           </div>
 
-          <FooterCol title={f.col1Title} links={f.links1} />
-          <FooterCol title={f.col2Title} links={f.links2} />
-          <FooterCol title={f.col3Title} links={f.links3} />
+          <FooterCol title={tFooter("col1Title")} links={links1} />
+          <FooterCol title={tFooter("col2Title")} links={links2} />
+          <FooterCol title={tFooter("col3Title")} links={links3} />
         </div>
 
         <div className="mt-12 flex flex-col gap-3 border-t border-border/50 pt-6 text-xs text-foreground/55 md:flex-row md:items-center md:justify-between">
           <p>
-            &copy; {new Date().getFullYear()} {f.copyright}
+            &copy; {new Date().getFullYear()} {tFooter("copyright")}
           </p>
-          <p className="eyebrow">{f.finePrint}</p>
+          <p className="eyebrow">{tFooter("finePrint")}</p>
         </div>
       </div>
     </footer>
