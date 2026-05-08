@@ -4,7 +4,7 @@
     {
       "name": "Next.js dev (Hero's Forge)",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["exec", "next", "dev", "--turbopack"],
+      "runtimeArgs": ["run", "dev"],
       "autoPort": true,
       "port": 3001
     },

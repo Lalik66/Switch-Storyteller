@@ -1,5 +1,7 @@
 import { Fraunces, Newsreader, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages } from "next-intl/server";
 import { LanguageProvider } from "@/components/language-provider";
 import { LocalizedSiteFooter } from "@/components/localized-site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -81,13 +83,19 @@ export const viewport: Viewport = {
   themeColor: "#c83e1e",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Resolved server-side from the `heros-forge-ui-lang` cookie (see
+  // `src/i18n/request.ts`). Falls back to `en` on first visit; the client
+  // LanguageProvider then writes the cookie if it disagrees.
+  const locale = await getLocale();
+  const messages = await getMessages();
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <body
         className={`${fraunces.variable} ${newsreader.variable} ${jetbrains.variable} antialiased grain`}
       >
@@ -97,17 +105,19 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <LanguageProvider>
-            <div className="relative z-10 flex min-h-screen flex-col">
-              <SiteHeader />
-              <main id="main-content" className="flex-1">
-                {children}
-              </main>
-              <LocalizedSiteFooter />
-            </div>
-            <Toaster richColors position="top-right" />
-            <ServiceWorkerRegister />
-          </LanguageProvider>
+          <NextIntlClientProvider locale={locale} messages={messages}>
+            <LanguageProvider>
+              <div className="relative z-10 flex min-h-screen flex-col">
+                <SiteHeader />
+                <main id="main-content" className="flex-1">
+                  {children}
+                </main>
+                <LocalizedSiteFooter />
+              </div>
+              <Toaster richColors position="top-right" />
+              <ServiceWorkerRegister />
+            </LanguageProvider>
+          </NextIntlClientProvider>
         </ThemeProvider>
       </body>
     </html>
