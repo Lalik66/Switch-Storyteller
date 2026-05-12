@@ -11,9 +11,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { useLanguage, type AppLang } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
+import { useAppLocale } from "@/i18n/use-app-locale";
 import { BADGES_BY_KEY, isKnownBadgeKey } from "@/lib/badges";
 import { story, storyPage } from "@/lib/schema";
 import { getWorld } from "@/lib/worlds";
@@ -21,49 +22,6 @@ import type { InferSelectModel } from "drizzle-orm";
 
 type Story = InferSelectModel<typeof story>;
 type StoryPage = InferSelectModel<typeof storyPage>;
-
-const COPY: Record<
-  AppLang,
-  {
-    eyebrow: string;
-    by: string;
-    world: string;
-    hero: string;
-    backToFeed: string;
-    remix: string;
-    remixing: string;
-    remixFailed: string;
-    remixRateLimited: string;
-    pageLabel: (n: number) => string;
-  }
-> = {
-  en: {
-    eyebrow: "§ The community ledger · A published tale",
-    by: "By",
-    world: "World",
-    hero: "Hero",
-    backToFeed: "← Back to the ledger",
-    remix: "Remix this tale",
-    remixing: "Forging your remix…",
-    remixFailed: "The forge ran cold. Try again.",
-    remixRateLimited:
-      "You've already started a story this week — come back next week for a new adventure.",
-    pageLabel: (n) => `Page ${n}`,
-  },
-  az: {
-    eyebrow: "§ İcma jurnalı · Dərc edilmiş nağıl",
-    by: "Müəllif",
-    world: "Dünya",
-    hero: "Qəhrəman",
-    backToFeed: "← Jurnala qayıt",
-    remix: "Bu nağılı remiks et",
-    remixing: "Remiks hazırlanır…",
-    remixFailed: "Dəmirçi soyudu. Yenə cəhd et.",
-    remixRateLimited:
-      "Bu həftə artıq bir nağıl başlatmısan — gələn həftə yeni macəra üçün geri qayıt.",
-    pageLabel: (n) => `Səhifə ${n}`,
-  },
-};
 
 export function PublicReader({
   storyId,
@@ -78,13 +36,18 @@ export function PublicReader({
   authorName: string;
   canRemix: boolean;
 }) {
-  const { lang } = useLanguage();
-  const t = COPY[lang];
+  const t = useTranslations("PublicReader");
+  // Worlds + badges still ship their copy as `{ en, az }` records; PR 4
+  // will migrate those into the messages bundle. `useAppLocale()` narrows
+  // next-intl's string locale to our canonical `Locale` union safely (no
+  // unchecked cast), with a fallback to DEFAULT_LOCALE if the cookie
+  // ever drifts outside the supported set.
+  const locale = useAppLocale();
   const router = useRouter();
 
   const [remixing, setRemixing] = useState(false);
   const world = getWorld(source.worldKey);
-  const worldName = world?.name[lang] ?? source.worldKey;
+  const worldName = world?.name[locale] ?? source.worldKey;
 
   async function handleRemix() {
     if (remixing) return;
@@ -96,7 +59,7 @@ export function PublicReader({
         body: "{}",
       });
       if (res.status === 429) {
-        toast.error(t.remixRateLimited);
+        toast.error(t("remixRateLimited"));
         return;
       }
       if (!res.ok) throw new Error(`Remix failed: ${res.status}`);
@@ -110,7 +73,7 @@ export function PublicReader({
         for (const key of data.newBadges) {
           if (typeof key !== "string" || !isKnownBadgeKey(key)) continue;
           const badge = BADGES_BY_KEY[key];
-          const i18n = badge.i18n[lang];
+          const i18n = badge.i18n[locale];
           toast.success(`${badge.icon}  ${i18n.name}`, {
             description: i18n.description,
           });
@@ -118,7 +81,7 @@ export function PublicReader({
       }
       router.push(`/story/${data.storyId}`);
     } catch {
-      toast.error(t.remixFailed);
+      toast.error(t("remixFailed"));
     } finally {
       setRemixing(false);
     }
@@ -131,26 +94,26 @@ export function PublicReader({
           href="/community"
           className="eyebrow text-foreground/55 transition-colors hover:text-[color:var(--ember)]"
         >
-          {t.backToFeed}
+          {t("backToFeed")}
         </Link>
 
         <header className="mt-6 mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div className="flex-1">
-            <p className="eyebrow">{t.eyebrow}</p>
+            <p className="eyebrow">{t("eyebrow")}</p>
             <h1 className="display-lg mt-3 text-4xl md:text-5xl">
               {source.title}
             </h1>
             <dl className="mt-4 flex flex-wrap items-baseline gap-x-5 gap-y-2 font-[var(--font-newsreader)] text-[14px] text-foreground/70">
               <div className="flex items-baseline gap-1.5">
-                <dt className="eyebrow">{t.by}</dt>
+                <dt className="eyebrow">{t("by")}</dt>
                 <dd className="italic">{authorName}</dd>
               </div>
               <div className="flex items-baseline gap-1.5">
-                <dt className="eyebrow">{t.world}</dt>
+                <dt className="eyebrow">{t("world")}</dt>
                 <dd>{worldName}</dd>
               </div>
               <div className="flex items-baseline gap-1.5">
-                <dt className="eyebrow">{t.hero}</dt>
+                <dt className="eyebrow">{t("hero")}</dt>
                 <dd className="italic">{source.heroName}</dd>
               </div>
             </dl>
@@ -162,7 +125,7 @@ export function PublicReader({
               disabled={remixing}
               className="btn-ember justify-center disabled:opacity-50 md:self-end"
             >
-              {remixing ? t.remixing : t.remix}
+              {remixing ? t("remixing") : t("remix")}
             </Button>
           )}
         </header>
@@ -174,7 +137,7 @@ export function PublicReader({
               className="card-stamp p-6 md:p-8"
             >
               <p className="eyebrow text-foreground/55">
-                {t.pageLabel(page.pageNumber)}
+                {t("pageLabel", { n: page.pageNumber })}
               </p>
               <div className="rule-ornament my-5">
                 <svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true">

@@ -12,5 +12,77 @@
     "children": "Uşaqlar",
     "characters": "Xarakterlər",
     "community": "İcma"
+  },
+  "Brand": {
+    "eyebrow": "Est. MMXXVI",
+    "before": "Qəhrəmanın",
+    "accent": "Döyməxanası",
+    "ariaHome": "Qəhrəmanın Döyməxanası — ana səhifə"
+  },
+  "LanguageSwitcher": {
+    "ariaGroup": "İnterfeys dili",
+    "ariaEn": "İngilis interfeysi",
+    "ariaAz": "Azərbaycan interfeysi"
+  },
+  "Footer": {
+    "blurb": "Gənc oxucular üçün daha təhlükəsiz və təxəyyüllü internet tikən kiçik studiya. COPPA uyğun. İnsan moderatorlu. Ailələrin sevimlisi.",
+    "tagline": "— İsti mürəkkəbdə döyülür —",
+    "col1Title": "Nağıl",
+    "col2Title": "Böyüklər üçün",
+    "col3Title": "Yazıçılar",
+    "copyright": "Qəhrəmanın Döyməxanası. Bütün nağıllar saxlanılır.",
+    "finePrint": "Parşömenə bağlanıb · Kölgədə çap olunub",
+    "col1Labels": ["Necə işləyir", "Dünyalar", "Nümunə səhifə"],
+    "col2Labels": ["Valideynlər", "Təhlükəsizlik və COPPA", "Qiymətlər"],
+    "col3Labels": ["Əlaqə", "Mətbuat dəsti", "Müəllimlər"]
+  },
+  "Hero": {
+    "eyebrow": "Gənc müəlliflər studiyası · 7–12 yaş",
+    "body": "Qəhrəmanın Döyməxanası uşaqların yumşaq bir süni nağılçı ilə sehrli macəralar birgə yazdığı təsvirli studiyadır. Hər səhifə onlarındır. Hər seçim vacibdir. Hər nağıl əllərində tuta biləcəkləri əsl çap kitabına çevrilir.",
+    "ctaTale": "Nağıla başla",
+    "ctaParents": "Valideynlər üçün",
+    "proofShield": "COPPA uyğun",
+    "proofEye": "İnsan nəzarəti",
+    "proofFeather": "Reklamsız, həmişəlik",
+    "titleEn": {
+      "line1": "Where young",
+      "line2": "heroes are",
+      "accent": "forged",
+      "line3": "in ink."
+    },
+    "titleAz": {
+      "line1": "Sənin hekayələrin",
+      "accent": "qəhrəman yaradır"
+    }
+  },
+  "PublicReader": {
+    "eyebrow": "§ İcma jurnalı · Dərc edilmiş nağıl",
+    "by": "Müəllif",
+    "world": "Dünya",
+    "hero": "Qəhrəman",
+    "backToFeed": "← Jurnala qayıt",
+    "remix": "Bu nağılı remiks et",
+    "remixing": "Remiks hazırlanır…",
+    "remixFailed": "Dəmirçi soyudu. Yenə cəhd et.",
+    "remixRateLimited": "Bu həftə artıq bir nağıl başlatmısan — gələn həftə yeni macəra üçün geri qayıt.",
+    "pageLabel": "Səhifə {n}"
+  },
+  "Manuscript": {
+    "sealText": "· Fəsil I · Qapı açıqdır · Fəsil I ·",
+    "folioMeta": "Folio I · səh. 03",
+    "liveBadge": "× canlı parça",
+    "p1Before": "Maren parlaq qapıya əlini sürtdü.",
+    "p1Highlight": "Ay işığı meşəsi",
+    "p1After": "onun arxasında uğuldayırdı — onu çoxdan gözləyən şeylərlə dolu idi.",
+    "quote": "Gecikdin,",
+    "p1End": "çəkmələrinin yanında kiçik bir səs pıçıldadı.",
+    "question": "Maren nə edəcək?",
+    "footerLeft": "və ya — özün yaz",
+    "footerRight": "Təhlükəsiz yoxlanılıb",
+    "choices": [
+      "Diz çöküb pıçıldamaq",
+      "Qapıdan keçmək",
+      "Adını sormaq"
+    ]
   }
 }

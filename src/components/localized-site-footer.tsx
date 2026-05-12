@@ -1,13 +1,23 @@
-"use client";
-
 import Link from "next/link";
-import { useLanguage } from "@/components/language-provider";
-import { LANDING_COPY } from "@/lib/landing-copy";
+import { getTranslations } from "next-intl/server";
 
-export function LocalizedSiteFooter() {
-  const { lang } = useLanguage();
-  const f = LANDING_COPY[lang].footer;
-  const ch = LANDING_COPY[lang].chrome;
+// Hrefs live in code, not the messages bundle: they're anchor IDs / routes,
+// not translatable copy. If a developer renames `#loop`, they update it
+// here once instead of in every locale's JSON. Translators only ever touch
+// the matching label arrays in `messages/{en,az}.json` under `Footer.colNLabels`.
+const COL1_HREFS = ["#loop", "#worlds", "#sample"] as const;
+const COL2_HREFS = ["#parents", "#safety", "#pricing"] as const;
+const COL3_HREFS = ["#", "#", "#"] as const;
+
+export async function LocalizedSiteFooter() {
+  const tFooter = await getTranslations("Footer");
+  const tBrand = await getTranslations("Brand");
+
+  // `t.raw()` returns the structured value (an array of label strings)
+  // verbatim from the JSON, bypassing ICU formatting.
+  const col1Labels = tFooter.raw("col1Labels") as string[];
+  const col2Labels = tFooter.raw("col2Labels") as string[];
+  const col3Labels = tFooter.raw("col3Labels") as string[];
 
   return (
     <footer className="relative mt-32 border-t border-border/60">
@@ -44,25 +54,37 @@ export function LocalizedSiteFooter() {
         <div className="grid gap-10 md:grid-cols-[2fr_1fr_1fr_1fr]">
           <div>
             <p className="display-lg text-3xl leading-none text-foreground">
-              {ch.brandBefore}{" "}
-              <em className="italic-wonk">{ch.brandAccent}</em>
+              {tBrand("before")}{" "}
+              <em className="italic-wonk">{tBrand("accent")}</em>
             </p>
             <p className="mt-3 max-w-sm text-[15px] leading-relaxed text-foreground/70">
-              {f.blurb}
+              {tFooter("blurb")}
             </p>
-            <p className="eyebrow mt-6">{f.tagline}</p>
+            <p className="eyebrow mt-6">{tFooter("tagline")}</p>
           </div>
 
-          <FooterCol title={f.col1Title} links={f.links1} />
-          <FooterCol title={f.col2Title} links={f.links2} />
-          <FooterCol title={f.col3Title} links={f.links3} />
+          <FooterCol
+            title={tFooter("col1Title")}
+            labels={col1Labels}
+            hrefs={COL1_HREFS}
+          />
+          <FooterCol
+            title={tFooter("col2Title")}
+            labels={col2Labels}
+            hrefs={COL2_HREFS}
+          />
+          <FooterCol
+            title={tFooter("col3Title")}
+            labels={col3Labels}
+            hrefs={COL3_HREFS}
+          />
         </div>
 
         <div className="mt-12 flex flex-col gap-3 border-t border-border/50 pt-6 text-xs text-foreground/55 md:flex-row md:items-center md:justify-between">
           <p>
-            &copy; {new Date().getFullYear()} {f.copyright}
+            &copy; {new Date().getFullYear()} {tFooter("copyright")}
           </p>
-          <p className="eyebrow">{f.finePrint}</p>
+          <p className="eyebrow">{tFooter("finePrint")}</p>
         </div>
       </div>
     </footer>
@@ -71,19 +93,21 @@ export function LocalizedSiteFooter() {
 
 function FooterCol({
   title,
-  links,
+  labels,
+  hrefs,
 }: {
   title: string;
-  links: [string, string][];
+  labels: string[];
+  hrefs: readonly string[];
 }) {
   return (
     <div>
       <p className="eyebrow mb-4">{title}</p>
       <ul className="space-y-2.5 text-[15px]">
-        {links.map(([label, href]) => (
+        {labels.map((label, i) => (
           <li key={label}>
             <Link
-              href={href}
+              href={hrefs[i] ?? "#"}
               className="text-foreground/75 transition-colors hover:text-[color:var(--ember)]"
             >
               {label}

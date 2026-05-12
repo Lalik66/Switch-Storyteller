@@ -12,5 +12,77 @@
     "children": "Children",
     "characters": "Characters",
     "community": "Community"
+  },
+  "Brand": {
+    "eyebrow": "Est. MMXXVI",
+    "before": "The Hero's",
+    "accent": "Forge",
+    "ariaHome": "The Hero's Forge — home"
+  },
+  "LanguageSwitcher": {
+    "ariaGroup": "Interface language",
+    "ariaEn": "English interface",
+    "ariaAz": "Azerbaijani interface"
+  },
+  "Footer": {
+    "blurb": "A small studio building a safer, more imaginative internet for young readers. COPPA-compliant. Moderated by humans. Loved by families.",
+    "tagline": "— Forged in warm ink —",
+    "col1Title": "The Tale",
+    "col2Title": "For Grown-ups",
+    "col3Title": "The Scribes",
+    "copyright": "The Hero's Forge. All tales reserved.",
+    "finePrint": "Bound in parchment · Printed with ember",
+    "col1Labels": ["How it works", "Worlds", "Sample page"],
+    "col2Labels": ["Parents", "Safety & COPPA", "Pricing"],
+    "col3Labels": ["Contact", "Press kit", "Educators"]
+  },
+  "Hero": {
+    "eyebrow": "A studio for young authors · Ages 7–12",
+    "body": "The Hero's Forge is an illustrated storytelling studio where children co-write magical adventures with a gentle AI storyteller. Every page is theirs. Every choice matters. Every tale becomes a real, printed book they can hold.",
+    "ctaTale": "Begin a tale",
+    "ctaParents": "For parents",
+    "proofShield": "COPPA compliant",
+    "proofEye": "Human-reviewed",
+    "proofFeather": "Ad-free, forever",
+    "titleEn": {
+      "line1": "Where young",
+      "line2": "heroes are",
+      "accent": "forged",
+      "line3": "in ink."
+    },
+    "titleAz": {
+      "line1": "Sənin hekayələrin",
+      "accent": "qəhrəman yaradır"
+    }
+  },
+  "PublicReader": {
+    "eyebrow": "§ The community ledger · A published tale",
+    "by": "By",
+    "world": "World",
+    "hero": "Hero",
+    "backToFeed": "← Back to the ledger",
+    "remix": "Remix this tale",
+    "remixing": "Forging your remix…",
+    "remixFailed": "The forge ran cold. Try again.",
+    "remixRateLimited": "You've already started a story this week — come back next week for a new adventure.",
+    "pageLabel": "Page {n}"
+  },
+  "Manuscript": {
+    "sealText": "· Chapter One · The door is open · Chapter One ·",
+    "folioMeta": "Folio I · page 03",
+    "liveBadge": "× live excerpt",
+    "p1Before": "Maren pressed her palm against the glowing door. The",
+    "p1Highlight": "moonlit forest",
+    "p1After": "hummed behind it, full of things that had waited a very long time to meet her.",
+    "quote": "You're late,",
+    "p1End": "whispered a small voice near her boots.",
+    "question": "What will Maren do?",
+    "footerLeft": "or — write your own",
+    "footerRight": "Safely reviewed",
+    "choices": [
+      "Kneel and whisper back",
+      "Step through the door",
+      "Ask its name"
+    ]
   }
 }
