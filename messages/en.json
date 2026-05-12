@@ -32,34 +32,28 @@
     "col3Title": "The Scribes",
     "copyright": "The Hero's Forge. All tales reserved.",
     "finePrint": "Bound in parchment · Printed with ember",
-    "links1": [
-      ["How it works", "#loop"],
-      ["Worlds", "#worlds"],
-      ["Sample page", "#sample"]
-    ],
-    "links2": [
-      ["Parents", "#parents"],
-      ["Safety & COPPA", "#safety"],
-      ["Pricing", "#pricing"]
-    ],
-    "links3": [
-      ["Contact", "#"],
-      ["Press kit", "#"],
-      ["Educators", "#"]
-    ]
+    "col1Labels": ["How it works", "Worlds", "Sample page"],
+    "col2Labels": ["Parents", "Safety & COPPA", "Pricing"],
+    "col3Labels": ["Contact", "Press kit", "Educators"]
   },
   "Hero": {
     "eyebrow": "A studio for young authors · Ages 7–12",
-    "titleLine1": "Where young",
-    "titleLine2": "heroes are",
-    "titleAccent": "forged",
-    "titleLine3": "in ink.",
     "body": "The Hero's Forge is an illustrated storytelling studio where children co-write magical adventures with a gentle AI storyteller. Every page is theirs. Every choice matters. Every tale becomes a real, printed book they can hold.",
     "ctaTale": "Begin a tale",
     "ctaParents": "For parents",
     "proofShield": "COPPA compliant",
     "proofEye": "Human-reviewed",
-    "proofFeather": "Ad-free, forever"
+    "proofFeather": "Ad-free, forever",
+    "titleEn": {
+      "line1": "Where young",
+      "line2": "heroes are",
+      "accent": "forged",
+      "line3": "in ink."
+    },
+    "titleAz": {
+      "line1": "Sənin hekayələrin",
+      "accent": "qəhrəman yaradır"
+    }
   },
   "PublicReader": {
     "eyebrow": "§ The community ledger · A published tale",

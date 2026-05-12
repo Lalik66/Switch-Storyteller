@@ -15,8 +15,10 @@
 
 import type messages from "../../messages/en.json";
 
+type IntlMessagesShape = typeof messages;
+
 declare global {
-  interface IntlMessages extends Omit<typeof messages, ""> {}
+  interface IntlMessages extends IntlMessagesShape {}
 }
 
 export {};

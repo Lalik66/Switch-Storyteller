@@ -1,15 +1,23 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 
+// Hrefs live in code, not the messages bundle: they're anchor IDs / routes,
+// not translatable copy. If a developer renames `#loop`, they update it
+// here once instead of in every locale's JSON. Translators only ever touch
+// the matching label arrays in `messages/{en,az}.json` under `Footer.colNLabels`.
+const COL1_HREFS = ["#loop", "#worlds", "#sample"] as const;
+const COL2_HREFS = ["#parents", "#safety", "#pricing"] as const;
+const COL3_HREFS = ["#", "#", "#"] as const;
+
 export async function LocalizedSiteFooter() {
   const tFooter = await getTranslations("Footer");
   const tBrand = await getTranslations("Brand");
 
-  // `t.raw()` returns the structured value (array of [label, href] tuples)
+  // `t.raw()` returns the structured value (an array of label strings)
   // verbatim from the JSON, bypassing ICU formatting.
-  const links1 = tFooter.raw("links1") as [string, string][];
-  const links2 = tFooter.raw("links2") as [string, string][];
-  const links3 = tFooter.raw("links3") as [string, string][];
+  const col1Labels = tFooter.raw("col1Labels") as string[];
+  const col2Labels = tFooter.raw("col2Labels") as string[];
+  const col3Labels = tFooter.raw("col3Labels") as string[];
 
   return (
     <footer className="relative mt-32 border-t border-border/60">
@@ -55,9 +63,21 @@ export async function LocalizedSiteFooter() {
             <p className="eyebrow mt-6">{tFooter("tagline")}</p>
           </div>
 
-          <FooterCol title={tFooter("col1Title")} links={links1} />
-          <FooterCol title={tFooter("col2Title")} links={links2} />
-          <FooterCol title={tFooter("col3Title")} links={links3} />
+          <FooterCol
+            title={tFooter("col1Title")}
+            labels={col1Labels}
+            hrefs={COL1_HREFS}
+          />
+          <FooterCol
+            title={tFooter("col2Title")}
+            labels={col2Labels}
+            hrefs={COL2_HREFS}
+          />
+          <FooterCol
+            title={tFooter("col3Title")}
+            labels={col3Labels}
+            hrefs={COL3_HREFS}
+          />
         </div>
 
         <div className="mt-12 flex flex-col gap-3 border-t border-border/50 pt-6 text-xs text-foreground/55 md:flex-row md:items-center md:justify-between">
@@ -73,19 +93,21 @@ export async function LocalizedSiteFooter() {
 
 function FooterCol({
   title,
-  links,
+  labels,
+  hrefs,
 }: {
   title: string;
-  links: [string, string][];
+  labels: string[];
+  hrefs: readonly string[];
 }) {
   return (
     <div>
       <p className="eyebrow mb-4">{title}</p>
       <ul className="space-y-2.5 text-[15px]">
-        {links.map(([label, href]) => (
+        {labels.map((label, i) => (
           <li key={label}>
             <Link
-              href={href}
+              href={hrefs[i] ?? "#"}
               className="text-foreground/75 transition-colors hover:text-[color:var(--ember)]"
             >
               {label}

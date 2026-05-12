@@ -11,10 +11,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import type { AppLang } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
+import { useAppLocale } from "@/i18n/use-app-locale";
 import { BADGES_BY_KEY, isKnownBadgeKey } from "@/lib/badges";
 import { story, storyPage } from "@/lib/schema";
 import { getWorld } from "@/lib/worlds";
@@ -37,9 +37,12 @@ export function PublicReader({
   canRemix: boolean;
 }) {
   const t = useTranslations("PublicReader");
-  // Worlds + badges still ship their copy as `{ en, az }` records, so we
-  // need the raw locale to index them. PR 4 will migrate those too.
-  const locale = useLocale() as AppLang;
+  // Worlds + badges still ship their copy as `{ en, az }` records; PR 4
+  // will migrate those into the messages bundle. `useAppLocale()` narrows
+  // next-intl's string locale to our canonical `Locale` union safely (no
+  // unchecked cast), with a fallback to DEFAULT_LOCALE if the cookie
+  // ever drifts outside the supported set.
+  const locale = useAppLocale();
   const router = useRouter();
 
   const [remixing, setRemixing] = useState(false);

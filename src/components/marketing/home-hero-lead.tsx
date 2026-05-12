@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { getTranslations, getLocale } from "next-intl/server";
+import { useTranslations } from "next-intl";
+import { useAppLocale } from "@/i18n/use-app-locale";
 
 function Proof({
   icon,
@@ -34,8 +35,10 @@ function Proof({
 }
 
 // EN and AZ have meaningfully different title shapes (3 lines + italic mid-
-// word vs. 2 lines + italic 2nd line). We branch on locale rather than
-// shoehorn both into one t.rich() template.
+// word vs. 2 lines + italic 2nd line). The locale-specific layouts are
+// modelled as separate `Hero.titleEn` / `Hero.titleAz` sub-namespaces in
+// the messages bundle — eliminates dead empty-string keys on the other
+// locale and makes the divergence explicit in the JSON shape.
 function HeroTitleEn({
   line1,
   line2,
@@ -81,9 +84,14 @@ function HeroTitleAz({
   );
 }
 
-export async function HomeHeroLead() {
-  const t = await getTranslations("Hero");
-  const locale = await getLocale();
+// Sync server component on purpose: `useTranslations` + `useAppLocale`
+// are universal hooks (server + client) and avoid the React rules-of-hooks
+// trap that fires when an `async` function tries to call a hook.
+// Reach for `getTranslations` / `getLocale` from `next-intl/server` only
+// when the function MUST be async for some other reason (e.g. data fetch).
+export function HomeHeroLead() {
+  const t = useTranslations("Hero");
+  const locale = useAppLocale();
 
   return (
     <div className="lg:col-span-7">
@@ -94,13 +102,16 @@ export async function HomeHeroLead() {
       </p>
 
       {locale === "az" ? (
-        <HeroTitleAz line1={t("titleLine1")} accent={t("titleAccent")} />
+        <HeroTitleAz
+          line1={t("titleAz.line1")}
+          accent={t("titleAz.accent")}
+        />
       ) : (
         <HeroTitleEn
-          line1={t("titleLine1")}
-          line2={t("titleLine2")}
-          accent={t("titleAccent")}
-          line3={t("titleLine3")}
+          line1={t("titleEn.line1")}
+          line2={t("titleEn.line2")}
+          accent={t("titleEn.accent")}
+          line3={t("titleEn.line3")}
         />
       )}
 
