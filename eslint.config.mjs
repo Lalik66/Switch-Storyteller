@@ -11,6 +11,9 @@ const config = [
       "create-agentic-app/**",
       "drizzle/**",
       "scripts/**",
+      // Generated PWA artifacts (next-pwa/Workbox output) — minified bundles,
+      // regenerated on every build and already gitignored.
+      "public/**/*.js",
     ],
   },
   ...nextConfig,
