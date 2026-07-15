@@ -16,6 +16,7 @@
 
 import Link from "next/link";
 import { and, count, desc, eq, inArray } from "drizzle-orm";
+import { getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
 import { childProfile, story, storyPage } from "@/lib/schema";
 import { requireAuth } from "@/lib/session";
@@ -105,6 +106,7 @@ export default async function CommunityFeedPage({
 }) {
   await requireAuth();
   const sp = await searchParams;
+  const tWorlds = await getTranslations("Worlds");
 
   // Coerce ?page= to a positive integer (defaults to 1; never trusts arbitrary input).
   const rawPage = Number.parseInt(sp.page ?? "1", 10);
@@ -171,7 +173,7 @@ export default async function CommunityFeedPage({
                             </div>
                             <div className="flex items-baseline gap-1.5">
                               <dt className="eyebrow">World</dt>
-                              <dd>{world?.name.en ?? row.worldKey}</dd>
+                              <dd>{world ? tWorlds(`${world.key}.name`) : row.worldKey}</dd>
                             </div>
                             <div className="flex items-baseline gap-1.5">
                               <dt className="eyebrow">Hero</dt>

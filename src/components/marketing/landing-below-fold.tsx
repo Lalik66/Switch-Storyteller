@@ -2,12 +2,26 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { useLanguage } from "@/components/language-provider";
-import {
-  LANDING_COPY,
-  WORLD_MARKETING_ORDER,
-  type WorldMarketingKey,
-} from "@/lib/landing-copy";
+import { useTranslations } from "next-intl";
+
+/** Marketing world keys for the atlas section — match `Landing.worlds.tiles` in messages. */
+type WorldMarketingKey =
+  | "moonlit-forest"
+  | "clockwork"
+  | "sunken"
+  | "dragons-spine"
+  | "stardust"
+  | "hollow-meadows";
+
+/** Render order for the atlas grid. */
+const WORLD_MARKETING_ORDER: WorldMarketingKey[] = [
+  "moonlit-forest",
+  "clockwork",
+  "sunken",
+  "dragons-spine",
+  "stardust",
+  "hollow-meadows",
+];
 
 function WorldTileArt({ tileKey }: { tileKey: WorldMarketingKey }) {
   switch (tileKey) {
@@ -171,14 +185,29 @@ const LOOP_ICONS: [ReactNode, ReactNode, ReactNode] = [
 ];
 
 export function LandingBelowFold() {
-  const { lang } = useLanguage();
-  const c = LANDING_COPY[lang];
+  const t = useTranslations("Landing");
+  // Typed accessors for the array payloads in the bundle. `t.raw()` returns `unknown`,
+  // so we cast at the boundary against the shape stored in messages.
+  const ticker = t.raw("ticker") as string[];
+  const loopSteps = t.raw("loop.steps") as Array<{ n: string; title: string; body: string }>;
+  const sampleStats = t.raw("sample.stats") as Array<[string, string]>;
+  const sampleChoices = t.raw("sample.choices") as string[];
+  const parentPillars = t.raw("parents.pillars") as Array<{ title: string; body: string }>;
+  const pricingTiers = t.raw("pricing.tiers") as Array<{
+    name: string;
+    price: string;
+    sub: string;
+    desc: string;
+    features: string[];
+    cta: string;
+    featured: boolean;
+  }>;
 
   return (
     <>
       <div className="relative overflow-hidden border-y border-border/60 bg-[color:var(--card)]/60 py-5">
         <div className="marquee">
-          {[...c.ticker, ...c.ticker].map((f, i) => (
+          {[...ticker, ...ticker].map((f, i) => (
             <span
               key={i}
               className="flex-shrink-0 text-[1.4rem] italic leading-none text-foreground/55 font-[var(--font-newsreader)]"
@@ -193,17 +222,17 @@ export function LandingBelowFold() {
 
       <section id="loop" className="container mx-auto px-6 py-32">
         <header className="mb-16 max-w-2xl">
-          <p className="eyebrow">{c.loop.eyebrow}</p>
+          <p className="eyebrow">{t("loop.eyebrow")}</p>
           <h2 className="display-lg mt-4 text-5xl md:text-6xl">
-            {c.loop.title}{" "}
+            {t("loop.title")}{" "}
             <span className="italic-wonk text-foreground/55">
-              {c.loop.titleAccent}
+              {t("loop.titleAccent")}
             </span>
           </h2>
         </header>
 
         <div className="grid gap-8 md:grid-cols-3">
-          {c.loop.steps.map((s, i) => (
+          {loopSteps.map((s, i) => (
             <article key={s.n} className="relative">
               <div className="flex items-baseline justify-between">
                 <span className="display-lg text-[color:var(--ember)] text-[5.5rem] leading-none">
@@ -232,7 +261,7 @@ export function LandingBelowFold() {
                 {s.body}
               </p>
 
-              {i < c.loop.steps.length - 1 && (
+              {i < loopSteps.length - 1 && (
                 <svg
                   className="absolute -right-6 top-10 hidden text-[color:var(--ember)]/40 md:block"
                   width="40"
@@ -268,25 +297,26 @@ export function LandingBelowFold() {
         <div className="container mx-auto px-6">
           <header className="mb-16 flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
             <div className="max-w-2xl">
-              <p className="eyebrow">{c.worlds.eyebrow}</p>
+              <p className="eyebrow">{t("worlds.eyebrow")}</p>
               <h2 className="display-lg mt-4 text-5xl md:text-6xl">
-                {c.worlds.title1}
+                {t("worlds.title1")}
                 <br />
                 <span className="italic-wonk text-[color:var(--ember)]">
-                  {c.worlds.titleAccent}
+                  {t("worlds.titleAccent")}
                 </span>{" "}
-                {c.worlds.title2}
+                {t("worlds.title2")}
               </h2>
             </div>
             <p className="max-w-sm text-[15.5px] leading-relaxed text-foreground/70">
-              {c.worlds.blurb}
+              {t("worlds.blurb")}
             </p>
           </header>
 
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {WORLD_MARKETING_ORDER.map((key, i) => {
               const tone = TONES[key];
-              const tile = c.worlds.tiles[key];
+              const tileName = t(`worlds.tiles.${key}.name`);
+              const tileTag = t(`worlds.tiles.${key}.tag`);
               return (
                 <article
                   key={key}
@@ -308,15 +338,15 @@ export function LandingBelowFold() {
                       <WorldTileArt tileKey={key} />
                     </svg>
                     <span className="absolute left-4 top-4 rounded-full border border-foreground/15 bg-background/70 px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest text-foreground/70 backdrop-blur">
-                      {c.worlds.indexLabel} {String(i + 1).padStart(2, "0")}
+                      {t("worlds.indexLabel")} {String(i + 1).padStart(2, "0")}
                     </span>
                   </div>
                   <div className="flex items-baseline justify-between gap-4 px-5 py-4">
                     <div>
                       <h3 className="text-xl leading-tight text-foreground">
-                        {tile.name}
+                        {tileName}
                       </h3>
-                      <p className="eyebrow mt-1 !tracking-[0.18em]">{tile.tag}</p>
+                      <p className="eyebrow mt-1 !tracking-[0.18em]">{tileTag}</p>
                     </div>
                     <svg
                       width="22"
@@ -344,17 +374,17 @@ export function LandingBelowFold() {
       <section id="sample" className="container mx-auto px-6 py-32">
         <div className="grid gap-16 lg:grid-cols-12 lg:gap-8">
           <div className="lg:col-span-5">
-            <p className="eyebrow">{c.sample.eyebrow}</p>
+            <p className="eyebrow">{t("sample.eyebrow")}</p>
             <h2 className="display-lg mt-4 text-5xl md:text-6xl">
-              {c.sample.title1}
+              {t("sample.title1")}
               <br />
-              <span className="italic-wonk">{c.sample.titleAccent}</span>
+              <span className="italic-wonk">{t("sample.titleAccent")}</span>
             </h2>
             <p className="mt-6 max-w-md text-[15.5px] leading-relaxed text-foreground/70">
-              {c.sample.body}
+              {t("sample.body")}
             </p>
             <dl className="mt-10 grid max-w-md grid-cols-2 gap-6">
-              {c.sample.stats.map(([n, l]) => (
+              {sampleStats.map(([n, l]) => (
                 <div key={l} className="border-l border-border/70 pl-4">
                   <dt
                     className="display-lg text-4xl text-[color:var(--ember)]"
@@ -377,25 +407,25 @@ export function LandingBelowFold() {
                     M
                   </span>
                   <div className="leading-tight">
-                    <p className="text-sm text-foreground">{c.sample.cardTitle}</p>
-                    <p className="eyebrow">{c.sample.cardMeta}</p>
+                    <p className="text-sm text-foreground">{t("sample.cardTitle")}</p>
+                    <p className="eyebrow">{t("sample.cardMeta")}</p>
                   </div>
                 </div>
-                <span className="eyebrow">{c.sample.pageCounter}</span>
+                <span className="eyebrow">{t("sample.pageCounter")}</span>
               </div>
 
               <p className="mt-6 font-[var(--font-newsreader)] text-[17px] leading-[1.85] text-foreground/90">
-                {c.sample.p1}{" "}
-                <em className="italic text-[color:var(--ember)]">{c.sample.p1Em}</em>{" "}
-                {c.sample.p1b}
+                {t("sample.p1")}{" "}
+                <em className="italic text-[color:var(--ember)]">{t("sample.p1Em")}</em>{" "}
+                {t("sample.p1b")}
               </p>
 
               <p className="mt-4 font-[var(--font-newsreader)] text-[17px] leading-[1.85] text-foreground/90">
-                {c.sample.p2Before}{" "}
+                {t("sample.p2Before")}{" "}
                 <span className="bg-[color:var(--gold)]/40 px-0.5">
-                  {c.sample.p2Highlight}
+                  {t("sample.p2Highlight")}
                 </span>{" "}
-                {c.sample.p2After}
+                {t("sample.p2After")}
               </p>
 
               <div className="rule-ornament my-7">
@@ -407,9 +437,9 @@ export function LandingBelowFold() {
                 </svg>
               </div>
 
-              <p className="eyebrow mb-3">{c.sample.question}</p>
+              <p className="eyebrow mb-3">{t("sample.question")}</p>
               <div className="grid gap-2 md:grid-cols-3">
-                {c.sample.choices.map((label, idx) => (
+                {sampleChoices.map((label, idx) => (
                   <button
                     key={label}
                     type="button"
@@ -432,9 +462,9 @@ export function LandingBelowFold() {
                       strokeWidth="1.3"
                     />
                   </svg>
-                  {c.sample.customHint}
+                  {t("sample.customHint")}
                 </span>
-                <span className="font-mono">{c.sample.moderated}</span>
+                <span className="font-mono">{t("sample.moderated")}</span>
               </div>
             </div>
 
@@ -452,22 +482,22 @@ export function LandingBelowFold() {
         <div className="container mx-auto px-6">
           <div className="grid gap-16 lg:grid-cols-12">
             <div className="lg:col-span-5">
-              <p className="eyebrow !text-[color:var(--gold)]">{c.parents.eyebrow}</p>
+              <p className="eyebrow !text-[color:var(--gold)]">{t("parents.eyebrow")}</p>
               <h2 className="display-lg mt-4 text-5xl md:text-6xl text-[color:var(--parchment)]">
-                {c.parents.title1}
+                {t("parents.title1")}
                 <br />
                 <span className="italic-wonk text-[color:var(--gold)]">
-                  {c.parents.titleAccent}
+                  {t("parents.titleAccent")}
                 </span>
               </h2>
               <p className="mt-6 max-w-md text-[15.5px] leading-relaxed text-[color:var(--parchment)]/75">
-                {c.parents.intro}
+                {t("parents.intro")}
               </p>
               <Link
                 href="#pricing"
                 className="mt-10 inline-flex items-center gap-2 border-b border-[color:var(--gold)]/60 pb-1 text-[color:var(--gold)] transition-colors hover:border-[color:var(--gold)]"
               >
-                {c.parents.link}
+                {t("parents.link")}
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                   <path
                     d="M5 12h14M13 6l6 6-6 6"
@@ -481,7 +511,7 @@ export function LandingBelowFold() {
             </div>
 
             <div className="grid gap-px bg-[color:var(--parchment)]/15 sm:grid-cols-2 lg:col-span-7">
-              {c.parents.pillars.map((p, i) => (
+              {parentPillars.map((p, i) => (
                 <div key={p.title} className="bg-[color:var(--ink)] p-7">
                   <span className="font-mono text-xs text-[color:var(--gold)]">
                     0{i + 1}
@@ -501,35 +531,35 @@ export function LandingBelowFold() {
 
       <section id="pricing" className="container mx-auto px-6 py-32">
         <header className="mb-16 text-center">
-          <p className="eyebrow">{c.pricing.eyebrow}</p>
+          <p className="eyebrow">{t("pricing.eyebrow")}</p>
           <h2 className="display-lg mx-auto mt-4 max-w-3xl text-5xl md:text-6xl">
-            {c.pricing.title1}
+            {t("pricing.title1")}
             <br />
             <span className="italic-wonk text-[color:var(--ember)]">
-              {c.pricing.titleAccent}
+              {t("pricing.titleAccent")}
             </span>{" "}
-            {c.pricing.title2}
+            {t("pricing.title2")}
           </h2>
         </header>
 
         <div className="grid gap-6 md:grid-cols-3">
-          {c.pricing.tiers.map((t) => (
+          {pricingTiers.map((tier) => (
             <article
-              key={t.name}
+              key={tier.name}
               className={`card-stamp relative flex flex-col p-8 transition-all ${
-                t.featured
+                tier.featured
                   ? "border-[color:var(--ember)] shadow-[0_24px_60px_-30px_rgba(200,62,30,0.55)] md:-translate-y-4 md:scale-[1.02]"
                   : ""
               }`}
             >
-              {t.featured && (
+              {tier.featured && (
                 <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[color:var(--ember)] px-3 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-[color:var(--primary-foreground)]">
-                  {c.pricing.badge}
+                  {t("pricing.badge")}
                 </span>
               )}
               <div className="flex items-baseline justify-between">
-                <h3 className="text-2xl text-foreground">{t.name}</h3>
-                {t.featured && (
+                <h3 className="text-2xl text-foreground">{tier.name}</h3>
+                {tier.featured && (
                   <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden>
                     <path
                       d="M12 2l2 7 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z"
@@ -541,12 +571,12 @@ export function LandingBelowFold() {
 
               <div className="mt-5 flex items-baseline gap-2">
                 <span className="display-lg text-5xl text-foreground">
-                  {t.price}
+                  {tier.price}
                 </span>
-                <span className="eyebrow">{t.sub}</span>
+                <span className="eyebrow">{tier.sub}</span>
               </div>
               <p className="mt-4 text-[14.5px] leading-relaxed text-foreground/65">
-                {t.desc}
+                {tier.desc}
               </p>
 
               <div className="rule-ornament my-6">
@@ -556,7 +586,7 @@ export function LandingBelowFold() {
               </div>
 
               <ul className="space-y-2.5 text-[14px] text-foreground/80">
-                {t.features.map((f) => (
+                {tier.features.map((f) => (
                   <li key={f} className="flex items-start gap-2.5">
                     <svg
                       width="16"
@@ -579,19 +609,19 @@ export function LandingBelowFold() {
               <Link
                 href="#"
                 className={`mt-8 inline-flex w-full items-center justify-center gap-2 rounded-full py-3 text-sm font-[var(--font-fraunces)] transition-all ${
-                  t.featured
+                  tier.featured
                     ? "bg-[color:var(--ember)] text-[color:var(--primary-foreground)] hover:-translate-y-[1px]"
                     : "border border-border text-foreground hover:border-[color:var(--ember)] hover:text-[color:var(--ember)]"
                 }`}
               >
-                {t.cta}
+                {tier.cta}
               </Link>
             </article>
           ))}
         </div>
 
         <p className="mt-10 text-center text-xs text-foreground/50">
-          {c.pricing.footnote}
+          {t("pricing.footnote")}
         </p>
       </section>
 
@@ -619,20 +649,20 @@ export function LandingBelowFold() {
               />
             </svg>
           </div>
-          <p className="eyebrow relative">{c.finalCta.eyebrow}</p>
+          <p className="eyebrow relative">{t("finalCta.eyebrow")}</p>
           <h2 className="display-xl relative mt-4 text-5xl md:text-7xl">
-            {c.finalCta.title1}
+            {t("finalCta.title1")}
             <br />
             <span className="italic-wonk text-[color:var(--ember)]">
-              {c.finalCta.titleAccent}
+              {t("finalCta.titleAccent")}
             </span>
           </h2>
           <p className="relative mx-auto mt-6 max-w-xl text-[15.5px] leading-relaxed text-foreground/70">
-            {c.finalCta.body}
+            {t("finalCta.body")}
           </p>
           <div className="relative mt-10 flex items-center justify-center gap-4">
             <Link href="#" className="btn-ember">
-              {c.finalCta.cta1}
+              {t("finalCta.cta1")}
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                 <path
                   d="M5 12h14M13 6l6 6-6 6"
@@ -644,7 +674,7 @@ export function LandingBelowFold() {
               </svg>
             </Link>
             <Link href="#parents" className="btn-ghost-ink">
-              {c.finalCta.cta2}
+              {t("finalCta.cta2")}
             </Link>
           </div>
         </div>

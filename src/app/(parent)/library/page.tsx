@@ -8,6 +8,7 @@
  */
 
 import { desc, eq, inArray, asc } from "drizzle-orm";
+import { getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
 import {
   childProfile,
@@ -89,6 +90,7 @@ function getStatusDisplay(status: string): { label: string; colorClass: string }
 export default async function ParentStoriesPage() {
   const session = await requireAuth();
   const parentFirstName = session.user.name?.split(" ")[0] ?? "Captain";
+  const tWorlds = await getTranslations("Worlds");
 
   // Fetch the parent's children
   const children = await loadChildrenForParent(session.user.id);
@@ -200,7 +202,7 @@ export default async function ParentStoriesPage() {
                                   <dl className="mt-3 flex flex-wrap items-baseline gap-x-5 gap-y-2 font-[var(--font-newsreader)] text-[14px] text-foreground/70">
                                     <div className="flex items-baseline gap-1.5">
                                       <dt className="eyebrow">World</dt>
-                                      <dd>{world?.name.en ?? s.worldKey}</dd>
+                                      <dd>{world ? tWorlds(`${world.key}.name`) : s.worldKey}</dd>
                                     </div>
                                     <div className="flex items-baseline gap-1.5">
                                       <dt className="eyebrow">Hero</dt>

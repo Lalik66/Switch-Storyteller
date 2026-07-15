@@ -84,5 +84,332 @@
       "Qapıdan keçmək",
       "Adını sormaq"
     ]
+  },
+  "Worlds": {
+    "enchanted-forest": {
+      "name": "Sehrli Meşə",
+      "description": "Danışan heyvanların qədim sirləri qoruduğu parıltılı meşə."
+    },
+    "space-station": {
+      "name": "Kosmik Stansiya",
+      "description": "Ağıllı robotlar və çəkisizlik dəhlizləri ilə dolu canlı orbital baza."
+    },
+    "underwater-kingdom": {
+      "name": "Sualtı Krallıq",
+      "description": "Delfinlərin mərcan qüllələri arasında xəbər daşıdığı parıltılı rif şəhəri."
+    },
+    "dragon-mountain": {
+      "name": "Əjdaha Dağı",
+      "description": "Mehriban əjdahaların gənc qəhrəmanlara uçmağı öyrətdiyi qayalıq zirvə."
+    },
+    "desert-oasis": {
+      "name": "Səhra Vahəsi",
+      "description": "Qum təpələri altında gizli kitabxana saxlayan parıltılı palma vahəsi."
+    },
+    "cloud-city": {
+      "name": "Bulud Şəhəri",
+      "description": "Kəndirli körpüləri və göy qurşağı bağları olan səmada üzən şəhər."
+    }
+  },
+  "Landing": {
+    "ticker": [
+      "— öz xəritəsini özü gətirdi",
+      "— əjdaha yalnız dost axtarırdı",
+      "— açar ulduz işığından düzəldi",
+      "— ada onun adını pıçıldadı",
+      "— dənizin dibində kitabxana",
+      "— saat bal ilə işləyirdi",
+      "— nənənin çardaqında qapı vardı",
+      "— qəhrəman əl örgüsü zirehdə"
+    ],
+    "loop": {
+      "eyebrow": "§ I · Döngə",
+      "title": "Üç asan addım.",
+      "titleAccent": "Bir yaddaqalan nağıl.",
+      "steps": [
+        {
+          "n": "I",
+          "title": "Qəhrəman seç",
+          "body": "Üç yumşaq sual — ad, ürək, arzu. Uşağın təxəyyülü kompas göstərir."
+        },
+        {
+          "n": "II",
+          "title": "Dünyanı formalaşdır",
+          "body": "Əl ilə çəkilmiş dünya seç: ay işığı meşəsi, cər saat şəhəri, şüşə dənizin dibi."
+        },
+        {
+          "n": "III",
+          "title": "Macəranı yaşa",
+          "body": "Hər səhifə məktub kimi gəlir. Üç seçim — və ya özün yaz. Nağıl bitəndə onu əsl kitaba bağlayırıq."
+        }
+      ]
+    },
+    "worlds": {
+      "eyebrow": "§ II · Atlas",
+      "title1": "Altı dünya,",
+      "titleAccent": "əl ilə çəkilmiş",
+      "title2": "və gözləyir.",
+      "blurb": "Hər dünya studiyamızda həqiqi rəssamlar tərəfindən təsvir olunub. Uşağın haraya enəcəyini o seçir — qələm qalanını yazır.",
+      "indexLabel": "№",
+      "tiles": {
+        "moonlit-forest": { "name": "Ay işığı meşəsi", "tag": "Pıçıldayan sehr" },
+        "clockwork": { "name": "Cər şəhər", "tag": "Ənbər və buxar" },
+        "sunken": { "name": "Batıq krallıq", "tag": "Duz və gümüş" },
+        "dragons-spine": { "name": "Əjdahanın beli", "tag": "Odlu daş zirvələr" },
+        "stardust": { "name": "Ulduz tozu bazarı", "tag": "Gecə yarmarkası" },
+        "hollow-meadows": { "name": "Boş çəmənlər", "tag": "Barmaq papaqlı xalq" }
+      }
+    },
+    "sample": {
+      "eyebrow": "§ III · Nağıldan səhifə",
+      "title1": "Yumşaq sözlər,",
+      "titleAccent": "böyük seçimlər.",
+      "body": "Hər səhifə 4–5-ci sinif oxu səviyyəsində yazılır, müstəqil moderator tərəfindən yoxlanır və seçilmiş təsvirlərlə müşayiət olunur — söz rəsmə yox, təsvir sözə uyğun gəlir.",
+      "stats": [
+        ["~150", "söz / səhifə"],
+        ["8–12", "səhifə / nağıl"],
+        ["4", "təhlükəsizlik qatı"],
+        ["0", "reklam, heç vaxt"]
+      ],
+      "cardTitle": "Maren və ay işığı qapısı",
+      "cardMeta": "Folio I · fəsil 02",
+      "pageCounter": "səh. 5 / 10",
+      "p1": "Qapı toxunanda isti idi — ocaqdan çıxan əlcəkdən də isti. Darçın və köhnə yağış qoxusu gəlirdi. Maren əllərini",
+      "p1Em": "tutacağın",
+      "p1b": "ətrafında bükəndə gördü ki, qəribə şəkildə, kiçik yatan tülkü formasındadır. Tülkünün oyaq olmağı üçün çox gözlədiyini hiss etdi.",
+      "p2Before": "Arxasında",
+      "p2Highlight": "ay işığı meşəsi",
+      "p2After": "nəfəsini tutmuşdu. Qabaqda isə qapı tək, səbirli bir not uğuldayırdı. Marenə elə gəlirdi ki, bu bir sual səsidir.",
+      "question": "Maren indi nə edir?",
+      "choices": ["Tülkünü yumşaq oyadır", "Qapını dinləyir", "Geri çəkilib gözləyir"],
+      "customHint": "Özün yaz — səni izləyəcəyik",
+      "moderated": "yoxlanıldı ✓"
+    },
+    "parents": {
+      "eyebrow": "§ IV · Böyüklər üçün",
+      "title1": "Valideyn",
+      "titleAccent": "etibarın üçün.",
+      "intro": "Döyməxananı əvvəl öz uşaqlarımız üçün tikdik. Ən çətin sualla başladıq: valideyn süni intellektə uşağının daxili dünyasını nəyə etibar edər?",
+      "link": "Təhlükəsizlik öhdəliklərimiz",
+      "pillars": [
+        { "title": "Dörd təhlükəsizlik qatı", "body": "Əvvəlcədən süzgəc, uşaq dostu LLM limitləri, generasiyadan sonra yoxlama və insan moderator masası — uşağın gördüyü hər söz bu dördündən keçir." },
+        { "title": "COPPA prinsipi ilə", "body": "Reklam izləmə yoxdur, məlumat satışı yoxdur, valideyn təsdiqli hesablar, istənilən vaxt ixrac və ya silmə. Uşaqlar məhsul deyil." },
+        { "title": "Hər sözü oxu", "body": "Həftəlik parşömen özet e-poçtuna gəlir. Uşağın yazdığı hər nağıl olduğu kimi oxuna bilər — qısa xülasə yoxdur." },
+        { "title": "Sən qurursan", "body": "Günlük vaxt limiti, məzmun sərtliyi, icma nəşri, remiks icazələri. Uşağın profili, sənin qaydaların." }
+      ]
+    },
+    "pricing": {
+      "eyebrow": "§ V · Şərtlər",
+      "title1": "Ədalətli hesab",
+      "titleAccent": "sıradan çıxan",
+      "title2": "nağıllar üçün.",
+      "badge": "Ən çox seçilən",
+      "footnote": "Çap kitabları ayrıca tərəfdaş cildxanada · dünya üzrə çatdırılma.",
+      "tiers": [
+        {
+          "name": "Şagird",
+          "price": "Pulsuz",
+          "sub": "Həmişəlik",
+          "desc": "Həftədə bir nağıl. Bütün dünyalar. Tam valideyn paneli.",
+          "features": ["Həftədə 1 nağıl", "6 dünya", "PDF ixrac", "Valideyn xülasəsi"],
+          "cta": "Pulsuz başla",
+          "featured": false
+        },
+        {
+          "name": "Yazıçı",
+          "price": "$7.99",
+          "sub": "aylıq",
+          "desc": "Limitsiz nağıl, audio oxu, təsvirli səhifələr, remiks.",
+          "features": ["Limitsiz nağıl", "Təsvirli səhifələr", "Audio oxu", "Personaj anbarı", "İcma remiksi"],
+          "cta": "Yazıçı ol",
+          "featured": true
+        },
+        {
+          "name": "Gilda",
+          "price": "$19.99",
+          "sub": "aylıq",
+          "desc": "Dörd uşaq profilinə qədər. Scribe-dakı hər şey, bütün ailə üçün.",
+          "features": ["4 uşaq profili", "Scribe-dakı hər şey", "Prioritet moderatorluq", "Çap kitabında endirim"],
+          "cta": "Gildanı topla",
+          "featured": false
+        }
+      ]
+    },
+    "finalCta": {
+      "eyebrow": "Nağıl gözləyir",
+      "title1": "Fənəri yandır.",
+      "titleAccent": "Qapını aç.",
+      "body": "İlk nağılın üçün həmişəlik pulsuz. Kredit kartı yoxdur. Reklam yoxdur. İzləmə yoxdur. Yalnız uşağının çəkmələrinin yanında pıçıldayan kiçik səs: «Gecikdin.»",
+      "cta1": "Nağıla başla",
+      "cta2": "Valideyn turu"
+    }
+  },
+  "Characters": {
+    "empty": "Hələ heç bir personaj yoxdur.",
+    "emptyHint": "Personajlar uşaqlarınız hekayə yazdıqca avtomatik aşkar edilir. Əl ilə də əlavə edə bilərsiniz.",
+    "addCharacter": "Personaj əlavə et",
+    "dialogTitle": "Yeni yoldaş",
+    "dialogDescription": "Bu personajı təsvir edin ki, nağılçı hekayələr arasında ardıcıl qalsın.",
+    "name": "Personajın adı",
+    "description": "Təsvir",
+    "descriptionHint": "Xarici görünüş, şəxsiyyət və ya diqqətəlayiq xüsusiyyətlər (1–2 cümlə).",
+    "cancel": "Ləğv et",
+    "save": "Yadda saxla",
+    "saving": "Saxlanılır…",
+    "edit": "Redaktə et",
+    "delete": "Sil",
+    "deleteConfirm": "Bu personaj silinsin? Gələcək hekayələrdə görünməyəcək.",
+    "saveFailed": "Saxlanılmadı. Yenə cəhd et.",
+    "deleteFailed": "Silinmədi. Yenə cəhd et.",
+    "appearances": "görünüş",
+    "childLabel": "Uşaq",
+    "selectChild": "Uşaq seçin",
+    "companionsHeading": "{name}-in yoldaşları"
+  },
+  "StoryNew": {
+    "eyebrow": "§ I · Yeni nağıl",
+    "titleLead": "Üç sakit",
+    "titleAccent": "sual.",
+    "intro": "Layihə dostu qəhrəmanını yaradacaq, bir dünya seçəcək və qarşılaşdığı çətinliyi dinləyəcək. Başla düyməsinə basana qədər heç nə saxlanmır.",
+    "stepLabel": "{total}-dən {n}-ci sual",
+    "step0Label": "Bu kimin nağılıdır?",
+    "step0Hint": "Qəhrəman seç.",
+    "step1Label": "Qəhrəmanının adı nədir?",
+    "step1Hint": "Yalnız ad bəsdir. Sonra dəyişə bilərsən.",
+    "step1Placeholder": "Maren",
+    "step2Label": "Nağıl harada başlayır?",
+    "step2Hint": "Bir dünya seç. Hər birinin öz əhvalı və işığı var.",
+    "step3Label": "Qəhrəmanını hansı dərd tapır?",
+    "step3Hint": "Bir-iki cümlə kifayətdir — qalanını nağılçı edəcək.",
+    "step3Placeholder": "Qaranlıq düşəndən sonra gümüş bir tülkü pəncərəyə toxunur, amma onu heç kim görmür…",
+    "next": "Növbəti",
+    "back": "Geri",
+    "begin": "Nağıla başla",
+    "missingName": "Qəhrəmanına əvvəl ad lazımdır.",
+    "missingWorld": "Səhnəni qurmaq üçün bir dünya seç.",
+    "missingProblem": "Dərdi qısa da olsa təsvir et.",
+    "submitFailed": "Yazıçı büdrədi. Bir az sonra yenə cəhd et.",
+    "rateLimited": "Bu həftə artıq bir nağıl başlatmısan! 'Hekayələrim' bölməsindən mövcud qaralamanı davam etdir, ya da yeni macəra üçün gələn həftə geri qayıt.",
+    "lockedEyebrow": "§ Astana · Bağlı folio",
+    "lockedTitle": "Bu səhifə",
+    "lockedTitleAccent": "dəvətlidir.",
+    "lockedBody": "Yeni nağıla başlamaq üçün daxil ol. Layihə dostu səni gözləyir.",
+    "lockedCta": "Emalatxanaya qayıt",
+    "loading": "Lələk yüklənir…"
+  },
+  "Children": {
+    "addChild": "Uşaq əlavə et",
+    "emptyTitle": "Hələ yazıçı yoxdur.",
+    "emptyBody": "Yaşını, məzmun sərtliyini və günlük vaxt limitini təyin etmək üçün ilk uşağını əlavə et.",
+    "dialogTitle": "Yeni kiçik yazıçı",
+    "dialogDescription": "Bu parametrlər uşağın oxuduğu hər səhifədə nağılçıya rəhbərlik edir.",
+    "displayName": "Görünən ad",
+    "age": "Yaş",
+    "strictness": "Məzmun sərtliyi",
+    "strictnessHint": "Nağılçının təhlükə, kədər və münaqişəni necə yumşaq ifadə etməsi.",
+    "strictnessSoft": "Yumşaq (6–8 yaş)",
+    "strictnessStandard": "Standart (9–11 yaş)",
+    "strictnessBrave": "Cəsur (12+ yaş)",
+    "allowPublish": "Ümumi kitabxanada nəşrə icazə ver",
+    "allowRemix": "Digər uşaqlara nağılları remikslərə icazə ver",
+    "dailyLimit": "Günlük dəqiqə limiti",
+    "dailyLimitHint": "Limit yoxdursa, boş burax.",
+    "cancel": "Ləğv et",
+    "save": "Yadda saxla",
+    "saving": "Saxlanılır…",
+    "edit": "Redaktə et",
+    "delete": "Sil",
+    "deleteConfirm": "Bu uşaq profili silinsin? Geri qaytarıla bilməz.",
+    "minutesLabel": "dəq/gün",
+    "yearsLabel": "yaş",
+    "saveFailed": "Saxlanılmadı. Yenə cəhd et.",
+    "deleteFailed": "Silinmədi. Yenə cəhd et.",
+    "sharingLabel": "Paylaşma",
+    "publishingOn": "Nəşr açıq",
+    "publishingOff": "Nəşr bağlı",
+    "remixingOn": "Remiks açıq",
+    "remixingOff": "Remiks bağlı",
+    "toggleFailed": "Yenilənmədi. Yenə cəhd et."
+  },
+  "Reader": {
+    "eyebrow": "§ Nağıl · Davam edir",
+    "untitled": "Adsız nağıl",
+    "wordsLabel": "söz",
+    "chaptersLabel": "fəsil",
+    "pagesLabel": "səhifə",
+    "pageOf": "səhifə {n} / {total}",
+    "chapterPrefix": "Fəs.",
+    "liveLabel": "canlı",
+    "illustrationAlt": "{n} səhifəsi üçün illüstrasiya",
+    "narrationAlt": "{n} səhifəsi üçün səsləndirmə",
+    "whatNext": "Sonra nə baş verir?",
+    "orWriteYourOwn": "Ya da — öz hərəkətini yaz",
+    "customPlaceholder": "Maren tülkü ilə pəncərə arasında dayanır…",
+    "send": "Nağılı davam etdir",
+    "sending": "Lələk hərəkət edir…",
+    "moderated": "yoxlanıldı ✓",
+    "streamFailed": "Yazıçı büdrədi. Yenə cəhd et.",
+    "scribeStumbled": "Yazıçı büdrədi.",
+    "emptyTitle": "Boş folio.",
+    "emptyBody": "Hələ səhifə yoxdur. Bu nağılın ilk səhifəsinə başlamaq üçün aşağıdan bir hərəkət seç.",
+    "generateImages": "Bu nağılı illüstrasiya et",
+    "generatingImages": "Səhnələr rənglənir…",
+    "illustrationsReady": "İllüstrasiya edilib ✓",
+    "imageGenFailed": "İllüstrator büdrədi. Yenə cəhd et.",
+    "narrate": "Bu səhifəni səsləndir",
+    "narrating": "Nağılçı çağırılır…",
+    "audioFailed": "Nağılçının səsi titrədi. Yenə cəhd et.",
+    "remix": "Bu nağılı remiks et",
+    "remixing": "Remiks hazırlanır…",
+    "remixFailed": "Dəmirçi soyudu. Yenə cəhd et.",
+    "remixRateLimited": "Bu həftə artıq bir nağıl başlatmısan — gələn həftə yeni macəra üçün geri qayıt.",
+    "finish": "Nağılı bitir",
+    "finishing": "Son səhifə möhürlənir…",
+    "finished": "Tamamlandı! İndi icmaya nəşr edə bilərsən.",
+    "finishHint": "Yazmağı bitirdin? Tamamla və icmaya nəşr et.",
+    "completeHint": "Bu nağıl möhürlənib. İcma jurnalına göndərmək üçün Nəşr et.",
+    "publishedHint": "Bu nağıl icma jurnalındadır. Digər valideynlər oxuya bilər.",
+    "finishFailed": "Nağıl möhürlənmədi. Yenə cəhd et.",
+    "publish": "İcmaya nəşr et",
+    "publishing": "Yelkən qaldırılır…",
+    "publishSucceeded": "Nəşr edildi! İcma jurnalında görə bilərsən.",
+    "unpublish": "Geri çək",
+    "unpublishing": "Yelkən endirilir…",
+    "unpublishSucceeded": "Geri çəkildi. İndi yalnız sən görürsən.",
+    "publishGenericFailed": "Nəşr edilmədi. Yenə cəhd et.",
+    "publishDisallowedHint": "Əvvəlcə uşaq profilində Nəşr açıq pillini aktiv et.",
+    "completeBanner": "Tamamlandı",
+    "publishedBanner": "Nəşr edildi",
+    "actionChoices": [
+      "Cəsarətlə irəli addımla",
+      "Diz çök və pıçılda",
+      "Səssizcə uzaqlaş"
+    ]
+  },
+  "Badges": {
+    "first-tale": {
+      "name": "İlk Nağıl",
+      "description": "İlk nağılını tamamladın."
+    },
+    "triple-quill": {
+      "name": "Üçlü Lələk",
+      "description": "Üç tamamlanmış nağıl — lələk artıq sənindir."
+    },
+    "wordsmith": {
+      "name": "Söz Ustası",
+      "description": "Nağıllarında min söz yazdın."
+    },
+    "world-walker": {
+      "name": "Dünya Səyyahı",
+      "description": "Üç fərqli dünyada nağıl qurdun."
+    },
+    "published-author": {
+      "name": "Nəşr Edən Müəllif",
+      "description": "Bir nağılı icma jurnalına göndərdin."
+    },
+    "remix-master": {
+      "name": "Remiks Ustası",
+      "description": "Başqasının nağılına öz dəyişikliyini etdin."
+    }
   }
 }

@@ -9,12 +9,13 @@
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { useLanguage, type AppLang } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useAppLocale } from "@/i18n/use-app-locale";
 import { useSession } from "@/lib/auth-client";
 // NOTE: `@/lib/worlds` is owned by the worlds-agent. Types below mirror
 // the expected shape documented in the PRD. These imports will resolve
@@ -32,113 +33,8 @@ type ChildProfile = {
   age: number;
 };
 
-/* ── Localized copy (Phase 1 inline tables) ─────────────────────────── */
-
-const COPY: Record<
-  AppLang,
-  {
-    eyebrow: string;
-    titleLead: string;
-    titleAccent: string;
-    intro: string;
-    stepLabel: (n: number, total: number) => string;
-    step0Label: string;
-    step0Hint: string;
-    step1Label: string;
-    step1Hint: string;
-    step1Placeholder: string;
-    step2Label: string;
-    step2Hint: string;
-    step3Label: string;
-    step3Hint: string;
-    step3Placeholder: string;
-    next: string;
-    back: string;
-    begin: string;
-    missingName: string;
-    missingWorld: string;
-    missingProblem: string;
-    submitFailed: string;
-    rateLimited: string;
-    lockedEyebrow: string;
-    lockedTitle: string;
-    lockedTitleAccent: string;
-    lockedBody: string;
-    lockedCta: string;
-    loading: string;
-  }
-> = {
-  en: {
-    eyebrow: "\u00a7 I \u00b7 A new tale",
-    titleLead: "Three quiet",
-    titleAccent: "questions.",
-    intro:
-      "The drafting buddy will shape your hero, pick a world, and listen to the trouble they face. Nothing is saved until you press Begin.",
-    stepLabel: (n, total) => `Question ${n} of ${total}`,
-    step0Label: "Whose story is this?",
-    step0Hint: "Pick a hero.",
-    step1Label: "What is your hero\u2019s name?",
-    step1Hint: "A first name is plenty. You can change it later.",
-    step1Placeholder: "Maren",
-    step2Label: "Where does the tale begin?",
-    step2Hint: "Pick a world. Each has its own mood and light.",
-    step3Label: "What trouble finds your hero?",
-    step3Hint: "A sentence or two is enough \u2014 the storyteller will do the rest.",
-    step3Placeholder:
-      "A silver fox keeps tapping at the window after dusk, but no one else can see it\u2026",
-    next: "Next",
-    back: "Back",
-    begin: "Begin the tale",
-    missingName: "Your hero needs a name first.",
-    missingWorld: "Pick a world to set the scene.",
-    missingProblem: "Describe the trouble, even briefly.",
-    submitFailed: "The scribe stumbled. Try again in a moment.",
-    rateLimited:
-      "You've already started a tale this week! Continue an existing draft from My Stories, or come back next week for a new adventure.",
-    lockedEyebrow: "\u00a7 Threshold \u00b7 A locked folio",
-    lockedTitle: "This page is",
-    lockedTitleAccent: "by invitation.",
-    lockedBody:
-      "Sign in to begin a new tale. The drafting buddy will be waiting for you.",
-    lockedCta: "Return to the workshop",
-    loading: "Loading the quill\u2026",
-  },
-  az: {
-    eyebrow: "\u00a7 I \u00b7 Yeni nağıl",
-    titleLead: "Üç sakit",
-    titleAccent: "sual.",
-    intro:
-      "Layihə dostu qəhrəmanını yaradacaq, bir dünya seçəcək və qarşılaşdığı çətinliyi dinləyəcək. Başla düyməsinə basana qədər heç nə saxlanmır.",
-    stepLabel: (n, total) => `${total}-dən ${n}-ci sual`,
-    step0Label: "Bu kimin nağılıdır?",
-    step0Hint: "Qəhrəman seç.",
-    step1Label: "Qəhrəmanının adı nədir?",
-    step1Hint: "Yalnız ad bəsdir. Sonra dəyişə bilərsən.",
-    step1Placeholder: "Maren",
-    step2Label: "Nağıl harada başlayır?",
-    step2Hint: "Bir dünya seç. Hər birinin öz əhvalı və işığı var.",
-    step3Label: "Qəhrəmanını hansı dərd tapır?",
-    step3Hint: "Bir-iki cümlə kifayətdir \u2014 qalanını nağılçı edəcək.",
-    step3Placeholder:
-      "Qaranlıq düşəndən sonra gümüş bir tülkü pəncərəyə toxunur, amma onu heç kim görmür\u2026",
-    next: "Növbəti",
-    back: "Geri",
-    begin: "Nağıla başla",
-    missingName: "Qəhrəmanına əvvəl ad lazımdır.",
-    missingWorld: "Səhnəni qurmaq üçün bir dünya seç.",
-    missingProblem: "Dərdi qısa da olsa təsvir et.",
-    submitFailed: "Yazıçı büdrədi. Bir az sonra yenə cəhd et.",
-    rateLimited:
-      "Bu həftə artıq bir nağıl başlatmısan! 'Hekayələrim' bölməsindən mövcud qaralamanı davam etdir, ya da yeni macəra üçün gələn həftə geri qayıt.",
-    lockedEyebrow: "\u00a7 Astana \u00b7 Bağlı folio",
-    lockedTitle: "Bu səhifə",
-    lockedTitleAccent: "dəvətlidir.",
-    lockedBody:
-      "Yeni nağıla başlamaq üçün daxil ol. Layihə dostu səni gözləyir.",
-    lockedCta: "Emalatxanaya qayıt",
-    loading: "Lələk yüklənir\u2026",
-  },
-};
+/** Translator function for a fixed messages namespace. */
+type Translator = ReturnType<typeof useTranslations>;
 
 /* ── Component ──────────────────────────────────────────────────────── */
 
@@ -146,8 +42,9 @@ const TOTAL_STEPS = 3;
 
 export default function NewStoryPage() {
   const { data: session, isPending } = useSession();
-  const { lang } = useLanguage();
-  const t = COPY[lang];
+  const lang = useAppLocale();
+  const t = useTranslations("StoryNew");
+  const tWorlds = useTranslations("Worlds");
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [heroName, setHeroName] = useState("");
@@ -195,7 +92,7 @@ export default function NewStoryPage() {
   if (isPending) {
     return (
       <div className="flex h-[60vh] items-center justify-center">
-        <p className="eyebrow">{t.loading}</p>
+        <p className="eyebrow">{t("loading")}</p>
       </div>
     );
   }
@@ -207,7 +104,7 @@ export default function NewStoryPage() {
   const goNext = () => {
     if (step === 1) {
       if (!heroName.trim()) {
-        toast.error(t.missingName);
+        toast.error(t("missingName"));
         return;
       }
       setStep(2);
@@ -215,7 +112,7 @@ export default function NewStoryPage() {
     }
     if (step === 2) {
       if (!worldKey) {
-        toast.error(t.missingWorld);
+        toast.error(t("missingWorld"));
         return;
       }
       setStep(3);
@@ -233,16 +130,16 @@ export default function NewStoryPage() {
 
     if (!heroName.trim()) {
       setStep(1);
-      toast.error(t.missingName);
+      toast.error(t("missingName"));
       return;
     }
     if (!worldKey) {
       setStep(2);
-      toast.error(t.missingWorld);
+      toast.error(t("missingWorld"));
       return;
     }
     if (!problem.trim()) {
-      toast.error(t.missingProblem);
+      toast.error(t("missingProblem"));
       return;
     }
 
@@ -269,7 +166,7 @@ export default function NewStoryPage() {
           const body = (await res.json().catch(() => ({}))) as {
             message?: string;
           };
-          toast.error(body.message ?? t.rateLimited);
+          toast.error(body.message ?? t("rateLimited"));
           return;
         }
         // Generic non-OK: log the body for debugging, show generic toast.
@@ -278,7 +175,7 @@ export default function NewStoryPage() {
           message?: string;
         };
         console.warn("[story/new] create non-ok", res.status, body);
-        toast.error(body.message ?? t.submitFailed);
+        toast.error(body.message ?? t("submitFailed"));
         return;
       }
 
@@ -288,7 +185,7 @@ export default function NewStoryPage() {
       }
     } catch (err) {
       console.error(err);
-      toast.error(t.submitFailed);
+      toast.error(t("submitFailed"));
     } finally {
       setSubmitting(false);
     }
@@ -299,16 +196,16 @@ export default function NewStoryPage() {
       <div className="mx-auto max-w-3xl">
         <header className="mb-10">
           <div>
-            <p className="eyebrow">{t.eyebrow}</p>
+            <p className="eyebrow">{t("eyebrow")}</p>
             <h1 className="display-lg mt-4 text-4xl md:text-5xl">
-              {t.titleLead}
+              {t("titleLead")}
               <br />
               <span className="italic-wonk text-[color:var(--ember)]">
-                {t.titleAccent}
+                {t("titleAccent")}
               </span>
             </h1>
             <p className="mt-5 max-w-xl font-[var(--font-newsreader)] text-[15.5px] leading-relaxed text-foreground/70">
-              {t.intro}
+              {t("intro")}
             </p>
           </div>
         </header>
@@ -316,7 +213,7 @@ export default function NewStoryPage() {
         <article className="card-stamp p-6 md:p-8">
           <div className="flex items-center justify-between">
             <p className="eyebrow text-foreground/55">
-              {t.stepLabel(step, TOTAL_STEPS)}
+              {t("stepLabel", { n: step, total: TOTAL_STEPS })}
             </p>
             <StepDots current={step} total={TOTAL_STEPS} />
           </div>
@@ -336,7 +233,7 @@ export default function NewStoryPage() {
                 {children.length > 1 && (
                   <div className="flex flex-col gap-3">
                     <p className="font-[var(--font-fraunces)] text-[15px] text-foreground">
-                      {t.step0Label}
+                      {t("step0Label")}
                     </p>
                     <div className="grid gap-3 sm:grid-cols-2">
                       {children.map((c) => {
@@ -364,7 +261,7 @@ export default function NewStoryPage() {
                       })}
                     </div>
                     <p className="font-[var(--font-newsreader)] text-[14px] italic text-foreground/55">
-                      {t.step0Hint}
+                      {t("step0Hint")}
                     </p>
                   </div>
                 )}
@@ -373,19 +270,19 @@ export default function NewStoryPage() {
                   htmlFor="hero-name"
                   className="font-[var(--font-fraunces)] text-[15px]"
                 >
-                  {t.step1Label}
+                  {t("step1Label")}
                 </Label>
                 <Input
                   id="hero-name"
                   value={heroName}
                   onChange={(e) => setHeroName(e.target.value)}
-                  placeholder={t.step1Placeholder}
+                  placeholder={t("step1Placeholder")}
                   maxLength={40}
                   autoFocus
                   className="font-[var(--font-newsreader)] text-[16px]"
                 />
                 <p className="font-[var(--font-newsreader)] text-[14px] italic text-foreground/55">
-                  {t.step1Hint}
+                  {t("step1Hint")}
                 </p>
                 </div>
               </div>
@@ -395,10 +292,10 @@ export default function NewStoryPage() {
               <div className="flex flex-col gap-4">
                 <div>
                   <p className="font-[var(--font-fraunces)] text-[15px] text-foreground">
-                    {t.step2Label}
+                    {t("step2Label")}
                   </p>
                   <p className="mt-1 font-[var(--font-newsreader)] text-[14px] italic text-foreground/55">
-                    {t.step2Hint}
+                    {t("step2Hint")}
                   </p>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -409,7 +306,7 @@ export default function NewStoryPage() {
                       index={idx}
                       selected={worldKey === w.key}
                       onSelect={() => setWorldKey(w.key)}
-                      lang={lang}
+                      tWorlds={tWorlds}
                     />
                   ))}
                 </div>
@@ -422,20 +319,20 @@ export default function NewStoryPage() {
                   htmlFor="hero-problem"
                   className="font-[var(--font-fraunces)] text-[15px]"
                 >
-                  {t.step3Label}
+                  {t("step3Label")}
                 </Label>
                 <Textarea
                   id="hero-problem"
                   value={problem}
                   onChange={(e) => setProblem(e.target.value)}
-                  placeholder={t.step3Placeholder}
+                  placeholder={t("step3Placeholder")}
                   rows={5}
                   maxLength={500}
                   autoFocus
                   className="font-[var(--font-newsreader)] text-[15.5px] leading-relaxed"
                 />
                 <p className="font-[var(--font-newsreader)] text-[14px] italic text-foreground/55">
-                  {t.step3Hint}
+                  {t("step3Hint")}
                 </p>
               </div>
             )}
@@ -448,7 +345,7 @@ export default function NewStoryPage() {
                 disabled={step === 1 || submitting}
                 className="eyebrow"
               >
-                {t.back}
+                {t("back")}
               </Button>
 
               {step < TOTAL_STEPS ? (
@@ -457,7 +354,7 @@ export default function NewStoryPage() {
                   onClick={goNext}
                   className="btn-ember justify-center"
                 >
-                  {t.next}
+                  {t("next")}
                   <ArrowRight />
                 </Button>
               ) : (
@@ -466,7 +363,7 @@ export default function NewStoryPage() {
                   disabled={submitting}
                   className="btn-ember justify-center disabled:opacity-50"
                 >
-                  {submitting ? t.loading : t.begin}
+                  {submitting ? t("loading") : t("begin")}
                   {!submitting && <ArrowRight />}
                 </Button>
               )}
@@ -520,17 +417,17 @@ function WorldTile({
   index,
   selected,
   onSelect,
-  lang,
+  tWorlds,
 }: {
   world: World;
   index: number;
   selected: boolean;
   onSelect: () => void;
-  lang: AppLang;
+  tWorlds: Translator;
 }) {
   const tone = WORLD_TONES[world.key] ?? "var(--forest)";
-  const title = world.name[lang];
-  const tagline = world.description[lang];
+  const title = tWorlds(`${world.key}.name`);
+  const tagline = tWorlds(`${world.key}.description`);
 
   return (
     <button
@@ -606,15 +503,15 @@ function ArrowRight() {
   );
 }
 
-function LockedFolio({ t }: { t: (typeof COPY)[AppLang] }) {
+function LockedFolio({ t }: { t: Translator }) {
   return (
     <section className="container mx-auto px-6 py-32 md:py-40">
       <div className="mx-auto max-w-xl text-center">
-        <p className="eyebrow">{t.lockedEyebrow}</p>
+        <p className="eyebrow">{t("lockedEyebrow")}</p>
         <h1 className="display-xl mt-6 text-[clamp(2.8rem,6vw,4.8rem)] leading-[0.95]">
-          {t.lockedTitle}&nbsp;
+          {t("lockedTitle")}&nbsp;
           <span className="italic-wonk text-[color:var(--ember)]">
-            {t.lockedTitleAccent}
+            {t("lockedTitleAccent")}
           </span>
         </h1>
         <div className="rule-ornament my-8 mx-auto max-w-xs">
@@ -626,11 +523,11 @@ function LockedFolio({ t }: { t: (typeof COPY)[AppLang] }) {
           </svg>
         </div>
         <p className="mx-auto max-w-md font-[var(--font-newsreader)] text-[15.5px] leading-relaxed text-foreground/70">
-          {t.lockedBody}
+          {t("lockedBody")}
         </p>
         <div className="mt-10 flex justify-center">
           <Link href="/dashboard" className="btn-ghost-ink">
-            {t.lockedCta}
+            {t("lockedCta")}
           </Link>
         </div>
       </div>
