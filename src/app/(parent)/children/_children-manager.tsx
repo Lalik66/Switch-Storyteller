@@ -10,8 +10,8 @@
 
 import { useEffect, useState, useTransition, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { useLanguage, type AppLang } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -32,122 +32,8 @@ import type { InferSelectModel } from "drizzle-orm";
 
 type ChildProfile = InferSelectModel<typeof childProfile>;
 
-/* ── Localized copy ─────────────────────────────────────────────────── */
-
-const COPY: Record<
-  AppLang,
-  {
-    addChild: string;
-    emptyTitle: string;
-    emptyBody: string;
-    dialogTitle: string;
-    dialogDescription: string;
-    displayName: string;
-    age: string;
-    strictness: string;
-    strictnessHint: string;
-    strictnessOptions: { value: string; label: string }[];
-    allowPublish: string;
-    allowRemix: string;
-    dailyLimit: string;
-    dailyLimitHint: string;
-    cancel: string;
-    save: string;
-    saving: string;
-    edit: string;
-    delete: string;
-    deleteConfirm: string;
-    minutesLabel: string;
-    yearsLabel: string;
-    saveFailed: string;
-    deleteFailed: string;
-    sharingLabel: string;
-    publishingOn: string;
-    publishingOff: string;
-    remixingOn: string;
-    remixingOff: string;
-    toggleFailed: string;
-  }
-> = {
-  en: {
-    addChild: "Add a child",
-    emptyTitle: "No scribes yet.",
-    emptyBody:
-      "Add your first child to set their age, reading strictness, and daily time limit.",
-    dialogTitle: "A new little scribe",
-    dialogDescription:
-      "These settings guide the storyteller on every page your child reads.",
-    displayName: "Display name",
-    age: "Age",
-    strictness: "Content strictness",
-    strictnessHint:
-      "How gently the storyteller handles peril, sadness, and conflict.",
-    strictnessOptions: [
-      { value: "soft", label: "Soft (ages 6\u20138)" },
-      { value: "standard", label: "Standard (ages 9\u201311)" },
-      { value: "brave", label: "Brave (ages 12+)" },
-    ],
-    allowPublish: "Allow publishing to the shared library",
-    allowRemix: "Allow other children to remix their tales",
-    dailyLimit: "Daily minute limit",
-    dailyLimitHint: "Leave blank for no limit.",
-    cancel: "Cancel",
-    save: "Save scribe",
-    saving: "Saving\u2026",
-    edit: "Edit",
-    delete: "Delete",
-    deleteConfirm: "Delete this child profile? This cannot be undone.",
-    minutesLabel: "min/day",
-    yearsLabel: "yrs",
-    saveFailed: "Could not save. Try again.",
-    deleteFailed: "Could not delete. Try again.",
-    sharingLabel: "Sharing",
-    publishingOn: "Publishing on",
-    publishingOff: "Publishing off",
-    remixingOn: "Remixing on",
-    remixingOff: "Remixing off",
-    toggleFailed: "Could not update. Try again.",
-  },
-  az: {
-    addChild: "Uşaq əlavə et",
-    emptyTitle: "Hələ yazıçı yoxdur.",
-    emptyBody:
-      "Yaşını, məzmun sərtliyini və günlük vaxt limitini təyin etmək üçün ilk uşağını əlavə et.",
-    dialogTitle: "Yeni kiçik yazıçı",
-    dialogDescription:
-      "Bu parametrlər uşağın oxuduğu hər səhifədə nağılçıya rəhbərlik edir.",
-    displayName: "Görünən ad",
-    age: "Yaş",
-    strictness: "Məzmun sərtliyi",
-    strictnessHint:
-      "Nağılçının təhlükə, kədər və münaqişəni necə yumşaq ifadə etməsi.",
-    strictnessOptions: [
-      { value: "soft", label: "Yumşaq (6\u20138 yaş)" },
-      { value: "standard", label: "Standart (9\u201311 yaş)" },
-      { value: "brave", label: "Cəsur (12+ yaş)" },
-    ],
-    allowPublish: "Ümumi kitabxanada nəşrə icazə ver",
-    allowRemix: "Digər uşaqlara nağılları remikslərə icazə ver",
-    dailyLimit: "Günlük dəqiqə limiti",
-    dailyLimitHint: "Limit yoxdursa, boş burax.",
-    cancel: "Ləğv et",
-    save: "Yadda saxla",
-    saving: "Saxlanılır\u2026",
-    edit: "Redaktə et",
-    delete: "Sil",
-    deleteConfirm: "Bu uşaq profili silinsin? Geri qaytarıla bilməz.",
-    minutesLabel: "dəq/gün",
-    yearsLabel: "yaş",
-    saveFailed: "Saxlanılmadı. Yenə cəhd et.",
-    deleteFailed: "Silinmədi. Yenə cəhd et.",
-    sharingLabel: "Paylaşma",
-    publishingOn: "Nəşr açıq",
-    publishingOff: "Nəşr bağlı",
-    remixingOn: "Remiks açıq",
-    remixingOff: "Remiks bağlı",
-    toggleFailed: "Yenilənmədi. Yenə cəhd et.",
-  },
-};
+/** Translator function for a fixed messages namespace — typed against next-intl's `useTranslations` return. */
+type Translator = ReturnType<typeof useTranslations>;
 
 /* ── Form model ─────────────────────────────────────────────────────── */
 
@@ -200,8 +86,7 @@ export function ChildrenManager({
    */
   badgesByChild?: Record<string, string[]>;
 }) {
-  const { lang } = useLanguage();
-  const t = COPY[lang];
+  const t = useTranslations("Children");
   const router = useRouter();
   const [, startTransition] = useTransition();
 
@@ -303,7 +188,7 @@ export function ChildrenManager({
       setDialogOpen(false);
     } catch (err) {
       console.error(err);
-      toast.error(t.saveFailed);
+      toast.error(t("saveFailed"));
     } finally {
       setSubmitting(false);
     }
@@ -352,14 +237,14 @@ export function ChildrenManager({
       });
     } catch (err) {
       console.error(err);
-      toast.error(t.toggleFailed);
+      toast.error(t("toggleFailed"));
     }
   };
 
   const handleDelete = async (row: ChildProfile) => {
     const id = readField<string | undefined>(row, "id", "id", undefined);
     if (!id) return;
-    if (typeof window !== "undefined" && !window.confirm(t.deleteConfirm)) {
+    if (typeof window !== "undefined" && !window.confirm(t("deleteConfirm"))) {
       return;
     }
     try {
@@ -376,7 +261,7 @@ export function ChildrenManager({
       );
     } catch (err) {
       console.error(err);
-      toast.error(t.deleteFailed);
+      toast.error(t("deleteFailed"));
     }
   };
 
@@ -390,7 +275,7 @@ export function ChildrenManager({
               onClick={openForNew}
               className="btn-ember justify-center"
             >
-              {t.addChild}
+              {t("addChild")}
             </Button>
           </DialogTrigger>
           <ChildDialogContent
@@ -405,9 +290,9 @@ export function ChildrenManager({
 
       {children.length === 0 ? (
         <article className="card-stamp p-10 text-center">
-          <p className="eyebrow text-foreground/55">{t.emptyTitle}</p>
+          <p className="eyebrow text-foreground/55">{t("emptyTitle")}</p>
           <p className="mt-4 font-[var(--font-newsreader)] text-[15.5px] italic leading-relaxed text-foreground/70">
-            {t.emptyBody}
+            {t("emptyBody")}
           </p>
         </article>
       ) : (
@@ -458,32 +343,32 @@ export function ChildrenManager({
                       <h2 className="text-xl leading-tight">{displayName}</h2>
                       <dl className="mt-2 flex flex-wrap items-baseline gap-x-5 gap-y-1 font-[var(--font-newsreader)] text-[14px] text-foreground/70">
                         <div className="flex items-baseline gap-1.5">
-                          <dt className="eyebrow">{t.age}</dt>
+                          <dt className="eyebrow">{t("age")}</dt>
                           <dd>
-                            {age} {t.yearsLabel}
+                            {age} {t("yearsLabel")}
                           </dd>
                         </div>
                         <div className="flex items-baseline gap-1.5">
-                          <dt className="eyebrow">{t.strictness}</dt>
+                          <dt className="eyebrow">{t("strictness")}</dt>
                           <dd className="capitalize">{strictness}</dd>
                         </div>
                         {dailyLimit != null && (
                           <div className="flex items-baseline gap-1.5">
-                            <dt className="eyebrow">{t.dailyLimit}</dt>
+                            <dt className="eyebrow">{t("dailyLimit")}</dt>
                             <dd>
-                              {dailyLimit} {t.minutesLabel}
+                              {dailyLimit} {t("minutesLabel")}
                             </dd>
                           </div>
                         )}
                       </dl>
                       <div className="mt-3 flex flex-wrap items-center gap-2">
                         <span className="eyebrow text-foreground/55">
-                          {t.sharingLabel}
+                          {t("sharingLabel")}
                         </span>
                         <SharingPill
                           on={allowPublish}
-                          onLabel={t.publishingOn}
-                          offLabel={t.publishingOff}
+                          onLabel={t("publishingOn")}
+                          offLabel={t("publishingOff")}
                           onClick={() =>
                             void handleSharingToggle(
                               row,
@@ -494,8 +379,8 @@ export function ChildrenManager({
                         />
                         <SharingPill
                           on={allowRemix}
-                          onLabel={t.remixingOn}
-                          offLabel={t.remixingOff}
+                          onLabel={t("remixingOn")}
+                          offLabel={t("remixingOff")}
                           onClick={() =>
                             void handleSharingToggle(
                               row,
@@ -506,10 +391,7 @@ export function ChildrenManager({
                         />
                       </div>
                       {/* Earned-badge row — only renders when at least one is awarded. */}
-                      <BadgeRow
-                        badgeKeys={badgesByChild[id] ?? []}
-                        lang={lang}
-                      />
+                      <BadgeRow badgeKeys={badgesByChild[id] ?? []} />
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
@@ -519,7 +401,7 @@ export function ChildrenManager({
                       onClick={() => openForEdit(row)}
                       className="eyebrow"
                     >
-                      {t.edit}
+                      {t("edit")}
                     </Button>
                     <Button
                       type="button"
@@ -527,7 +409,7 @@ export function ChildrenManager({
                       onClick={() => handleDelete(row)}
                       className="eyebrow text-[color:var(--destructive)] hover:text-[color:var(--destructive)]"
                     >
-                      {t.delete}
+                      {t("delete")}
                     </Button>
                   </div>
                 </article>
@@ -542,28 +424,22 @@ export function ChildrenManager({
 
 /* ── Earned-badge row (read-only chip strip) ───────────────────────── */
 
-function BadgeRow({
-  badgeKeys,
-  lang,
-}: {
-  badgeKeys: string[];
-  lang: AppLang;
-}) {
+function BadgeRow({ badgeKeys }: { badgeKeys: string[] }) {
+  const tBadges = useTranslations("Badges");
   const knownBadges = badgeKeys.filter(isKnownBadgeKey);
   if (knownBadges.length === 0) return null;
   return (
     <div className="mt-3 flex flex-wrap items-center gap-1.5">
       {knownBadges.map((key) => {
         const badge = BADGES_BY_KEY[key];
-        const i18n = badge.i18n[lang];
         return (
           <span
             key={key}
-            title={i18n.description}
+            title={tBadges(`${key}.description`)}
             className="inline-flex items-center gap-1 rounded-full border border-[color:var(--gold)]/40 bg-[color:var(--gold)]/15 px-2.5 py-0.5 text-[12px] text-[color:var(--ember)]"
           >
             <span aria-hidden="true">{badge.icon}</span>
-            <span className="font-medium">{i18n.name}</span>
+            <span className="font-medium">{tBadges(`${key}.name`)}</span>
           </span>
         );
       })}
@@ -609,26 +485,34 @@ function ChildDialogContent({
   submitting,
   onSubmit,
 }: {
-  t: (typeof COPY)[AppLang];
+  t: Translator;
   form: ChildForm;
   setForm: (next: ChildForm) => void;
   submitting: boolean;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }) {
+  // Strictness option values are stable enum keys; only the labels are
+  // localized. Build the option list from the messages bundle so callers
+  // never have to maintain a per-locale option array.
+  const strictnessOptions: Array<{ value: Strictness; label: string }> = [
+    { value: "soft", label: t("strictnessSoft") },
+    { value: "standard", label: t("strictnessStandard") },
+    { value: "brave", label: t("strictnessBrave") },
+  ];
   return (
     <DialogContent className="sm:max-w-xl">
       <DialogHeader>
         <DialogTitle className="font-[var(--font-fraunces)] text-2xl">
-          {t.dialogTitle}
+          {t("dialogTitle")}
         </DialogTitle>
         <DialogDescription className="font-[var(--font-newsreader)] text-[14px] italic text-foreground/60">
-          {t.dialogDescription}
+          {t("dialogDescription")}
         </DialogDescription>
       </DialogHeader>
 
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <Label htmlFor="display-name">{t.displayName}</Label>
+          <Label htmlFor="display-name">{t("displayName")}</Label>
           <Input
             id="display-name"
             value={form.displayName}
@@ -643,7 +527,7 @@ function ChildDialogContent({
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="age">{t.age}</Label>
+            <Label htmlFor="age">{t("age")}</Label>
             <Input
               id="age"
               type="number"
@@ -656,7 +540,7 @@ function ChildDialogContent({
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="daily-limit">{t.dailyLimit}</Label>
+            <Label htmlFor="daily-limit">{t("dailyLimit")}</Label>
             <Input
               id="daily-limit"
               type="number"
@@ -669,13 +553,13 @@ function ChildDialogContent({
               placeholder="\u2014"
             />
             <p className="font-[var(--font-newsreader)] text-[13px] italic text-foreground/55">
-              {t.dailyLimitHint}
+              {t("dailyLimitHint")}
             </p>
           </div>
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label htmlFor="strictness">{t.strictness}</Label>
+          <Label htmlFor="strictness">{t("strictness")}</Label>
           {/* Native select — no new shadcn primitive added. Styled to
               match the Input primitive. */}
           <select
@@ -689,14 +573,14 @@ function ChildDialogContent({
             }
             className="border-input h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-sm shadow-xs outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
           >
-            {t.strictnessOptions.map((opt) => (
+            {strictnessOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>
                 {opt.label}
               </option>
             ))}
           </select>
           <p className="font-[var(--font-newsreader)] text-[13px] italic text-foreground/55">
-            {t.strictnessHint}
+            {t("strictnessHint")}
           </p>
         </div>
 
@@ -710,7 +594,7 @@ function ChildDialogContent({
               }
               className="h-4 w-4 accent-[color:var(--ember)]"
             />
-            <span>{t.allowPublish}</span>
+            <span>{t("allowPublish")}</span>
           </label>
           <label className="flex items-center gap-3 text-[14px]">
             <input
@@ -721,14 +605,14 @@ function ChildDialogContent({
               }
               className="h-4 w-4 accent-[color:var(--ember)]"
             />
-            <span>{t.allowRemix}</span>
+            <span>{t("allowRemix")}</span>
           </label>
         </div>
 
         <DialogFooter>
           <DialogClose asChild>
             <Button type="button" variant="ghost" className="eyebrow">
-              {t.cancel}
+              {t("cancel")}
             </Button>
           </DialogClose>
           <Button
@@ -736,7 +620,7 @@ function ChildDialogContent({
             disabled={submitting}
             className="btn-ember justify-center disabled:opacity-50"
           >
-            {submitting ? t.saving : t.save}
+            {submitting ? t("saving") : t("save")}
           </Button>
         </DialogFooter>
       </form>

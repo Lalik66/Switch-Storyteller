@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { useLanguage, type AppLang } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -24,79 +24,9 @@ import type { InferSelectModel } from "drizzle-orm";
 type Character = InferSelectModel<typeof character>;
 type ChildProfile = InferSelectModel<typeof childProfile>;
 
-const COPY: Record<
-  AppLang,
-  {
-    empty: string;
-    emptyHint: string;
-    addCharacter: string;
-    dialogTitle: string;
-    dialogDescription: string;
-    name: string;
-    description: string;
-    descriptionHint: string;
-    cancel: string;
-    save: string;
-    saving: string;
-    edit: string;
-    delete: string;
-    deleteConfirm: string;
-    saveFailed: string;
-    deleteFailed: string;
-    appearances: string;
-    childLabel: string;
-    selectChild: string;
-  }
-> = {
-  en: {
-    empty: "No characters yet.",
-    emptyHint:
-      "Characters are discovered automatically as your children write stories. You can also add them manually.",
-    addCharacter: "Add a character",
-    dialogTitle: "A new companion",
-    dialogDescription:
-      "Describe this character so the storyteller stays consistent across tales.",
-    name: "Character name",
-    description: "Description",
-    descriptionHint:
-      "Physical appearance, personality, or notable traits (1–2 sentences).",
-    cancel: "Cancel",
-    save: "Save",
-    saving: "Saving…",
-    edit: "Edit",
-    delete: "Delete",
-    deleteConfirm: "Remove this character? They won’t appear in future stories.",
-    saveFailed: "Could not save. Try again.",
-    deleteFailed: "Could not delete. Try again.",
-    appearances: "appearances",
-    childLabel: "Child",
-    selectChild: "Select a child",
-  },
-  az: {
-    empty: "Hələ heç bir personaj yoxdur.",
-    emptyHint:
-      "Personajlar uşaqlarınız hekayə yazdıqca avtomatik aşkar edilir. Əl ilə də əlavə edə bilərsiniz.",
-    addCharacter: "Personaj əlavə et",
-    dialogTitle: "Yeni yoldaş",
-    dialogDescription:
-      "Bu personajı təsvir edin ki, nağılçı hekayələr arasında ardıcıl qalsın.",
-    name: "Personajın adı",
-    description: "Təsvir",
-    descriptionHint:
-      "Xarici görünüş, şəxsiyyət və ya diqqətəlayiq xüsusiyyətlər (1–2 cümlə).",
-    cancel: "Ləğv et",
-    save: "Yadda saxla",
-    saving: "Saxlanılır…",
-    edit: "Redaktə et",
-    delete: "Sil",
-    deleteConfirm: "Bu personaj silinsin? Gələcək hekayələrdə görünməyəcək.",
-    saveFailed: "Saxlanılmadı. Yenə cəhd et.",
-    deleteFailed: "Silinmədi. Yenə cəhd et.",
-    appearances: "görünüş",
-    childLabel: "Uşaq",
-    selectChild: "Uşaq seçin",
-  },
-};
+/** Translator function for a fixed messages namespace. */
+type Translator = ReturnType<typeof useTranslations>;
+
 
 type CharForm = {
   id?: string;
@@ -138,8 +68,7 @@ export function CharacterVault({
 }: {
   initialData: ChildWithCharacters[];
 }) {
-  const { lang } = useLanguage();
-  const t = COPY[lang];
+  const t = useTranslations("Characters");
 
   const [data, setData] = useState(initialData);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -217,7 +146,7 @@ export function CharacterVault({
       setDialogOpen(false);
     } catch (err) {
       console.error(err);
-      toast.error(t.saveFailed);
+      toast.error(t("saveFailed"));
     } finally {
       setSubmitting(false);
     }
@@ -226,7 +155,7 @@ export function CharacterVault({
   const handleDelete = async (row: Character) => {
     const id = readField(row, "id", "id", "");
     if (!id) return;
-    if (typeof window !== "undefined" && !window.confirm(t.deleteConfirm)) {
+    if (typeof window !== "undefined" && !window.confirm(t("deleteConfirm"))) {
       return;
     }
     try {
@@ -243,7 +172,7 @@ export function CharacterVault({
       );
     } catch (err) {
       console.error(err);
-      toast.error(t.deleteFailed);
+      toast.error(t("deleteFailed"));
     }
   };
 
@@ -257,7 +186,7 @@ export function CharacterVault({
               onClick={openForNew}
               className="btn-ember justify-center"
             >
-              {t.addCharacter}
+              {t("addCharacter")}
             </Button>
           </DialogTrigger>
           <CharacterDialogContent
@@ -273,9 +202,9 @@ export function CharacterVault({
 
       {allCharacters.length === 0 ? (
         <article className="card-stamp p-10 text-center">
-          <p className="eyebrow text-foreground/55">{t.empty}</p>
+          <p className="eyebrow text-foreground/55">{t("empty")}</p>
           <p className="mt-4 font-[var(--font-newsreader)] text-[15.5px] italic leading-relaxed text-foreground/70">
-            {t.emptyHint}
+            {t("emptyHint")}
           </p>
         </article>
       ) : (
@@ -294,7 +223,7 @@ export function CharacterVault({
             return (
               <div key={childId}>
                 <p className="eyebrow mb-3">
-                  {childName}&rsquo;s companions
+                  {t("companionsHeading", { name: childName })}
                 </p>
                 <ul className="flex flex-col gap-3">
                   {entry.characters.map((row) => {
@@ -328,7 +257,7 @@ export function CharacterVault({
                               <dl className="mt-2 flex flex-wrap items-baseline gap-x-5 gap-y-1 font-[var(--font-newsreader)] text-[13px] text-foreground/55">
                                 <div className="flex items-baseline gap-1.5">
                                   <dd>
-                                    {count} {t.appearances}
+                                    {count} {t("appearances")}
                                   </dd>
                                 </div>
                               </dl>
@@ -341,7 +270,7 @@ export function CharacterVault({
                               onClick={() => openForEdit(row)}
                               className="eyebrow"
                             >
-                              {t.edit}
+                              {t("edit")}
                             </Button>
                             <Button
                               type="button"
@@ -349,7 +278,7 @@ export function CharacterVault({
                               onClick={() => handleDelete(row)}
                               className="eyebrow text-[color:var(--destructive)] hover:text-[color:var(--destructive)]"
                             >
-                              {t.delete}
+                              {t("delete")}
                             </Button>
                           </div>
                         </article>
@@ -374,7 +303,7 @@ function CharacterDialogContent({
   onSubmit,
   childProfiles,
 }: {
-  t: (typeof COPY)[AppLang];
+  t: Translator;
   form: CharForm;
   setForm: (next: CharForm) => void;
   submitting: boolean;
@@ -387,17 +316,17 @@ function CharacterDialogContent({
     <DialogContent className="sm:max-w-xl">
       <DialogHeader>
         <DialogTitle className="font-[var(--font-fraunces)] text-2xl">
-          {t.dialogTitle}
+          {t("dialogTitle")}
         </DialogTitle>
         <DialogDescription className="font-[var(--font-newsreader)] text-[14px] italic text-foreground/60">
-          {t.dialogDescription}
+          {t("dialogDescription")}
         </DialogDescription>
       </DialogHeader>
 
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
         {showChildPicker && (
           <div className="flex flex-col gap-2">
-            <Label htmlFor="child-select">{t.childLabel}</Label>
+            <Label htmlFor="child-select">{t("childLabel")}</Label>
             <select
               id="child-select"
               value={form.childProfileId}
@@ -407,7 +336,7 @@ function CharacterDialogContent({
               required
               className="border-input h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-sm shadow-xs outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
             >
-              <option value="">{t.selectChild}</option>
+              <option value="">{t("selectChild")}</option>
               {childProfiles.map((child) => {
                 const id = readChildField(child, "id", "id", "");
                 const name = readChildField(
@@ -427,7 +356,7 @@ function CharacterDialogContent({
         )}
 
         <div className="flex flex-col gap-2">
-          <Label htmlFor="char-name">{t.name}</Label>
+          <Label htmlFor="char-name">{t("name")}</Label>
           <Input
             id="char-name"
             value={form.name}
@@ -439,7 +368,7 @@ function CharacterDialogContent({
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label htmlFor="char-desc">{t.description}</Label>
+          <Label htmlFor="char-desc">{t("description")}</Label>
           <Textarea
             id="char-desc"
             value={form.description}
@@ -451,14 +380,14 @@ function CharacterDialogContent({
             rows={3}
           />
           <p className="font-[var(--font-newsreader)] text-[13px] italic text-foreground/55">
-            {t.descriptionHint}
+            {t("descriptionHint")}
           </p>
         </div>
 
         <DialogFooter>
           <DialogClose asChild>
             <Button type="button" variant="ghost" className="eyebrow">
-              {t.cancel}
+              {t("cancel")}
             </Button>
           </DialogClose>
           <Button
@@ -466,7 +395,7 @@ function CharacterDialogContent({
             disabled={submitting}
             className="btn-ember justify-center disabled:opacity-50"
           >
-            {submitting ? t.saving : t.save}
+            {submitting ? t("saving") : t("save")}
           </Button>
         </DialogFooter>
       </form>

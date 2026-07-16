@@ -8,6 +8,7 @@
 
 import Link from "next/link";
 import { desc, eq, inArray } from "drizzle-orm";
+import { getTranslations } from "next-intl/server";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -218,9 +219,10 @@ function ChildStoryGroup({
 }
 
 /** An individual story card linking to the story reader. */
-function StoryCard({ story: s }: { story: Story }) {
+async function StoryCard({ story: s }: { story: Story }) {
   const world = getWorld(s.worldKey);
-  const worldName = world?.name.en ?? s.worldKey;
+  const tWorlds = await getTranslations("Worlds");
+  const worldName = world ? tWorlds(`${world.key}.name`) : s.worldKey;
 
   return (
     <Link href={`/story/${s.id}`} className="group block">

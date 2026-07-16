@@ -59,11 +59,6 @@ export type Badge = {
   category: BadgeCategory;
   /** Emoji shown in chips + toasts. Plain unicode, no icon font. */
   icon: string;
-  /** EN/AZ display strings. */
-  i18n: {
-    en: { name: string; description: string };
-    az: { name: string; description: string };
-  };
   /** Returns true when this child has now earned the badge. */
   isEarned: (stats: BadgeStats) => boolean;
 };
@@ -71,102 +66,47 @@ export type Badge = {
 /**
  * The full badge catalog, ordered by progression difficulty. `BADGES_BY_KEY`
  * gives O(1) lookup by key for renderers.
+ *
+ * Localized display copy (name + description) lives in the `Badges`
+ * namespace of `messages/{en,az}.json` keyed by `badge.key`. Renderers
+ * resolve it via `useTranslations("Badges")` and call
+ * `t(\`${badge.key}.name\`)` / `t(\`${badge.key}.description\`)`.
  */
 export const BADGES: readonly Badge[] = [
   {
     key: "first-tale",
     category: "completion",
     icon: "📖",
-    i18n: {
-      en: {
-        name: "First Tale",
-        description: "Finished your very first story.",
-      },
-      az: {
-        name: "İlk Nağıl",
-        description: "İlk nağılını tamamladın.",
-      },
-    },
     isEarned: (s) => s.completedStories >= 1,
   },
   {
     key: "triple-quill",
     category: "completion",
     icon: "🪶",
-    i18n: {
-      en: {
-        name: "Triple Quill",
-        description: "Three completed tales — the quill is yours.",
-      },
-      az: {
-        name: "Üçlü Lələk",
-        description: "Üç tamamlanmış nağıl — lələk artıq sənindir.",
-      },
-    },
     isEarned: (s) => s.completedStories >= 3,
   },
   {
     key: "wordsmith",
     category: "volume",
     icon: "✒️",
-    i18n: {
-      en: {
-        name: "Wordsmith",
-        description: "Wrote a thousand words across your tales.",
-      },
-      az: {
-        name: "Söz Ustası",
-        description: "Nağıllarında min söz yazdın.",
-      },
-    },
     isEarned: (s) => s.totalWords >= 1000,
   },
   {
     key: "world-walker",
     category: "exploration",
     icon: "🌍",
-    i18n: {
-      en: {
-        name: "World Walker",
-        description: "Set tales in three different worlds.",
-      },
-      az: {
-        name: "Dünya Səyyahı",
-        description: "Üç fərqli dünyada nağıl qurdun.",
-      },
-    },
     isEarned: (s) => s.worldsExplored >= 3,
   },
   {
     key: "published-author",
     category: "community",
     icon: "✦",
-    i18n: {
-      en: {
-        name: "Published Author",
-        description: "Sent a tale into the community ledger.",
-      },
-      az: {
-        name: "Nəşr Edən Müəllif",
-        description: "Bir nağılı icma jurnalına göndərdin.",
-      },
-    },
     isEarned: (s) => s.publishedStories >= 1,
   },
   {
     key: "remix-master",
     category: "community",
     icon: "🔁",
-    i18n: {
-      en: {
-        name: "Remix Master",
-        description: "Forged your own riff on someone else's tale.",
-      },
-      az: {
-        name: "Remiks Ustası",
-        description: "Başqasının nağılına öz dəyişikliyini etdin.",
-      },
-    },
     isEarned: (s) => s.remixesCreated >= 1,
   },
 ];

@@ -84,5 +84,332 @@
       "Step through the door",
       "Ask its name"
     ]
+  },
+  "Worlds": {
+    "enchanted-forest": {
+      "name": "Enchanted Forest",
+      "description": "A glowing woodland where talking animals guard ancient secrets."
+    },
+    "space-station": {
+      "name": "Space Station",
+      "description": "A bustling orbital outpost full of clever robots and zero-gravity hallways."
+    },
+    "underwater-kingdom": {
+      "name": "Underwater Kingdom",
+      "description": "A sparkling reef city where dolphins carry messages between coral towers."
+    },
+    "dragon-mountain": {
+      "name": "Dragon Mountain",
+      "description": "A craggy peak where gentle dragons teach young heroes to soar."
+    },
+    "desert-oasis": {
+      "name": "Desert Oasis",
+      "description": "A shimmering palm oasis hiding a hidden library beneath the dunes."
+    },
+    "cloud-city": {
+      "name": "Cloud City",
+      "description": "A floating town of rope bridges and rainbow gardens high above the world."
+    }
+  },
+  "Landing": {
+    "ticker": [
+      "— she brought a map of her own",
+      "— the dragon only wanted company",
+      "— the key was made of starlight",
+      "— the island whispered her name",
+      "— a library at the bottom of the sea",
+      "— the clock ran on honey",
+      "— grandmother's attic had a door",
+      "— a hero in hand-knit armor"
+    ],
+    "loop": {
+      "eyebrow": "§ I · The loop",
+      "title": "Three quiet steps.",
+      "titleAccent": "One unforgettable tale.",
+      "steps": [
+        {
+          "n": "I",
+          "title": "Choose a hero",
+          "body": "Three gentle questions — a name, a heart, a wish. Your child's imagination sets the compass."
+        },
+        {
+          "n": "II",
+          "title": "Shape the world",
+          "body": "Pick a hand-illustrated world: a moonlit forest, a clockwork city, the bottom of a glassy sea."
+        },
+        {
+          "n": "III",
+          "title": "Live the adventure",
+          "body": "Each page arrives like a letter. Three choices — or write your own. When the tale ends, we bind it into a real book."
+        }
+      ]
+    },
+    "worlds": {
+      "eyebrow": "§ II · The atlas",
+      "title1": "Six worlds,",
+      "titleAccent": "hand-drawn",
+      "title2": "and waiting.",
+      "blurb": "Every world is illustrated in-house by real artists. Your child chooses where to land — the quill does the rest.",
+      "indexLabel": "No.",
+      "tiles": {
+        "moonlit-forest": { "name": "The Moonlit Forest", "tag": "Whisper-magic" },
+        "clockwork": { "name": "The Clockwork City", "tag": "Brass & steam" },
+        "sunken": { "name": "The Sunken Kingdom", "tag": "Salt & silver" },
+        "dragons-spine": { "name": "The Dragon's Spine", "tag": "Fire-stone peaks" },
+        "stardust": { "name": "The Stardust Bazaar", "tag": "Night market" },
+        "hollow-meadows": { "name": "The Hollow Meadows", "tag": "Thimble folk" }
+      }
+    },
+    "sample": {
+      "eyebrow": "§ III · A page from the tale",
+      "title1": "Gentle words,",
+      "titleAccent": "great choices.",
+      "body": "Each page is written at a 4th–5th grade reading level, screened by an independent moderator, and illustrated selectively so the picture follows the words — not the other way around.",
+      "stats": [
+        ["~150", "words per page"],
+        ["8–12", "pages per tale"],
+        ["4", "safety layers"],
+        ["0", "ads, ever"]
+      ],
+      "cardTitle": "Maren & the Moonlit Door",
+      "cardMeta": "Folio I · chapter 02",
+      "pageCounter": "page 5 / 10",
+      "p1": "The door was warm to the touch — warmer than a mitten fresh from the fire. It smelled faintly of cinnamon and old rain. Maren cupped her hands around the",
+      "p1Em": "handle",
+      "p1b": "and found it was shaped, strangely, like a small sleeping fox. She had a feeling the fox had been waiting a long time to wake up.",
+      "p2Before": "Behind her, the",
+      "p2Highlight": "moonlit forest",
+      "p2After": "held its breath. Ahead, the door hummed a single, patient note. Maren thought it sounded rather like a question.",
+      "question": "What does Maren do next?",
+      "choices": ["Wake the fox gently", "Listen to the door", "Step back and wait"],
+      "customHint": "Or write your own — we'll follow your lead",
+      "moderated": "moderated ✓"
+    },
+    "parents": {
+      "eyebrow": "§ IV · For the grown-ups",
+      "title1": "Built for",
+      "titleAccent": "parent trust.",
+      "intro": "We built the Forge for our own kids first. That meant starting with the hardest question: what would make a parent trust an AI with their child's inner world?",
+      "link": "See our safety commitments",
+      "pillars": [
+        { "title": "Four layers of safety", "body": "Pre-prompt screening, G-rated LLM guardrails, post-generation review, and a human moderation desk — every word your child sees passes all four." },
+        { "title": "COPPA by design", "body": "No ad tracking, no data sale, parent-verified accounts, instant export or deletion on request. Children are not the product." },
+        { "title": "Read every word", "body": "A weekly parchment-paper digest arrives in your inbox. Every tale your child writes is readable, verbatim — no summaries." },
+        { "title": "You set the knobs", "body": "Daily time limits, content strictness, community publishing, remix permissions. Your child's profile, your rules." }
+      ]
+    },
+    "pricing": {
+      "eyebrow": "§ V · The terms",
+      "title1": "A fair ledger for",
+      "titleAccent": "extraordinary",
+      "title2": "tales.",
+      "badge": "Most chosen",
+      "footnote": "Printed books sold separately via our partner bindery · shipped worldwide.",
+      "tiers": [
+        {
+          "name": "Apprentice",
+          "price": "Free",
+          "sub": "Forever",
+          "desc": "One tale a week. All worlds. Full parent dashboard.",
+          "features": ["1 story per week", "All 6 worlds", "PDF export", "Parent digest"],
+          "cta": "Begin free",
+          "featured": false
+        },
+        {
+          "name": "Scribe",
+          "price": "$7.99",
+          "sub": "per month",
+          "desc": "Unlimited tales, audio narration, illustrated pages, remixing.",
+          "features": ["Unlimited stories", "Illustrated pages", "Audio narration", "Character vault", "Community remixing"],
+          "cta": "Become a Scribe",
+          "featured": true
+        },
+        {
+          "name": "Guild",
+          "price": "$19.99",
+          "sub": "per month",
+          "desc": "Up to four child profiles. Everything in Scribe, for the whole family.",
+          "features": ["4 child profiles", "Everything in Scribe", "Priority moderation", "Discount on printed books"],
+          "cta": "Gather the Guild",
+          "featured": false
+        }
+      ]
+    },
+    "finalCta": {
+      "eyebrow": "Your tale awaits",
+      "title1": "Light the lantern.",
+      "titleAccent": "Open the door.",
+      "body": "Free forever for your first tale. No credit card. No ads. No tracking. Just a small voice near your child's boots, whispering \"you're late.\"",
+      "cta1": "Begin a tale",
+      "cta2": "Parent walkthrough"
+    }
+  },
+  "Characters": {
+    "empty": "No characters yet.",
+    "emptyHint": "Characters are discovered automatically as your children write stories. You can also add them manually.",
+    "addCharacter": "Add a character",
+    "dialogTitle": "A new companion",
+    "dialogDescription": "Describe this character so the storyteller stays consistent across tales.",
+    "name": "Character name",
+    "description": "Description",
+    "descriptionHint": "Physical appearance, personality, or notable traits (1–2 sentences).",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving…",
+    "edit": "Edit",
+    "delete": "Delete",
+    "deleteConfirm": "Remove this character? They won't appear in future stories.",
+    "saveFailed": "Could not save. Try again.",
+    "deleteFailed": "Could not delete. Try again.",
+    "appearances": "appearances",
+    "childLabel": "Child",
+    "selectChild": "Select a child",
+    "companionsHeading": "{name}'s companions"
+  },
+  "StoryNew": {
+    "eyebrow": "§ I · A new tale",
+    "titleLead": "Three quiet",
+    "titleAccent": "questions.",
+    "intro": "The drafting buddy will shape your hero, pick a world, and listen to the trouble they face. Nothing is saved until you press Begin.",
+    "stepLabel": "Question {n} of {total}",
+    "step0Label": "Whose story is this?",
+    "step0Hint": "Pick a hero.",
+    "step1Label": "What is your hero's name?",
+    "step1Hint": "A first name is plenty. You can change it later.",
+    "step1Placeholder": "Maren",
+    "step2Label": "Where does the tale begin?",
+    "step2Hint": "Pick a world. Each has its own mood and light.",
+    "step3Label": "What trouble finds your hero?",
+    "step3Hint": "A sentence or two is enough — the storyteller will do the rest.",
+    "step3Placeholder": "A silver fox keeps tapping at the window after dusk, but no one else can see it…",
+    "next": "Next",
+    "back": "Back",
+    "begin": "Begin the tale",
+    "missingName": "Your hero needs a name first.",
+    "missingWorld": "Pick a world to set the scene.",
+    "missingProblem": "Describe the trouble, even briefly.",
+    "submitFailed": "The scribe stumbled. Try again in a moment.",
+    "rateLimited": "You've already started a tale this week! Continue an existing draft from My Stories, or come back next week for a new adventure.",
+    "lockedEyebrow": "§ Threshold · A locked folio",
+    "lockedTitle": "This page is",
+    "lockedTitleAccent": "by invitation.",
+    "lockedBody": "Sign in to begin a new tale. The drafting buddy will be waiting for you.",
+    "lockedCta": "Return to the workshop",
+    "loading": "Loading the quill…"
+  },
+  "Children": {
+    "addChild": "Add a child",
+    "emptyTitle": "No scribes yet.",
+    "emptyBody": "Add your first child to set their age, reading strictness, and daily time limit.",
+    "dialogTitle": "A new little scribe",
+    "dialogDescription": "These settings guide the storyteller on every page your child reads.",
+    "displayName": "Display name",
+    "age": "Age",
+    "strictness": "Content strictness",
+    "strictnessHint": "How gently the storyteller handles peril, sadness, and conflict.",
+    "strictnessSoft": "Soft (ages 6–8)",
+    "strictnessStandard": "Standard (ages 9–11)",
+    "strictnessBrave": "Brave (ages 12+)",
+    "allowPublish": "Allow publishing to the shared library",
+    "allowRemix": "Allow other children to remix their tales",
+    "dailyLimit": "Daily minute limit",
+    "dailyLimitHint": "Leave blank for no limit.",
+    "cancel": "Cancel",
+    "save": "Save scribe",
+    "saving": "Saving…",
+    "edit": "Edit",
+    "delete": "Delete",
+    "deleteConfirm": "Delete this child profile? This cannot be undone.",
+    "minutesLabel": "min/day",
+    "yearsLabel": "yrs",
+    "saveFailed": "Could not save. Try again.",
+    "deleteFailed": "Could not delete. Try again.",
+    "sharingLabel": "Sharing",
+    "publishingOn": "Publishing on",
+    "publishingOff": "Publishing off",
+    "remixingOn": "Remixing on",
+    "remixingOff": "Remixing off",
+    "toggleFailed": "Could not update. Try again."
+  },
+  "Reader": {
+    "eyebrow": "§ The tale · In progress",
+    "untitled": "Untitled tale",
+    "wordsLabel": "words",
+    "chaptersLabel": "chapters",
+    "pagesLabel": "pages",
+    "pageOf": "page {n} / {total}",
+    "chapterPrefix": "Ch.",
+    "liveLabel": "live",
+    "illustrationAlt": "Illustration for page {n}",
+    "narrationAlt": "Narration for page {n}",
+    "whatNext": "What happens next?",
+    "orWriteYourOwn": "Or — write your own action",
+    "customPlaceholder": "Maren steps between the fox and the window…",
+    "send": "Continue the tale",
+    "sending": "The quill is moving…",
+    "moderated": "moderated ✓",
+    "streamFailed": "The scribe stumbled. Try again.",
+    "scribeStumbled": "The scribe stumbled.",
+    "emptyTitle": "A blank folio.",
+    "emptyBody": "No pages yet. Pick an action below to begin the first page of this tale.",
+    "generateImages": "Illustrate this tale",
+    "generatingImages": "Painting the scenes…",
+    "illustrationsReady": "Illustrated ✓",
+    "imageGenFailed": "The illustrator stumbled. Try again.",
+    "narrate": "Narrate this page",
+    "narrating": "Summoning the storyteller…",
+    "audioFailed": "The storyteller's voice cracked. Try again.",
+    "remix": "Remix this tale",
+    "remixing": "Forging your remix…",
+    "remixFailed": "The forge ran cold. Try again.",
+    "remixRateLimited": "You've already started a story this week — come back next week for a new adventure.",
+    "finish": "Finish this tale",
+    "finishing": "Sealing the last page…",
+    "finished": "Marked complete! You can publish it to the community now.",
+    "finishHint": "Done writing? Mark it complete and then publish to the community.",
+    "completeHint": "This tale is sealed. Hit Publish to send it to the community ledger.",
+    "publishedHint": "This tale is in the community ledger. Other parents can read it.",
+    "finishFailed": "Couldn't seal the tale. Try again.",
+    "publish": "Publish to community",
+    "publishing": "Hoisting the sails…",
+    "publishSucceeded": "Published! Find it in the community ledger.",
+    "unpublish": "Unpublish",
+    "unpublishing": "Lowering the sails…",
+    "unpublishSucceeded": "Unpublished. Only you can see it now.",
+    "publishGenericFailed": "Couldn't publish. Try again.",
+    "publishDisallowedHint": "Enable the Publishing pill on this child's profile first.",
+    "completeBanner": "Complete",
+    "publishedBanner": "Published",
+    "actionChoices": [
+      "Step forward bravely",
+      "Kneel and whisper",
+      "Slip quietly away"
+    ]
+  },
+  "Badges": {
+    "first-tale": {
+      "name": "First Tale",
+      "description": "Finished your very first story."
+    },
+    "triple-quill": {
+      "name": "Triple Quill",
+      "description": "Three completed tales — the quill is yours."
+    },
+    "wordsmith": {
+      "name": "Wordsmith",
+      "description": "Wrote a thousand words across your tales."
+    },
+    "world-walker": {
+      "name": "World Walker",
+      "description": "Set tales in three different worlds."
+    },
+    "published-author": {
+      "name": "Published Author",
+      "description": "Sent a tale into the community ledger."
+    },
+    "remix-master": {
+      "name": "Remix Master",
+      "description": "Forged your own riff on someone else's tale."
+    }
   }
 }

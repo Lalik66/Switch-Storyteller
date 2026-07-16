@@ -14,28 +14,31 @@
 
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { useLanguage, type AppLang } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { useAppLocale } from "@/i18n/use-app-locale";
 import { BADGES_BY_KEY, isKnownBadgeKey } from "@/lib/badges";
 // NOTE: `@/lib/schema` is owned by the schema-agent.
 import { story, storyPage } from "@/lib/schema";
 import type { InferSelectModel } from "drizzle-orm";
+
+/** Translator function for a fixed messages namespace — typed against next-intl's `useTranslations` return. */
+type Translator = ReturnType<typeof useTranslations>;
 
 /**
  * Surface a celebratory toast for each newly-earned badge in the API
  * response. Unknown keys (e.g. legacy rows after a catalog removal) are
  * silently skipped so they never break the award path.
  */
-function toastNewBadges(newBadges: unknown, lang: AppLang) {
+function toastNewBadges(newBadges: unknown, tBadges: Translator) {
   if (!Array.isArray(newBadges) || newBadges.length === 0) return;
   for (const key of newBadges) {
     if (typeof key !== "string" || !isKnownBadgeKey(key)) continue;
     const badge = BADGES_BY_KEY[key];
-    const i18n = badge.i18n[lang];
-    toast.success(`${badge.icon}  ${i18n.name}`, {
-      description: i18n.description,
+    toast.success(`${badge.icon}  ${tBadges(`${key}.name`)}`, {
+      description: tBadges(`${key}.description`),
     });
   }
 }
@@ -43,158 +46,6 @@ function toastNewBadges(newBadges: unknown, lang: AppLang) {
 type Story = InferSelectModel<typeof story>;
 type StoryPage = InferSelectModel<typeof storyPage>;
 
-/* ── Localization ───────────────────────────────────────────────────── */
-
-const COPY: Record<
-  AppLang,
-  {
-    eyebrow: string;
-    pageOf: (n: number, total: number) => string;
-    wordsLabel: string;
-    chaptersLabel: string;
-    pagesLabel: string;
-    whatNext: string;
-    orWriteYourOwn: string;
-    customPlaceholder: string;
-    send: string;
-    sending: string;
-    moderated: string;
-    streamFailed: string;
-    emptyTitle: string;
-    emptyBody: string;
-    generateImages: string;
-    generatingImages: string;
-    illustrationsReady: string;
-    imageGenFailed: string;
-    narrate: string;
-    narrating: string;
-    audioFailed: string;
-    remix: string;
-    remixing: string;
-    remixFailed: string;
-    remixRateLimited: string;
-    finish: string;
-    finishing: string;
-    finished: string;
-    finishHint: string;
-    completeHint: string;
-    publishedHint: string;
-    finishFailed: string;
-    publish: string;
-    publishing: string;
-    publishSucceeded: string;
-    unpublish: string;
-    unpublishing: string;
-    unpublishSucceeded: string;
-    publishGenericFailed: string;
-    publishDisallowedHint: string;
-    completeBanner: string;
-    publishedBanner: string;
-  }
-> = {
-  en: {
-    eyebrow: "\u00a7 The tale \u00b7 In progress",
-    pageOf: (n, total) => `page ${n} / ${total}`,
-    wordsLabel: "words",
-    chaptersLabel: "chapters",
-    pagesLabel: "pages",
-    whatNext: "What happens next?",
-    orWriteYourOwn: "Or \u2014 write your own action",
-    customPlaceholder: "Maren steps between the fox and the window\u2026",
-    send: "Continue the tale",
-    sending: "The quill is moving\u2026",
-    moderated: "moderated \u2713",
-    streamFailed: "The scribe stumbled. Try again.",
-    emptyTitle: "A blank folio.",
-    emptyBody:
-      "No pages yet. Pick an action below to begin the first page of this tale.",
-    generateImages: "Illustrate this tale",
-    generatingImages: "Painting the scenes…",
-    illustrationsReady: "Illustrated ✓",
-    imageGenFailed: "The illustrator stumbled. Try again.",
-    narrate: "Narrate this page",
-    narrating: "Summoning the storyteller…",
-    audioFailed: "The storyteller's voice cracked. Try again.",
-    remix: "Remix this tale",
-    remixing: "Forging your remix…",
-    remixFailed: "The forge ran cold. Try again.",
-    remixRateLimited:
-      "You've already started a story this week — come back next week for a new adventure.",
-    finish: "Finish this tale",
-    finishing: "Sealing the last page…",
-    finished:
-      "Marked complete! You can publish it to the community now.",
-    finishHint:
-      "Done writing? Mark it complete and then publish to the community.",
-    completeHint:
-      "This tale is sealed. Hit Publish to send it to the community ledger.",
-    publishedHint:
-      "This tale is in the community ledger. Other parents can read it.",
-    finishFailed: "Couldn't seal the tale. Try again.",
-    publish: "Publish to community",
-    publishing: "Hoisting the sails…",
-    publishSucceeded: "Published! Find it in the community ledger.",
-    unpublish: "Unpublish",
-    unpublishing: "Lowering the sails…",
-    unpublishSucceeded: "Unpublished. Only you can see it now.",
-    publishGenericFailed: "Couldn't publish. Try again.",
-    publishDisallowedHint:
-      "Enable the Publishing pill on this child's profile first.",
-    completeBanner: "Complete",
-    publishedBanner: "Published",
-  },
-  az: {
-    eyebrow: "\u00a7 Nağıl \u00b7 Davam edir",
-    pageOf: (n, total) => `səhifə ${n} / ${total}`,
-    wordsLabel: "söz",
-    chaptersLabel: "fəsil",
-    pagesLabel: "səhifə",
-    whatNext: "Sonra nə baş verir?",
-    orWriteYourOwn: "Ya da \u2014 öz hərəkətini yaz",
-    customPlaceholder: "Maren tülkü ilə pəncərə arasında dayanır\u2026",
-    send: "Nağılı davam etdir",
-    sending: "Lələk hərəkət edir\u2026",
-    moderated: "yoxlanıldı \u2713",
-    streamFailed: "Yazıçı büdrədi. Yenə cəhd et.",
-    emptyTitle: "Boş folio.",
-    emptyBody:
-      "Hələ səhifə yoxdur. Bu nağılın ilk səhifəsinə başlamaq üçün aşağıdan bir hərəkət seç.",
-    generateImages: "Bu nağılı illüstrasiya et",
-    generatingImages: "Səhnələr rənglənir…",
-    illustrationsReady: "İllüstrasiya edilib ✓",
-    imageGenFailed: "İllüstrator büdrədi. Yenə cəhd et.",
-    narrate: "Bu səhifəni səsləndir",
-    narrating: "Nağılçı çağırılır…",
-    audioFailed: "Nağılçının səsi titrədi. Yenə cəhd et.",
-    remix: "Bu nağılı remiks et",
-    remixing: "Remiks hazırlanır…",
-    remixFailed: "Dəmirçi soyudu. Yenə cəhd et.",
-    remixRateLimited:
-      "Bu həftə artıq bir nağıl başlatmısan — gələn həftə yeni macəra üçün geri qayıt.",
-    finish: "Nağılı bitir",
-    finishing: "Son səhifə möhürlənir…",
-    finished:
-      "Tamamlandı! İndi icmaya nəşr edə bilərsən.",
-    finishHint:
-      "Yazmağı bitirdin? Tamamla və icmaya nəşr et.",
-    completeHint:
-      "Bu nağıl möhürlənib. İcma jurnalına göndərmək üçün Nəşr et.",
-    publishedHint:
-      "Bu nağıl icma jurnalındadır. Digər valideynlər oxuya bilər.",
-    finishFailed: "Nağıl möhürlənmədi. Yenə cəhd et.",
-    publish: "İcmaya nəşr et",
-    publishing: "Yelkən qaldırılır…",
-    publishSucceeded: "Nəşr edildi! İcma jurnalında görə bilərsən.",
-    unpublish: "Geri çək",
-    unpublishing: "Yelkən endirilir…",
-    unpublishSucceeded: "Geri çəkildi. İndi yalnız sən görürsən.",
-    publishGenericFailed: "Nəşr edilmədi. Yenə cəhd et.",
-    publishDisallowedHint:
-      "Əvvəlcə uşaq profilində Nəşr açıq pillini aktiv et.",
-    completeBanner: "Tamamlandı",
-    publishedBanner: "Nəşr edildi",
-  },
-};
 
 /* ── Utilities ──────────────────────────────────────────────────────── */
 
@@ -247,8 +98,9 @@ export function StoryReader({
   /** Source story meets the Phase 3 remix-eligibility gate. Server-computed. */
   canRemix?: boolean;
 }) {
-  const { lang } = useLanguage();
-  const t = COPY[lang];
+  const lang = useAppLocale();
+  const t = useTranslations("Reader");
+  const tBadges = useTranslations("Badges");
   const router = useRouter();
 
   const [pages] = useState<StoryPage[]>(initialPages);
@@ -278,10 +130,10 @@ export function StoryReader({
         newBadges?: string[];
       };
       setStoryStatus(data.status);
-      toast.success(t.finished);
-      toastNewBadges(data.newBadges, lang);
+      toast.success(t("finished"));
+      toastNewBadges(data.newBadges, tBadges);
     } catch {
-      toast.error(t.finishFailed);
+      toast.error(t("finishFailed"));
     } finally {
       setFinishing(false);
     }
@@ -306,17 +158,17 @@ export function StoryReader({
         };
         // Surface the server's specific reason when known.
         if (body.error === "publish_disallowed") {
-          toast.error(t.publishDisallowedHint);
+          toast.error(t("publishDisallowedHint"));
         } else if (body.error === "too_short") {
           toast.error(
-            body.message ?? t.publishGenericFailed,
+            body.message ?? t("publishGenericFailed"),
           );
         } else if (body.error === "moderation_pending") {
           toast.error(
-            body.message ?? t.publishGenericFailed,
+            body.message ?? t("publishGenericFailed"),
           );
         } else {
-          toast.error(body.message ?? t.publishGenericFailed);
+          toast.error(body.message ?? t("publishGenericFailed"));
         }
         return;
       }
@@ -326,11 +178,11 @@ export function StoryReader({
       };
       setStoryStatus(data.status);
       toast.success(
-        wantPublish ? t.publishSucceeded : t.unpublishSucceeded,
+        wantPublish ? t("publishSucceeded") : t("unpublishSucceeded"),
       );
-      toastNewBadges(data.newBadges, lang);
+      toastNewBadges(data.newBadges, tBadges);
     } catch {
-      toast.error(t.publishGenericFailed);
+      toast.error(t("publishGenericFailed"));
     } finally {
       setPublishingState(false);
     }
@@ -346,7 +198,7 @@ export function StoryReader({
         body: "{}",
       });
       if (res.status === 429) {
-        toast.error(t.remixRateLimited);
+        toast.error(t("remixRateLimited"));
         return;
       }
       if (!res.ok) throw new Error(`Remix failed: ${res.status}`);
@@ -354,10 +206,10 @@ export function StoryReader({
         storyId: string;
         newBadges?: string[];
       };
-      toastNewBadges(data.newBadges, lang);
+      toastNewBadges(data.newBadges, tBadges);
       router.push(`/story/${data.storyId}`);
     } catch {
-      toast.error(t.remixFailed);
+      toast.error(t("remixFailed"));
     } finally {
       setRemixing(false);
     }
@@ -415,7 +267,7 @@ export function StoryReader({
         return next;
       });
     } catch {
-      toast.error(t.audioFailed);
+      toast.error(t("audioFailed"));
     } finally {
       setLoadingAudio((prev) => {
         const next = new Set(prev);
@@ -437,14 +289,14 @@ export function StoryReader({
       };
       setImages(new Map(data.images.map((i) => [i.pageNumber, i.url])));
     } catch {
-      toast.error(t.imageGenFailed);
+      toast.error(t("imageGenFailed"));
     } finally {
       setGeneratingImages(false);
     }
   }
 
   const storyTitle =
-    (initialStory as unknown as { title?: string }).title ?? "Untitled tale";
+    (initialStory as unknown as { title?: string }).title ?? t("untitled");
 
   const stats = useMemo(() => {
     const allText = pages
@@ -461,27 +313,23 @@ export function StoryReader({
 
   const totalForCounter = Math.max(stats.pageCount, 1);
 
-  // The three canonical action choices. In Phase 2 these will be
-  // supplied per-page by the storyteller response; for Phase 1 we keep
-  // a stable trio so the reader is exercisable end-to-end.
-  const actionChoices: Array<{ key: string; label: string }> =
-    lang === "en"
-      ? [
-          { key: "a", label: "Step forward bravely" },
-          { key: "b", label: "Kneel and whisper" },
-          { key: "c", label: "Slip quietly away" },
-        ]
-      : [
-          { key: "a", label: "Cəsarətlə irəli addımla" },
-          { key: "b", label: "Diz çök və pıçılda" },
-          { key: "c", label: "Səssizcə uzaqlaş" },
-        ];
+  // The three canonical action choices. Labels live in the messages
+  // bundle (Reader.actionChoices); the stable keys "a"/"b"/"c" are sent
+  // to the storyteller API so the prompt template can branch on intent.
+  // In Phase 2 these will be supplied per-page by the storyteller; for
+  // Phase 1 we keep a stable trio so the reader is exercisable end-to-end.
+  const choiceLabels = t.raw("actionChoices") as string[];
+  const actionChoices: Array<{ key: string; label: string }> = [
+    { key: "a", label: choiceLabels[0] ?? "" },
+    { key: "b", label: choiceLabels[1] ?? "" },
+    { key: "c", label: choiceLabels[2] ?? "" },
+  ];
 
   async function postAndStream(body: {
     storyId: string;
     chosenActionKey?: string;
     customAction?: string;
-    lang: AppLang;
+    lang: "en" | "az";
   }) {
     if (submitting) return;
     setSubmitting(true);
@@ -539,7 +387,7 @@ export function StoryReader({
           );
         } else if (parsed.type === "error") {
           streamError =
-            parsed.errorText ?? "The scribe stumbled.";
+            parsed.errorText ?? t("scribeStumbled");
         } else if (parsed.redirect && typeof parsed.message === "string") {
           // Layer 1 moderation kid-friendly redirect (200 JSON, not SSE).
           redirectMessage = parsed.message;
@@ -583,7 +431,7 @@ export function StoryReader({
     } catch (err) {
       if ((err as { name?: string }).name !== "AbortError") {
         console.error(err);
-        toast.error(t.streamFailed);
+        toast.error(t("streamFailed"));
       }
       setStreamingPage(null);
     } finally {
@@ -608,19 +456,19 @@ export function StoryReader({
       <div className="mx-auto max-w-3xl">
         <header className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="eyebrow">{t.eyebrow}</p>
+            <p className="eyebrow">{t("eyebrow")}</p>
             <h1 className="display-lg mt-3 text-4xl md:text-5xl">
               {storyTitle}
             </h1>
             {/* Status banner for non-draft states. */}
             {storyStatus === "complete" && (
               <span className="eyebrow mt-3 inline-block rounded-sm border border-[color:var(--forest)]/40 px-2.5 py-1 text-[color:var(--forest)]">
-                ✓ {t.completeBanner}
+                ✓ {t("completeBanner")}
               </span>
             )}
             {storyStatus === "published" && (
               <span className="eyebrow mt-3 inline-block rounded-sm bg-[color:var(--ember)] px-2.5 py-1 text-[color:var(--primary-foreground)]">
-                ✦ {t.publishedBanner}
+                ✦ {t("publishedBanner")}
               </span>
             )}
           </div>
@@ -633,7 +481,7 @@ export function StoryReader({
                 disabled={finishing || submitting}
                 className="btn-ember justify-center disabled:opacity-50"
               >
-                {finishing ? t.finishing : t.finish}
+                {finishing ? t("finishing") : t("finish")}
               </Button>
             )}
             {/* Complete → "Publish to community"; Published → "Unpublish" */}
@@ -650,11 +498,11 @@ export function StoryReader({
               >
                 {publishingState
                   ? storyStatus === "published"
-                    ? t.unpublishing
-                    : t.publishing
+                    ? t("unpublishing")
+                    : t("publishing")
                   : storyStatus === "published"
-                    ? t.unpublish
-                    : t.publish}
+                    ? t("unpublish")
+                    : t("publish")}
               </Button>
             )}
             {canRemix && (
@@ -664,26 +512,26 @@ export function StoryReader({
                 disabled={remixing}
                 className="btn-ember justify-center disabled:opacity-50"
               >
-                {remixing ? t.remixing : t.remix}
+                {remixing ? t("remixing") : t("remix")}
               </Button>
             )}
           </div>
         </header>
         {/* Status-aware hint line. */}
         {storyStatus === "draft" && pages.length > 0 && (
-          <p className="eyebrow mb-6 text-foreground/55">{t.finishHint}</p>
+          <p className="eyebrow mb-6 text-foreground/55">{t("finishHint")}</p>
         )}
         {storyStatus === "complete" && (
-          <p className="eyebrow mb-6 text-foreground/55">{t.completeHint}</p>
+          <p className="eyebrow mb-6 text-foreground/55">{t("completeHint")}</p>
         )}
         {storyStatus === "published" && (
-          <p className="eyebrow mb-6 text-foreground/55">{t.publishedHint}</p>
+          <p className="eyebrow mb-6 text-foreground/55">{t("publishedHint")}</p>
         )}
 
         <dl className="mb-6 grid grid-cols-3 gap-4">
-          <Stat value={stats.pageCount} label={t.pagesLabel} />
-          <Stat value={stats.chapters} label={t.chaptersLabel} />
-          <Stat value={stats.words} label={t.wordsLabel} />
+          <Stat value={stats.pageCount} label={t("pagesLabel")} />
+          <Stat value={stats.chapters} label={t("chaptersLabel")} />
+          <Stat value={stats.words} label={t("wordsLabel")} />
         </dl>
 
         {pages.length >= 8 && (
@@ -691,7 +539,7 @@ export function StoryReader({
             {images.size > 0 ? (
               <span className="eyebrow flex items-center gap-2 text-[color:var(--forest)]">
                 <span className="inline-block h-1.5 w-1.5 rounded-full bg-[color:var(--forest)]" />
-                {t.illustrationsReady}
+                {t("illustrationsReady")}
               </span>
             ) : (
               <Button
@@ -700,7 +548,7 @@ export function StoryReader({
                 disabled={generatingImages}
                 className="btn-ember justify-center disabled:opacity-50"
               >
-                {generatingImages ? t.generatingImages : t.generateImages}
+                {generatingImages ? t("generatingImages") : t("generateImages")}
               </Button>
             )}
           </div>
@@ -709,9 +557,9 @@ export function StoryReader({
         <div className="flex flex-col gap-6">
           {pages.length === 0 && !streamingPage && (
             <article className="card-stamp p-8 text-center">
-              <p className="eyebrow text-foreground/55">{t.emptyTitle}</p>
+              <p className="eyebrow text-foreground/55">{t("emptyTitle")}</p>
               <p className="mt-4 font-[var(--font-newsreader)] text-[15.5px] italic leading-relaxed text-foreground/70">
-                {t.emptyBody}
+                {t("emptyBody")}
               </p>
             </article>
           )}
@@ -758,7 +606,7 @@ export function StoryReader({
 
         {storyStatus === "draft" && (
         <article className="card-stamp mt-10 p-6 md:p-8">
-          <p className="eyebrow text-foreground/55">{t.whatNext}</p>
+          <p className="eyebrow text-foreground/55">{t("whatNext")}</p>
 
           <div className="rule-ornament my-5">
             <svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true">
@@ -812,13 +660,13 @@ export function StoryReader({
               htmlFor="custom-action"
               className="eyebrow text-foreground/60"
             >
-              {t.orWriteYourOwn}
+              {t("orWriteYourOwn")}
             </label>
             <Textarea
               id="custom-action"
               value={customAction}
               onChange={(e) => setCustomAction(e.target.value)}
-              placeholder={t.customPlaceholder}
+              placeholder={t("customPlaceholder")}
               rows={3}
               maxLength={400}
               disabled={submitting}
@@ -827,14 +675,14 @@ export function StoryReader({
             <div className="flex items-center justify-between gap-3">
               <span className="eyebrow text-foreground/55 flex items-center gap-2">
                 <span className="inline-block h-1.5 w-1.5 rounded-full bg-[color:var(--forest)]" />
-                {t.moderated}
+                {t("moderated")}
               </span>
               <Button
                 type="submit"
                 disabled={!customAction.trim() || submitting}
                 className="btn-ember justify-center disabled:opacity-50"
               >
-                {submitting ? t.sending : t.send}
+                {submitting ? t("sending") : t("send")}
               </Button>
             </div>
           </form>
@@ -878,7 +726,7 @@ function PageCard({
   audioUrl: string | undefined;
   isLoadingAudio: boolean;
   onNarrate: (() => void) | undefined;
-  t: (typeof COPY)[AppLang];
+  t: Translator;
   isLive: boolean;
 }) {
   return (
@@ -888,7 +736,7 @@ function PageCard({
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={imageUrl}
-            alt={`Illustration for page ${pageNumber}`}
+            alt={t("illustrationAlt", { n: pageNumber })}
             className="h-full w-full object-cover transition-transform duration-700 hover:scale-[1.03]"
           />
         </div>
@@ -897,15 +745,15 @@ function PageCard({
         <div className="flex items-baseline justify-between border-b border-border/60 pb-4">
           <div className="flex items-baseline gap-3">
             <span className="eyebrow">
-              Ch. {String(chapterNumber).padStart(2, "0")}
+              {t("chapterPrefix")} {String(chapterNumber).padStart(2, "0")}
             </span>
             {isLive && (
               <span className="font-mono text-[10.5px] uppercase tracking-widest text-[color:var(--ember)]">
-                &times; live
+                &times; {t("liveLabel")}
               </span>
             )}
           </div>
-          <span className="eyebrow">{t.pageOf(pageNumber, total)}</span>
+          <span className="eyebrow">{t("pageOf", { n: pageNumber, total })}</span>
         </div>
 
         <div className="mt-5 whitespace-pre-wrap font-[var(--font-newsreader)] text-[17px] leading-[1.85] text-foreground/90">
@@ -922,7 +770,7 @@ function PageCard({
                 preload="none"
                 src={audioUrl}
                 className="w-full"
-                aria-label={`Narration for page ${pageNumber}`}
+                aria-label={t("narrationAlt", { n: pageNumber })}
               />
             ) : (
               <button
@@ -940,7 +788,7 @@ function PageCard({
                 >
                   <path d="M8 5v14l11-7z" />
                 </svg>
-                {isLoadingAudio ? t.narrating : t.narrate}
+                {isLoadingAudio ? t("narrating") : t("narrate")}
               </button>
             )}
           </div>

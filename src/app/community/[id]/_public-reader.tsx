@@ -14,7 +14,6 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { useAppLocale } from "@/i18n/use-app-locale";
 import { BADGES_BY_KEY, isKnownBadgeKey } from "@/lib/badges";
 import { story, storyPage } from "@/lib/schema";
 import { getWorld } from "@/lib/worlds";
@@ -37,17 +36,13 @@ export function PublicReader({
   canRemix: boolean;
 }) {
   const t = useTranslations("PublicReader");
-  // Worlds + badges still ship their copy as `{ en, az }` records; PR 4
-  // will migrate those into the messages bundle. `useAppLocale()` narrows
-  // next-intl's string locale to our canonical `Locale` union safely (no
-  // unchecked cast), with a fallback to DEFAULT_LOCALE if the cookie
-  // ever drifts outside the supported set.
-  const locale = useAppLocale();
+  const tWorlds = useTranslations("Worlds");
+  const tBadges = useTranslations("Badges");
   const router = useRouter();
 
   const [remixing, setRemixing] = useState(false);
   const world = getWorld(source.worldKey);
-  const worldName = world?.name[locale] ?? source.worldKey;
+  const worldName = world ? tWorlds(`${world.key}.name`) : source.worldKey;
 
   async function handleRemix() {
     if (remixing) return;
@@ -73,9 +68,8 @@ export function PublicReader({
         for (const key of data.newBadges) {
           if (typeof key !== "string" || !isKnownBadgeKey(key)) continue;
           const badge = BADGES_BY_KEY[key];
-          const i18n = badge.i18n[locale];
-          toast.success(`${badge.icon}  ${i18n.name}`, {
-            description: i18n.description,
+          toast.success(`${badge.icon}  ${tBadges(`${key}.name`)}`, {
+            description: tBadges(`${key}.description`),
           });
         }
       }
