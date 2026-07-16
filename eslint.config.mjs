@@ -14,6 +14,9 @@ const config = [
       // Generated PWA artifacts (next-pwa/Workbox output) — minified bundles,
       // regenerated on every build and already gitignored.
       "public/**/*.js",
+      // Nested git worktrees (each carries its own .next/ and public/ builds;
+      // the root-relative ignores above don't reach into them).
+      ".claude/**",
     ],
   },
   ...nextConfig,
