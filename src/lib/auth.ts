@@ -8,8 +8,10 @@ import { db } from "./db"
 import { getServerEnv } from "./env";
 
 // Same sending identity family as the parent digest cron
-// (src/app/api/cron/parent-digest/route.ts).
-const AUTH_EMAIL_FROM = "The Hero's Forge <auth@herosforge.app>";
+// (src/app/api/cron/parent-digest/route.ts). The Resend-verified sending
+// domain is mail.herosforge.app (subdomain), NOT the bare apex — senders
+// on @herosforge.app are rejected with a 403.
+const AUTH_EMAIL_FROM = "The Hero's Forge <auth@mail.herosforge.app>";
 
 /**
  * Deliver a transactional auth email via Resend. When RESEND_API_KEY is

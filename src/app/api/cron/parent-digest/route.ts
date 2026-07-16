@@ -84,7 +84,9 @@ export async function GET(req: Request) {
       );
 
       await resend.emails.send({
-        from: "The Hero's Forge <digest@herosforge.app>",
+        // Resend-verified sending domain is mail.herosforge.app — the
+        // bare apex is not verified and 403s.
+        from: "The Hero's Forge <digest@mail.herosforge.app>",
         to: parent.email,
         subject: `Weekly Digest — ${weekEndingStr}`,
         html,
