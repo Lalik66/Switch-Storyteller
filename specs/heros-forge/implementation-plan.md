@@ -38,6 +38,11 @@ Use this as a checklist when auditing; items reflect current `src/` structure.
   - ⚠️ **Fixed:** `env.ts` + `env.example` had invalid OpenRouter model IDs; updated defaults to `google/gemini-flash-1.5` (cheap) and `anthropic/claude-3-5-sonnet-20241022` (premium)
   - ✅ **Fixed:** Added `maxOutputTokens: 400` to `streamText` calls in story/page API for cost control (~150 words/page)
   - ⏳ Moderation logging + PDF download blocked pending working page generation (need OpenRouter credits)
+  - **2026-07-17 verification attempt** (OpenRouter credits funded, $5):
+    - ✅ Signup → child profile → intake all pass against the live dev server (E2E script)
+    - ✅ Page generation streams — `anthropic/claude-sonnet-4.6` produced a real 2.6 KB opener
+    - ⚠️ **Fixed (again):** all three model defaults had rotted — `claude-3.5-haiku`, `claude-3-5-sonnet-20241022`, and `openai/dall-e-3` no longer resolve. Replaced with `claude-haiku-4.5` / `claude-sonnet-4.6` / `gemini-2.5-flash-image`, each verified against `GET /api/v1/models` (PR #9)
+    - ⛔ **Still blocked — new blocker:** the OpenAI account behind `OPENAI_MODERATION_API_KEY` returns persistent 429 ("Too Many Requests") even on a single call. Moderation is fail-closed, so Layer 3 throws in `onFinish` and no page persists (verified: streamed page produced zero `story_page`/`prompt_log` rows). Moderation-logging E2E, PDF download E2E, and the negative test all wait on the OpenAI account being restored — not on code.
 - [x] **Parent verbatim visibility (PRD §10)** — Implement or extend a **parent** route so every story's **full text** is readable (no summary-only UX). Options: evolve `src/app/dashboard/page.tsx` or add `src/app/(parent)/dashboard/page.tsx` with server-loaded stories + pages for the parent's children.
   - ✅ Created `src/app/(parent)/stories/page.tsx` — parent-only library showing all children's stories with full verbatim page content
   - ✅ Session-safe (server component with auth check, parent ownership verification)
@@ -63,6 +68,7 @@ Use this as a checklist when auditing; items reflect current `src/` structure.
 - [x] **`src/lib/image-prompts.ts`** — `buildScenePrompt()` (world-aware, G-rated, watercolour style) + `sceneHash()` (SHA-256, normalised).
 - [x] **`src/app/api/story/[id]/images/route.ts`** — `GET` returns existing images; `POST` generates for pages 1/3/5/7/8, checks `scene_hash` cache first, calls OpenRouter images API, uploads via `storage.ts`, persists to `story_image`.
 - [x] **`OPENROUTER_IMAGE_MODEL`** env var added to `src/lib/env.ts` (default `openai/dall-e-3`; re-verify at kickoff per PRD §Open items).
+  - ✅ **Re-verified 2026-07-17:** `openai/dall-e-3` and `openai/gpt-image-1` are dead on OpenRouter; default changed to `google/gemini-2.5-flash-image` (PRD §4.2's first choice, confirmed live). PR #9. Live image *generation* not yet exercised.
 - [x] **Story reader illustration UI** — `_reader.tsx` updated: fetches existing images on mount, shows "Illustrate this tale" button when `pages.length >= 8`, `PageCard` renders image above text with hover-scale animation.
 - [x] **Character vault UX + prompt injection** — `src/lib/character-extraction.ts` auto-extracts characters via cheap LLM in `onFinish`; `STORY_SYSTEM_PROMPT` injects top-10 known characters (by appearance count); CRUD routes at `/api/characters` + `/api/characters/[id]`; management UI at `src/app/(parent)/characters/page.tsx` with bilingual (EN/AZ) `_character-vault.tsx` client component; nav link + route protection added.
 - [x] **`parent_report` table + weekly rollup** — `src/lib/parent-report.ts` aggregates stories/words/pages/moderation incidents per child per week; persists to `parent_report` table; marks rows as sent after email delivery.
@@ -83,12 +89,13 @@ Use this as a checklist when auditing; items reflect current `src/` structure.
 
 ### Tasks
 
-- [ ] **Schema** — `parent_story_id` on `story` (if not added earlier); `badge`, `child_badge`, `print_order`, `subscription` (or Better Auth Stripe tables).
-- [ ] **Remix flow** — Server action or API: clone pages 1–4 to new `story` with FK to parent story.
-- [ ] **`src/app/community/page.tsx`** — Paginated feed; only `moderation_status = safe` and `allow_publish = true`.
+- [x] **Schema (community slice)** — `parent_story_id` on `story` (set-null FK, `story_parent_story_id_idx`) and `child_badge` shipped in `src/lib/schema.ts` (PR #2). `print_order` and `subscription` remain unscheduled until the Lulu/Stripe milestones below.
+- [x] **Remix flow** — Shipped in PR #2: `POST /api/story/[id]/remix` clones up to 4 moderation-safe pages in one transaction, gates on source `status='published'` + `allowPublish` + `allowRemix`, applies the free-tier weekly limit to the remixer, and re-evaluates badges.
+- [x] **`src/app/community/page.tsx`** — Shipped in PR #2: paginated server-rendered feed gated on `story.status='published' AND child_profile.allow_publish`; public reader (`community/[id]`) additionally renders only `moderation_status='safe'` pages. Publish gates live in `POST /api/story/[id]/publish` (≥4 pages, all safe, parental consent, idempotent).
+- [x] **Badges** — Shipped in PR #2 (was folded into the schema bullet, never scoped — recorded here for the ledger): catalog of 6 as a code constant in `src/lib/badges.ts` (deliberate: no `badge` table; drift-safe "Unknown badge" rendering), race-safe `awardBadges()` via `onConflictDoNothing` on the `(child_profile_id, badge_key)` unique index, awarded from the complete/publish/remix routes, earned-chip UI + i18n `Badges` namespace. Note: the `wordsmith` badge only became earnable after the word-count fix (PR #6).
 - [ ] **`src/app/api/print/route.ts`** — Lulu xPress; reuse Phase 1 PDF as print master.
-- [ ] **Stripe** — Better Auth Stripe plugin or `src/lib/billing.ts`; parent as customer; map Pro/Family tiers to PRD §11.
-- [ ] **Free vs Pro** — Wire subscription state to story-creation throttle and Phase 2 premium features.
+- [ ] **Stripe** — Better Auth Stripe plugin or `src/lib/billing.ts`; parent as customer; map Pro/Family tiers to PRD §11. **Owner decision: last milestone of the project.**
+- [ ] **Free vs Pro** — Wire subscription state to story-creation throttle and Phase 2 premium features. Blocked on Stripe.
 
 ### Technical details
 
@@ -126,3 +133,34 @@ UPDATE "user" SET role = 'admin' WHERE email = 'you@example.com';
 ```
 
 No UI for role grants in v1 — deliberate. Admin promotion is a privileged operation and should leave a SQL trail.
+
+---
+
+## Housekeeping & template removal (2026-07)
+
+Full evidence in [`docs/audit/AUDIT-2026-07-16.md`](../../docs/audit/AUDIT-2026-07-16.md). Standing constraints now live in [`DESIGN.md`](../../DESIGN.md) — notably: **the Resend-verified sending domain is `mail.herosforge.app` (subdomain), never the bare apex**.
+
+### Removed (with why)
+
+- [x] `src/lib/landing-copy.ts` — inline `{en,az}` dictionary superseded by the `Landing` messages namespace (i18n migration part 2, PR #5).
+- [x] `src/components/site-footer.tsx` — superseded by `localized-site-footer.tsx`; zero imports (PR #8).
+- [x] `src/app/(parent)/library/page.tsx` — near-verbatim duplicate of `/parent/stories` (which adds the publish toggle); no inbound links (PR #8).
+- [x] `public/{next,vercel,file,globe,window}.svg` — starter-template assets, unreferenced (PR #8).
+- [x] ~3.1 GB of stale worktrees/branches under `.claude/worktrees/` — 50 worktrees and ~60 fully-merged branches removed 2026-07-16 (tooling state, not source).
+
+### Boilerplate still present (deletion pending owner review)
+
+Not part of the product; the PRD referenced them only as the "reference pattern" for new AI routes:
+
+- [ ] `src/app/chat/*` + `src/app/api/chat/route.ts` — demo AI chat. Inbound refs: old `/dashboard` page, `protectedRoutes` (`session.ts`), proxy matcher, `OPENROUTER_MODEL` env + `env.example` comment, README feature list.
+- [ ] `src/app/api/diagnostics/route.ts` + `src/hooks/use-diagnostics.ts` — setup-wizard health check; consumed only by the old `/dashboard` page.
+- [ ] `src/app/dashboard/*` — template hub. Post-login redirects repointed to `/parent/dashboard` in PR #10; remaining plain links (`not-found`, `offline`, `story/new`, `user-profile`) move in the deletion PR.
+
+---
+
+## Open items (cross-phase)
+
+- [ ] **`description_embedding` (pgvector) on `character`** — still deferred (see Phase 2 schema bullet). Needs: pgvector extension confirmed on the target Postgres, a separate `ALTER TABLE` migration, an embedding call on character upsert, and prompt-injection ranking by similarity instead of `appearance_count`. No owner decision yet on provider/dimensions (PRD assumed 1536).
+- [ ] **Digest/email locale** — `user` has no locale column; UI locale lives in the `heros-forge-ui-lang` cookie, which cron/email contexts cannot read. Parent-facing emails are English-only until the owner decides where a parent's language preference persists (schema change — requires explicit approval).
+- [ ] **OpenAI moderation account** — persistent 429 as of 2026-07-17 blocks the remaining Phase 1 E2E items (ops, not code).
+- [ ] **PostHog** — see Phase 1 task list (optional).
