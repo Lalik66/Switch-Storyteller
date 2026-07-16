@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { useLanguage, type AppLang } from "@/components/language-provider";
+import { updateUser, useSession } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 
 const LANGS: { code: AppLang; label: string }[] = [
@@ -11,7 +12,18 @@ const LANGS: { code: AppLang; label: string }[] = [
 
 export function LanguageSwitcher() {
   const { lang, setLang } = useLanguage();
+  const { data: session } = useSession();
   const t = useTranslations("LanguageSwitcher");
+
+  const switchLang = (code: AppLang) => {
+    setLang(code);
+    // Signed-in parents also persist the choice to user.locale so
+    // cookie-less contexts (digest cron, transactional emails) follow.
+    // Fire-and-forget: the cookie is the UI's source of truth either way.
+    if (session) {
+      void updateUser({ locale: code }).catch(() => {});
+    }
+  };
 
   return (
     <div
@@ -25,7 +37,7 @@ export function LanguageSwitcher() {
           <button
             key={code}
             type="button"
-            onClick={() => setLang(code)}
+            onClick={() => switchLang(code)}
             className={cn(
               "rounded-full px-2.5 py-1 text-[11px] font-medium tracking-wide transition-colors",
               active
