@@ -38,6 +38,11 @@ const bodySchema = z.object({
 // Chapters are ~4 pages; opener/finale gets the premium model.
 const PREMIUM_PAGE_INTERVAL = 4;
 
+/** Whitespace-delimited word count — same tokenisation as the remix route. */
+function countWords(text: string): number {
+  return text.trim().split(/\s+/).filter(Boolean).length;
+}
+
 function pickModel(nextPageNumber: number, totalPagesPlanned = 8): string {
   const isOpenerOrFinale =
     nextPageNumber === 1 ||
@@ -274,6 +279,37 @@ export async function POST(req: Request) {
           modelUsed: modelId,
           tokenUsage: usage ? JSON.parse(JSON.stringify(usage)) : null,
         });
+
+        // Keep the story's aggregate counters in sync (PRD P1-4 progress
+        // tracking; badges, parent dashboard, and the weekly digest all
+        // read story.word_count). Recompute from all pages rather than
+        // incrementing so the row self-heals if a past write was missed.
+        const allPages = await db
+          .select({
+            aiContent: storyPage.aiContent,
+            childContent: storyPage.childContent,
+          })
+          .from(storyPage)
+          .where(eq(storyPage.storyId, storyId));
+
+        const totalWords = allPages.reduce(
+          (sum, p) =>
+            sum + countWords(p.aiContent) + countWords(p.childContent ?? ""),
+          0,
+        );
+
+        await db
+          .update(story)
+          .set({
+            wordCount: totalWords,
+            // Chapters are ~4 pages (see PREMIUM_PAGE_INTERVAL) — same
+            // bucketing as the chapterNumber prompt arg above.
+            chapterCount: Math.max(
+              1,
+              Math.ceil(allPages.length / PREMIUM_PAGE_INTERVAL),
+            ),
+          })
+          .where(eq(story.id, storyId));
 
         // Phase 2: extract characters from the generated page (fire-and-forget).
         if (moderationStatus === "safe") {
