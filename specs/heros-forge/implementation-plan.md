@@ -88,7 +88,9 @@ Use this as a checklist when auditing; items reflect current `src/` structure.
 
 ## Phase 3: The Community
 
-> **Unblocked 2026-07:** Phase 4 (Layer 4 human review) is complete, satisfying the plan's stated COPPA precondition for the community feed. Remix + feed shipped in PR #2 (ledger below); remaining Phase 3 work is Lulu print, then Stripe (last), then Free-vs-Pro wiring.
+> **Community slice shipped in PR #2 (2026-05-07) — LIVE IN CODE, NOT YET VERIFIED.** The feed, public reader, remix flow, and badges exist in the codebase but have never been E2E- or manually tested, and were absent from this plan for two months. A read-only community-feed audit was delivered to the owner on 2026-07-17 (six-point safety review).
+> **Correction of a prior note here:** an earlier version claimed "Phase 4 (Layer 4 human review) satisfies the plan's stated COPPA precondition for the feed." **That is false.** Layer 4 human review is NOT in the publish path — publishing gates only on automated Layer-3 `moderation_status='safe'` (see `api/story/[id]/publish/route.ts`) plus the parent's `allow_publish` flag. The admin queue reviews `moderation_event` rows after the fact; it does not gate publication. Treat feed safety as an OPEN question pending owner decisions from the audit.
+> Remaining Phase 3 build work: Lulu print, then Stripe (last), then Free-vs-Pro wiring.
 
 > **Provenance (recorded 2026-07-17):** the Phase 3 community slice shipped in **PR #2** (`claude/optimistic-vaughan-f34886`, merge `1f6ab07`, titled "feat(phase3): community + remix + badges") on 2026-05-07 — deliberately built early, the same out-of-phase ordering the plan already documents for Phase 4 (COPPA gate). Its checkboxes below were simply never updated at merge; corrected now. The original single compound "Schema" bullet is split per-item so no `[x]` bundles an unbuilt item.
 
