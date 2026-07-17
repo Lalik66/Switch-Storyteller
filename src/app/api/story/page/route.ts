@@ -21,6 +21,7 @@ import {
   STORY_PAGE_USER_PROMPT,
   STORY_OPENER_PROMPT,
 } from "@/lib/story-prompts";
+import { classifyStreamError } from "@/lib/stream-errors";
 
 // Canned safe fallback content when moderation repeatedly flags output.
 const CANNED_SAFE_PAGE: Record<"en" | "az", string> = {
@@ -329,6 +330,28 @@ export async function POST(req: Request) {
   });
 
   return (
-    result as unknown as { toUIMessageStreamResponse: () => Response }
-  ).toUIMessageStreamResponse();
+    result as unknown as {
+      toUIMessageStreamResponse: (opts?: {
+        onError?: (error: unknown) => string;
+      }) => Response;
+    }
+  ).toUIMessageStreamResponse({
+    // The AI SDK's default onError serializes the provider's raw message
+    // into the wire `errorText` (verified: @ai-sdk/provider-utils
+    // getErrorMessage returns error.message verbatim). That message can leak
+    // model IDs / key hints / credit state and is untranslated technical
+    // English. Replace it with a classified code — the ONLY thing the child's
+    // browser ever receives — and log the real details server-side for ops.
+    onError: (error) => {
+      const errorClass = classifyStreamError(error);
+      console.error("[story/page] generation stream error", {
+        storyId,
+        pageNumber: nextPageNumber,
+        model: modelId,
+        errorClass,
+        providerMessage: error instanceof Error ? error.message : String(error),
+      });
+      return errorClass;
+    },
+  });
 }
