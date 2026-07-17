@@ -21,20 +21,22 @@ const serverEnvSchema = z.object({
   OPENROUTER_API_KEY: z.string().optional(),
   OPENROUTER_MODEL: z.string().default("openai/gpt-5-mini"),
   // Per PRD §4.1: cheap = Claude Haiku for per-page generation, premium =
-  // Claude Sonnet for chapter openers/finales. Use OpenRouter slugs that
-  // are confirmed live (the older `google/gemini-flash-1.5` was deprecated
-  // and now returns "No endpoints found"). Override per-deployment via .env.
+  // Claude Sonnet for chapter openers/finales. Model slugs rot: the 3.5-era
+  // Anthropic slugs died in mid-2026 just like `google/gemini-flash-1.5`
+  // before them ("No endpoints found"). Verified live 2026-07-17 against
+  // GET /api/v1/models. Override per-deployment via .env.
   OPENROUTER_STORY_MODEL_CHEAP: z
     .string()
-    .default("anthropic/claude-3.5-haiku"),
+    .default("anthropic/claude-haiku-4.5"),
   OPENROUTER_STORY_MODEL_PREMIUM: z
     .string()
-    .default("anthropic/claude-3-5-sonnet-20241022"),
+    .default("anthropic/claude-sonnet-4.6"),
   // Phase 2: image generation model via OpenRouter images API.
-  // Re-verify model ID availability at Phase 2 kickoff (PRD §Open items).
+  // Re-verified 2026-07-17: `openai/dall-e-3` and `openai/gpt-image-1` no
+  // longer resolve; gemini-2.5-flash-image (PRD §4.2's first choice) does.
   OPENROUTER_IMAGE_MODEL: z
     .string()
-    .default("openai/dall-e-3"),
+    .default("google/gemini-2.5-flash-image"),
 
   // Moderation (child-safety critical — required, not optional)
   OPENAI_MODERATION_API_KEY: z
