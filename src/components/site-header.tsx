@@ -3,9 +3,13 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import { LocalizedSkipLink } from "@/components/localized-skip-link";
 import { MainNavLinks } from "@/components/main-nav-links";
 import { SiteHeaderHomeLink } from "@/components/site-header-home-link";
+import { isCommunityEnabled } from "@/lib/env";
 import { ModeToggle } from "./ui/mode-toggle";
 
 export function SiteHeader() {
+  // Server component — resolves the community flag once and passes it to the
+  // client nav so the /community link is absent (not just hidden) when off.
+  const communityEnabled = isCommunityEnabled();
   return (
     <>
       <LocalizedSkipLink />
@@ -19,7 +23,7 @@ export function SiteHeader() {
         >
           <SiteHeaderHomeLink />
 
-          <MainNavLinks />
+          <MainNavLinks communityEnabled={communityEnabled} />
 
           <div
             className="flex items-center gap-3"

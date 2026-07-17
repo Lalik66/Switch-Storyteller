@@ -7,7 +7,11 @@ import { useSession } from "@/lib/auth-client";
 const linkClasses =
   "text-sm text-foreground/75 transition-colors hover:text-foreground";
 
-export function MainNavLinks() {
+export function MainNavLinks({
+  communityEnabled = false,
+}: {
+  communityEnabled?: boolean;
+}) {
   const t = useTranslations("Nav");
   const { data: session } = useSession();
 
@@ -40,9 +44,11 @@ export function MainNavLinks() {
           <Link href="/characters" className={linkClasses}>
             {t("characters")}
           </Link>
-          <Link href="/community" className={linkClasses}>
-            {t("community")}
-          </Link>
+          {communityEnabled && (
+            <Link href="/community" className={linkClasses}>
+              {t("community")}
+            </Link>
+          )}
         </>
       )}
     </div>

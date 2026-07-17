@@ -13,6 +13,7 @@
 import { desc, eq, inArray, asc } from "drizzle-orm";
 import { getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
+import { isCommunityEnabled } from "@/lib/env";
 import {
   childProfile,
   story,
@@ -95,6 +96,9 @@ export default async function ParentStoriesPage() {
   const session = await requireAuth();
   const parentFirstName = session.user.name?.split(" ")[0] ?? "Captain";
   const tWorlds = await getTranslations("Worlds");
+  // Publish/unpublish is a community-surface action — hidden when the flag
+  // is off (safety audit 2026-07-17). The API 404s regardless.
+  const communityEnabled = isCommunityEnabled();
 
   // Fetch the parent's children
   const children = await loadChildrenForParent(session.user.id);
@@ -228,10 +232,12 @@ export default async function ParentStoriesPage() {
                                       {storyPages.length === 1 ? "page" : "pages"}
                                     </span>
                                   </div>
-                                  <PublishToggle
-                                    storyId={s.id}
-                                    currentStatus={s.status}
-                                  />
+                                  {communityEnabled && (
+                                    <PublishToggle
+                                      storyId={s.id}
+                                      currentStatus={s.status}
+                                    />
+                                  )}
                                 </div>
                               </div>
 

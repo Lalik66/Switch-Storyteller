@@ -4,6 +4,7 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { awardBadges } from "@/lib/badges";
 import { db } from "@/lib/db";
+import { isCommunityEnabled } from "@/lib/env";
 import { childProfile, story, storyPage } from "@/lib/schema";
 
 /** Maximum stories (including remixes) a free-tier child may create per rolling 7 days. */
@@ -26,6 +27,10 @@ export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  // Community surface behind a default-off flag (safety audit 2026-07-17).
+  // 404 — not 403 — so a disabled surface is indistinguishable from absent.
+  if (!isCommunityEnabled()) return json({ error: "Not found" }, 404);
+
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) return json({ error: "Unauthorized" }, 401);
 
