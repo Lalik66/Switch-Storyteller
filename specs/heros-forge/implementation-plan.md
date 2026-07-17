@@ -88,6 +88,8 @@ Use this as a checklist when auditing; items reflect current `src/` structure.
 
 ## Phase 3: The Community
 
+> **Unblocked 2026-07:** Phase 4 (Layer 4 human review) is complete, satisfying the plan's stated COPPA precondition for the community feed. Remix + feed shipped in PR #2 (ledger below); remaining Phase 3 work is Lulu print, then Stripe (last), then Free-vs-Pro wiring.
+
 ### Tasks
 
 - [x] **Schema (community slice)** — `parent_story_id` on `story` (set-null FK, `story_parent_story_id_idx`) and `child_badge` shipped in `src/lib/schema.ts` (PR #2). `print_order` and `subscription` remain unscheduled until the Lulu/Stripe milestones below.
@@ -164,6 +166,6 @@ Not part of the product; the PRD referenced them only as the "reference pattern"
 - [ ] **`description_embedding` (pgvector) on `character`** — still deferred (see Phase 2 schema bullet). Needs: pgvector extension confirmed on the target Postgres, a separate `ALTER TABLE` migration, an embedding call on character upsert, and prompt-injection ranking by similarity instead of `appearance_count`. No owner decision yet on provider/dimensions (PRD assumed 1536).
 - [x] **Digest/email locale** — owner approved option A: `user.locale` column (migration 0008), captured at signup, synced by the language switcher (PR #11). Email templates still render English — wiring `locale` through rides with the `Emails.*` i18n batch.
 - [x] **OpenAI moderation account** — was returning persistent 429 (ops, not code); owner restored it 2026-07-17 and the full E2E passed.
-- [ ] **Drizzle migration journal drift** — `drizzle.__drizzle_migrations` in the local DB holds worktree-era timestamps that don't match `drizzle/meta/_journal.json`, so `pnpm db:migrate` fails (tries to re-apply 0004). The 0008 ALTER was applied surgically. Owner decision: rebaseline the journal vs. standardize on `db:push` for local dev. Any future production DB starts clean and is unaffected.
-- [ ] **Stray `story.published_at` column** — exists in the local DB (all NULL), absent from `schema.ts`; `db:push` wants to drop it. Owner call.
+- [x] **Drizzle migration journal drift + stray `story.published_at`** — RESOLVED by owner-ruled rebaseline (2026-07-17): confirmed no repo migration or source file ever creates `published_at` (worktree-era residue only), dropped and recreated the local dev DB from empty, and ran the full chain `0000 → 0008` through `pnpm db:migrate` — **all 9 applied cleanly**, 14 tables, `user.locale` correct, stray column gone. Migration 0008 has now executed through the real migrate path. `db:push` remains NOT blessed for local dev.
+- [ ] **Layer 3 flagged-path test hook** — the forced-error experiment (nonexistent cheap model, 2026-07-17) proved the *model-error* path is a different path: `streamText` emits a stream `error` part, `onFinish` never runs, so the canned fallback (which lives inside `onFinish` behind a `moderateOutput` flag) is not reached. The flagged path is unreachable with everything real — Layer 1 blocks any input that would coax unsafe output. Closing the caveat needs a dev-only test hook (e.g. `MODERATION_TEST_FORCE_FLAG`, refused in production) — owner approval pending. The experiment also exposed a robustness gap: **on model failure the child gets a raw error part in the stream, no page, no kid-friendly fallback, and nothing durable is logged** — candidate follow-up fix.
 - [ ] **PostHog** — see Phase 1 task list (optional).
