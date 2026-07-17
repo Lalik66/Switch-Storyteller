@@ -63,9 +63,11 @@ Use this as a checklist when auditing; items reflect current `src/` structure.
 
 ## Phase 2: The World Grows
 
+> **Provenance:** Phase 2 schema reached master via **migrations 0003 (`character`, `parent_report`, `story_image`) and 0004 (`story_audio`)**, both merged in **PR #2** (not a separate Phase 2 PR — see PR ledger). All Phase 2 tasks below are shipped.
+
 ### Tasks
 
-- [x] **`story_image` table + `character` table + `parentReport` table** — Added in `src/lib/schema.ts` Phase 2 section. `scene_hash` unique index on `story_image`; `character_child_profile_id_idx` on `character`. `description_embedding` (pgvector) deferred — requires separate `ALTER TABLE` migration once pgvector extension is confirmed on the Postgres instance.
+- [x] **`story_image` table + `character` table + `parentReport` table** — Added in `src/lib/schema.ts` Phase 2 section (migration `0003_fearless_vulcan.sql`, via PR #2). `scene_hash` unique index on `story_image`; `character_child_profile_id_idx` on `character`. `description_embedding` (pgvector) deferred — requires separate `ALTER TABLE` migration once pgvector extension is confirmed on the Postgres instance.
 - [x] **`src/lib/image-prompts.ts`** — `buildScenePrompt()` (world-aware, G-rated, watercolour style) + `sceneHash()` (SHA-256, normalised).
 - [x] **`src/app/api/story/[id]/images/route.ts`** — `GET` returns existing images; `POST` generates for pages 1/3/5/7/8, checks `scene_hash` cache first, calls OpenRouter images API, uploads via `storage.ts`, persists to `story_image`.
 - [x] **`OPENROUTER_IMAGE_MODEL`** env var added to `src/lib/env.ts` (default `openai/dall-e-3`; re-verify at kickoff per PRD §Open items).
@@ -105,7 +107,7 @@ Use this as a checklist when auditing; items reflect current `src/` structure.
 ### Features
 
 - [x] **Remix flow** — **Shipped in PR #2**: `POST /api/story/[id]/remix` clones up to 4 moderation-safe pages in one transaction, gates on source `status='published'` + `allowPublish` + `allowRemix`, applies the free-tier weekly limit to the remixer, and re-evaluates badges.
-- [x] **Community feed** (`src/app/community/page.tsx`) — **Shipped in PR #2**: paginated server-rendered feed gated on `story.status='published' AND child_profile.allow_publish`; public reader (`community/[id]`) additionally renders only `moderation_status='safe'` pages. Publish gates live in `POST /api/story/[id]/publish` (≥4 pages, all safe, parental consent, idempotent).
+- [x] **Community feed** (`src/app/community/page.tsx`) — **Shipped in PR #2**: paginated server-rendered feed gated on `story.status='published' AND child_profile.allow_publish`; public reader (`community/[id]`) additionally renders only `moderation_status='safe'` pages. Publish gates live in `POST /api/story/[id]/publish` (≥4 pages, all safe, parental consent, idempotent). **⚠️ Now DARK behind `COMMUNITY_ENABLED` (default off, PR #13)** pending owner decisions — see "Community feed safety findings" below.
 - [x] **Badges** — **Shipped in PR #2**: catalog of 6 as a code constant in `src/lib/badges.ts`, race-safe `awardBadges()` via `onConflictDoNothing` on the `(child_profile_id, badge_key)` unique index, awarded from the complete/publish/remix routes, earned-chip UI + i18n `Badges` namespace. The `wordsmith` badge only became earnable after the word-count fix (PR #6).
 - [ ] **Lulu print** (`src/app/api/print/route.ts`) — unbuilt. Lulu xPress; reuse Phase 1 PDF as print master.
 - [ ] **Stripe** — unbuilt. Better Auth Stripe plugin or `src/lib/billing.ts`; parent as customer; map Pro/Family tiers to PRD §11. **Owner decision: last milestone of the project.**
@@ -120,7 +122,10 @@ Use this as a checklist when auditing; items reflect current `src/` structure.
 
 ## Phase 4: Admin & Layer 4 moderation
 
-PRD §9/§10 — human review queue for high-severity `moderation_event` rows. **Built before Phase 3 community feed** because the feed cannot ship without a Layer 4 reviewer workflow under COPPA.
+PRD §9/§10 — human review queue for high-severity `moderation_event` rows.
+
+> **Provenance:** Phase 4 schema (`user_role` enum + `moderation_event` reviewer columns) reached master via **migration 0005** in **PR #2** (see PR ledger) — not a separate Phase 4 PR.
+> **Correction (2026-07-17 feed audit):** an earlier version of this header claimed "the feed cannot ship without a Layer 4 reviewer workflow." **That is false.** The admin queue reviews `moderation_event` rows *after the fact*; it is **NOT** in the publish path. Publishing gates only on automated Layer-3 `moderation_status='safe'` + the parent's `allow_publish` flag (see `api/story/[id]/publish/route.ts`). Layer 4 is not a precondition for publication.
 
 ### Tasks
 
@@ -183,4 +188,39 @@ Not part of the product; the PRD referenced them only as the "reference pattern"
 - [ ] **`generation_error` durable log** — deferred by owner ruling (2026-07-17). Stream failures are logged to server stdout only (see stream-failure item above); a durable table is write-only until there's a reader. **Trigger to revisit: when PostHog (§12) lands** — `hard_config` failures are an ops signal (the app is misconfigured for every child, e.g. exhausted credits — the exact class that blocked the E2E for weeks), and PostHog is where that signal belongs. This is the concrete justification §12 previously lacked.
 - [ ] **`description_embedding` (pgvector) on `character`** — still deferred (see Phase 2 schema bullet). Needs: pgvector extension confirmed on target Postgres, a separate `ALTER TABLE` migration, an embedding call on character upsert, and prompt-injection ranking by similarity instead of `appearance_count`. No owner decision yet on provider/dimensions (PRD assumed 1536).
 - [ ] **PostHog (§12)** — still the only unchecked Phase 1 box. Now has a concrete first consumer: routing `hard_config` stream failures as an ops signal (see `generation_error` item).
-- [ ] **Repo → plan reconciliation (full pass)** — NOT STARTED; queued after current threads close. The plan has twice turned out not to know what's in the repo (chat/diagnostics/old-`/dashboard`/DESIGN.md; then the Phase 3 badge/community slice). Do a full read-the-repo-then-correct-the-plan pass — repo is source of truth, plan follows. Do not correct the repo to match the plan.
+- [x] **Repo → plan reconciliation (full pass)** — DONE 2026-07-17. Walked all 13 merged PRs and migrations 0000→0008; authoritative mapping in the **PR ledger** below. Root cause of the drift identified: **PR #2's merge carried migrations 0003–0007** — all pending Phase 2 (character/story_image/parent_report/story_audio) **and** Phase 4 (user_role + reviewer columns) **and** Phase 3 (parent_story_id/child_badge) schema — under a "phase3 community + remix + badges" title. An entire Phase 2 + Phase 4 schema set reached master in one Phase-3-labelled merge, which is how the plan lost track of what shipped. The permanent PR ledger exists to stop a fourth recurrence.
+
+---
+
+## PR ledger (canonical — keep this current)
+
+**Rule: every merged PR gets a row here, with its migration(s). This section is the source of truth for "what shipped and when." If a PR adds a migration, its number goes in the last column.** Migration→PR mapping verified 2026-07-17 by `git rev-list --ancestry-path --merges <commit>..master`.
+
+| PR | Merged | Title | What changed | Migrations |
+|----|--------|-------|--------------|------------|
+| #1 | 2026-04-21 | multi-child story creation + Hero's Forge PWA branding | **Understated title — this PR established the entire Phase 1 domain:** auth + domain schema, `worlds.ts`, moderation, story/page/children APIs, intake, reader, children management, multi-child creation, PWA manifest + icons. | **0000** (auth tables), **0001** (auth indexes), **0002** (Phase 1 enums + `child_profile`/`story`/`story_page`/`prompt_log`/`moderation_event`, incl. `allow_publish`/`allow_remix`) |
+| #2 | 2026-05-08 | feat(phase3): community + remix + badges | Community feed, public reader, remix, badges — **but its merge also carried ALL pending Phase 2 + Phase 4 schema.** This is the drift that lost the plan. | **0003** (Phase 2: `character`, `parent_report`, `story_image`), **0004** (Phase 2: `story_audio`), **0005** (Phase 4: `user_role` + `moderation_event` reviewer cols), **0006** (Phase 3: `parent_story_id`), **0007** (Phase 3: `child_badge`) |
+| #3 | 2026-05-08 | i18n: next-intl + cookie locale (PR 1 of 3) | next-intl infra, cookie locale, 2 sample component migrations. *Also touched community surfaces (cookie locale the feed relies on).* | — |
+| #4 | 2026-05-12 | i18n: bulk migration part 1 — chrome + hero + public reader | i18n batch: nav/brand/footer/hero + **public reader**. *Reinforced the community slice a second time; plan still didn't notice.* | — |
+| #5 | 2026-07-16 | i18n: bulk migration **part 2** — reader, intake, vault, badges, worlds (+ lint) | i18n batch: reader/intake/vault/badges/worlds; deleted `landing-copy.ts`; ESLint ignores for `public/**` + `.claude/**`. **PR title originally said "part 3" — a mislabel; it is part 2. Corrected 2026-07-17.** | — |
+| #6 | 2026-07-16 | fix(story): word_count/chapter_count never updated | `onFinish` recomputes counters; `scripts/backfill-story-counts.mjs`. | — |
+| #7 | 2026-07-16 | feat(auth): reset + verification emails via Resend | Better Auth email hooks → Resend; `reset-password.tsx` + `verify-email.tsx` templates; sender = `mail.herosforge.app`. | — |
+| #8 | 2026-07-16 | chore: remove dead files | Deleted `site-footer.tsx`, `(parent)/library` dup, 5 template SVGs. | — |
+| #9 | 2026-07-17 | fix(env): dead OpenRouter model defaults | 3 model IDs → verified-live; surfaced `OPENROUTER_IMAGE_MODEL` in `env.example`. | — |
+| #10 | 2026-07-17 | refactor(auth): post-login → /parent/dashboard | 9 redirect call sites repointed; proxy matcher extended to nested `/parent`. | — |
+| #11 | 2026-07-17 | feat(i18n): persist parent locale (option A) | `user.locale` + Better Auth `additionalFields` + `inferAdditionalFields`; signup capture + switcher sync. | **0008** (`user.locale`) |
+| #12 | 2026-07-17 | fix(story): stream-failure masking + classify (+ vitest) | `classifyStreamError()` + server `onError` mask + client copy-only; stood up **vitest** + 1 classifier suite. | — |
+| #13 | 2026-07-17 | feat(community): gate community behind `COMMUNITY_ENABLED` | Feature flag (default OFF); 6 gates (feed, public reader, publish API, remix API, reader/library buttons, nav link); 404 when off. | — |
+
+---
+
+## Community feed safety findings (2026-07-17) — deferred by design, NOT blocked
+
+The community slice is **dark** behind `COMMUNITY_ENABLED` (default off, PR #13). The four findings below are **deferred by owner decision** and return only if the owner decides the feed ships. No published rows or remixed copies exist anywhere (DB was rebuilt from empty 2026-07-17); we are not deployed.
+
+1. **No human-review gate on publish.** Publishing requires only automated Layer-3 `moderation_status='safe'` + parent `allow_publish`. Layer 4 (admin queue) reviews `moderation_event` rows after the fact and does not gate publication.
+2. **Weak consent / child-reachable publish.** `allow_publish` is a one-time global per-child toggle set by the parent (children manager); once on, the publish button on the child-facing reader lets a child publish any qualifying story with one click. No per-story parental confirmation.
+3. **PII on the feed.** Feed cards + public reader render the child's `displayName`, `heroName`, and `problemText` (the child's own free text) to **every logged-in account** (auth-gated, but not restricted to related parents). Age and avatar are not rendered.
+4. **Remix data-carryover + deletion boundary.** Remix copies the source child's `childContent`/`heroName`/`problemText` into the *remixer's* own `story`/`story_page` rows (`api/story/[id]/remix`). Because `story.parentStoryId` is `onDelete: set null`, **deleting the source story leaves the remixed copy — and the source child's copied free text — intact in another family's account.** The deletion boundary is therefore *worse* than the toggle boundary: a parent flipping `allow_publish` off hides the source from the feed (live join), but neither toggling nor deleting reaches copies already remixed elsewhere. COPPA's deletion right stops at the remix boundary. (Q2 of the audit; recorded here, no action pending owner ruling.)
+
+**One property that fails safe (good):** when a page is flagged and falls back to canned content, its row is marked `'flagged'` (content = canned-safe), so the publish gate (all pages `'safe'`) excludes it. Flagged content cannot publish — verified by code-read (this is the untested Layer 3 path).
