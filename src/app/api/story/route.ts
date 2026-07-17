@@ -18,7 +18,7 @@ const bodySchema = z.object({
 });
 
 export async function POST(req: Request) {
-  // Verify parent session (mirrors src/app/api/chat/route.ts).
+  // Verify parent session.
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {

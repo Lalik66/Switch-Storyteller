@@ -47,7 +47,7 @@ export default function OfflinePage() {
           The Forge is offline for the moment. Tales already opened in this
           cabin remain readable — try{" "}
           <a
-            href="/dashboard"
+            href="/parent/dashboard"
             className="text-[color:var(--ember)] underline underline-offset-4 hover:no-underline"
           >
             your library
@@ -83,7 +83,7 @@ export default function OfflinePage() {
               />
             </svg>
           </button>
-          <a href="/dashboard" className="btn-ghost-ink">
+          <a href="/parent/dashboard" className="btn-ghost-ink">
             Return to the workshop
           </a>
         </div>

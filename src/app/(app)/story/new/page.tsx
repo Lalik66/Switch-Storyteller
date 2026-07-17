@@ -526,7 +526,7 @@ function LockedFolio({ t }: { t: Translator }) {
           {t("lockedBody")}
         </p>
         <div className="mt-10 flex justify-center">
-          <Link href="/dashboard" className="btn-ghost-ink">
+          <Link href="/parent/dashboard" className="btn-ghost-ink">
             {t("lockedCta")}
           </Link>
         </div>

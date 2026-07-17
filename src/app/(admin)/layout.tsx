@@ -3,7 +3,7 @@
  *
  * Every page under this group is gated by `requireAdmin()` so a parent
  * with a valid session who guesses an `/admin/...` URL is silently
- * redirected to `/dashboard` rather than told the area exists.
+ * redirected to `/parent/dashboard` rather than told the area exists.
  */
 
 import { requireAdmin } from "@/lib/session";

@@ -18,7 +18,7 @@ export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  // Verify parent session (mirrors src/app/api/chat/route.ts).
+  // Verify parent session.
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -95,7 +95,7 @@ export async function DELETE(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  // Verify parent session (mirrors src/app/api/chat/route.ts).
+  // Verify parent session.
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {

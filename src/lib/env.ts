@@ -19,7 +19,6 @@ const serverEnvSchema = z.object({
 
   // AI
   OPENROUTER_API_KEY: z.string().optional(),
-  OPENROUTER_MODEL: z.string().default("openai/gpt-5-mini"),
   // Per PRD §4.1: cheap = Claude Haiku for per-page generation, premium =
   // Claude Sonnet for chapter openers/finales. Model slugs rot: the 3.5-era
   // Anthropic slugs died in mid-2026 just like `google/gemini-flash-1.5`

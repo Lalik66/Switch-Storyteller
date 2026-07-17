@@ -84,7 +84,7 @@ export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  // Session gate mirrors src/app/api/chat/route.ts.
+  // Session gate.
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {

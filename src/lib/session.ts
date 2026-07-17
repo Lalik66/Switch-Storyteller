@@ -10,8 +10,6 @@ import { user } from "@/lib/schema";
  * These are also configured in src/proxy.ts for optimistic redirects.
  */
 export const protectedRoutes = [
-  "/chat",
-  "/dashboard",
   "/profile",
   "/stories",
   "/children",
