@@ -12,6 +12,7 @@
 import { notFound } from "next/navigation";
 import { and, asc, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
+import { isCommunityEnabled } from "@/lib/env";
 import { childProfile, story, storyPage } from "@/lib/schema";
 import { requireAuth } from "@/lib/session";
 import { StoryReader } from "./_reader";
@@ -88,6 +89,7 @@ export default async function StoryReaderPage({
       initialStory={result.story}
       initialPages={result.pages}
       canRemix={result.canRemix}
+      communityEnabled={isCommunityEnabled()}
     />
   );
 }

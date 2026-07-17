@@ -15,9 +15,11 @@
  */
 
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { and, count, desc, eq, inArray } from "drizzle-orm";
 import { getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
+import { isCommunityEnabled } from "@/lib/env";
 import { childProfile, story, storyPage } from "@/lib/schema";
 import { requireAuth } from "@/lib/session";
 import { getWorld } from "@/lib/worlds";
@@ -104,6 +106,9 @@ export default async function CommunityFeedPage({
 }: {
   searchParams: Promise<{ page?: string }>;
 }) {
+  // Community surface is behind a default-off flag (safety audit 2026-07-17).
+  // 404 — not 403 — so a disabled surface is indistinguishable from absent.
+  if (!isCommunityEnabled()) notFound();
   await requireAuth();
   const sp = await searchParams;
   const tWorlds = await getTranslations("Worlds");

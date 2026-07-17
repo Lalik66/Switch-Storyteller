@@ -58,6 +58,12 @@ const serverEnvSchema = z.object({
   // Storage
   BLOB_READ_WRITE_TOKEN: z.string().optional(),
 
+  // Feature flags
+  // Community surface (feed, public reader, publish, remix) master switch.
+  // Default OFF. Turned dark 2026-07-17 pending owner decisions from the
+  // community-feed safety audit — see `isCommunityEnabled()` below.
+  COMMUNITY_ENABLED: z.string().optional(),
+
   // App
   NODE_ENV: z
     .enum(["development", "production", "test"])
@@ -111,6 +117,18 @@ export function getClientEnv(): ClientEnv {
   }
 
   return parsed.data;
+}
+
+/**
+ * Community surface master switch (feed, public reader, publish, remix).
+ * Read directly from `process.env` so pages and route handlers can gate
+ * cheaply without running full server-env validation. Default OFF —
+ * anything other than the exact string "true" is treated as disabled, so
+ * an unset or malformed value fails safe (dark). See COMMUNITY_ENABLED in
+ * `env.example` and the 2026-07-17 community-feed safety audit.
+ */
+export function isCommunityEnabled(): boolean {
+  return process.env.COMMUNITY_ENABLED === "true";
 }
 
 /**

@@ -91,12 +91,15 @@ export function StoryReader({
   initialStory,
   initialPages,
   canRemix = false,
+  communityEnabled = false,
 }: {
   storyId: string;
   initialStory: Story;
   initialPages: StoryPage[];
   /** Source story meets the Phase 3 remix-eligibility gate. Server-computed. */
   canRemix?: boolean;
+  /** Community surface master flag (safety audit 2026-07-17). Server-computed. */
+  communityEnabled?: boolean;
 }) {
   const lang = useAppLocale();
   const t = useTranslations("Reader");
@@ -491,8 +494,11 @@ export function StoryReader({
                 {finishing ? t("finishing") : t("finish")}
               </Button>
             )}
-            {/* Complete → "Publish to community"; Published → "Unpublish" */}
-            {(storyStatus === "complete" || storyStatus === "published") && (
+            {/* Complete → "Publish to community"; Published → "Unpublish".
+                Gated on the community flag (safety audit 2026-07-17): with the
+                surface dark, publishing is hidden here and 404s at the API. */}
+            {communityEnabled &&
+              (storyStatus === "complete" || storyStatus === "published") && (
               <Button
                 type="button"
                 onClick={() => void handlePublishToggle()}
@@ -512,7 +518,7 @@ export function StoryReader({
                     : t("publish")}
               </Button>
             )}
-            {canRemix && (
+            {communityEnabled && canRemix && (
               <Button
                 type="button"
                 onClick={() => void handleRemix()}

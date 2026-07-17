@@ -13,6 +13,7 @@
 import { notFound } from "next/navigation";
 import { and, asc, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
+import { isCommunityEnabled } from "@/lib/env";
 import { childProfile, story, storyPage } from "@/lib/schema";
 import { requireAuth } from "@/lib/session";
 import { PublicReader } from "./_public-reader";
@@ -62,6 +63,8 @@ export default async function CommunityStoryPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  // Community surface behind a default-off flag (safety audit 2026-07-17).
+  if (!isCommunityEnabled()) notFound();
   await requireAuth();
   const { id } = await params;
 
