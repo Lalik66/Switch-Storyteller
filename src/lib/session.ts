@@ -63,7 +63,7 @@ async function loadUserRole(userId: string): Promise<"user" | "admin"> {
 
 /**
  * Server-Component / Route-Handler guard for the (admin) area. Redirects
- * unauthenticated users to "/" and non-admin users to "/dashboard" so we
+ * unauthenticated users to "/" and non-admin users to "/parent/dashboard" so we
  * never leak the existence of the admin route to a parent who happens to
  * type "/admin/moderation" into the URL bar.
  *
@@ -73,7 +73,7 @@ export async function requireAdmin() {
   const session = await requireAuth();
   const role = await loadUserRole(session.user.id);
   if (role !== "admin") {
-    redirect("/dashboard");
+    redirect("/parent/dashboard");
   }
   return { ...session, role };
 }

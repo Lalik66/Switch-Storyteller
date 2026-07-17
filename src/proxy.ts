@@ -28,6 +28,9 @@ export const config = {
     "/stories",
     "/children",
     "/parent",
+    // The post-login landing page is /parent/dashboard — nested paths need
+    // the optimistic redirect as much as the group root does.
+    "/parent/:path*",
     "/community",
     "/community/:path*",
     "/characters",
