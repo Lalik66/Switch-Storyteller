@@ -386,8 +386,15 @@ export function StoryReader({
             prev ? { ...prev, aiContent: assembled } : prev,
           );
         } else if (parsed.type === "error") {
-          streamError =
-            parsed.errorText ?? t("scribeStumbled");
+          // NEVER render a server-supplied string. Both failure classes
+          // ("transient" | "hard_config", carried in parsed.errorText by the
+          // route's onError) share one gentle message today, so we ignore the
+          // payload entirely and render our own translated copy. This is
+          // defence-in-depth: even if the server's onError were ever dropped
+          // and a raw provider message leaked into errorText, the child would
+          // still only ever see t("scribeStumbled"). The class code remains
+          // available in parsed.errorText for future per-class copy.
+          streamError = t("scribeStumbled");
         } else if (parsed.redirect && typeof parsed.message === "string") {
           // Layer 1 moderation kid-friendly redirect (200 JSON, not SSE).
           redirectMessage = parsed.message;

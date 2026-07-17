@@ -349,7 +349,7 @@
     "sending": "Lələk hərəkət edir…",
     "moderated": "yoxlanıldı ✓",
     "streamFailed": "Yazıçı büdrədi. Yenə cəhd et.",
-    "scribeStumbled": "Yazıçı büdrədi.",
+    "scribeStumbled": "Yazıçıya bir an lazımdır — nağılın qorunur. Yenə cəhd et.",
     "emptyTitle": "Boş folio.",
     "emptyBody": "Hələ səhifə yoxdur. Bu nağılın ilk səhifəsinə başlamaq üçün aşağıdan bir hərəkət seç.",
     "generateImages": "Bu nağılı illüstrasiya et",

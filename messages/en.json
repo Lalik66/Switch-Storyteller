@@ -349,7 +349,7 @@
     "sending": "The quill is moving…",
     "moderated": "moderated ✓",
     "streamFailed": "The scribe stumbled. Try again.",
-    "scribeStumbled": "The scribe stumbled.",
+    "scribeStumbled": "The scribe needs a moment — your story is safe. Try that again.",
     "emptyTitle": "A blank folio.",
     "emptyBody": "No pages yet. Pick an action below to begin the first page of this tale.",
     "generateImages": "Illustrate this tale",
