@@ -49,6 +49,17 @@ export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: "pg",
   }),
+  user: {
+    additionalFields: {
+      // Parent's UI/email language — see the `locale` column comment in
+      // schema.ts. `input: true` lets signup and updateUser set it.
+      locale: {
+        type: "string",
+        defaultValue: "en",
+        input: true,
+      },
+    },
+  },
   emailAndPassword: {
     enabled: true,
     sendResetPassword: async ({ user, url }) => {

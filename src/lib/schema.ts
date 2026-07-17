@@ -28,6 +28,12 @@ export const user = pgTable(
     emailVerified: boolean("email_verified").default(false).notNull(),
     image: text("image"),
     role: userRoleEnum("role").notNull().default("user"),
+    // UI/email language (PRD §6, "en" | "az" per src/i18n/config.ts).
+    // Captured from the language cookie at signup and kept in sync by the
+    // header language switcher; cron/email contexts read it because they
+    // cannot see the cookie. Plain text (not an enum) so adding a locale
+    // is a code change, not a migration.
+    locale: text("locale").notNull().default("en"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
       .defaultNow()

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAppLocale } from "@/i18n/use-app-locale";
 import { signUp } from "@/lib/auth-client";
 
 const inputClass =
@@ -12,6 +13,7 @@ const labelClass =
 
 export function SignUpForm() {
   const router = useRouter();
+  const locale = useAppLocale();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -40,6 +42,9 @@ export function SignUpForm() {
         name,
         email,
         password,
+        // Persist the signup-time UI language so cookie-less contexts
+        // (digest cron, transactional emails) know the parent's locale.
+        locale,
         callbackURL: "/parent/dashboard",
       });
 
