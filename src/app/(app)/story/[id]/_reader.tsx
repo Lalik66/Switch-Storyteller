@@ -8,8 +8,7 @@
  *   - Surface page counter, word count, and chapter count metadata.
  *   - Present 3 action buttons + a custom-action textarea below the
  *     latest page.
- *   - POST to `/api/story/page` and stream the next page in. Mirrors
- *     the streaming pattern used by `src/app/chat/page.tsx`.
+ *   - POST to `/api/story/page` and stream the next page in.
  */
 
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";

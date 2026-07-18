@@ -156,7 +156,7 @@ export function UserProfile() {
           asChild
           className="font-[var(--font-fraunces)] text-[14px] focus:bg-[color:var(--gold)]/20 focus:text-[color:var(--ember)]"
         >
-          <Link href="/dashboard" className="flex items-center gap-2.5">
+          <Link href="/parent/dashboard" className="flex items-center gap-2.5">
             <svg
               width="14"
               height="14"

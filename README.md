@@ -106,7 +106,7 @@ BETTER_AUTH_SECRET="your-random-32-character-secret-key-here"
 GOOGLE_CLIENT_ID="your-google-client-id"
 GOOGLE_CLIENT_SECRET="your-google-client-secret"
 
-# AI Integration via OpenRouter (Optional - for chat functionality)
+# AI Integration via OpenRouter (required at runtime for story generation)
 # Get your API key from: https://openrouter.ai/settings/keys
 # View available models at: https://openrouter.ai/models
 OPENROUTER_API_KEY="sk-or-v1-your-openrouter-api-key-here"
@@ -194,10 +194,7 @@ The storage service automatically detects which backend to use based on the pres
 src/
 ├── app/                    # Next.js app directory
 │   ├── api/               # API routes
-│   │   ├── auth/          # Authentication endpoints
-│   │   └── chat/          # AI chat endpoint
-│   ├── chat/              # AI chat page
-│   ├── dashboard/         # User dashboard
+│   │   └── auth/          # Authentication endpoints
 │   └── page.tsx           # Home page
 ├── components/            # React components
 │   ├── auth/             # Authentication components
@@ -229,8 +226,7 @@ npm run db:reset     # Reset database (drop all tables)
 ## 📖 Pages Overview
 
 - **Home (`/`)**: Landing page with setup instructions and features overview
-- **Dashboard (`/dashboard`)**: Protected user dashboard with profile information
-- **Chat (`/chat`)**: AI-powered chat interface using OpenRouter (requires authentication)
+- **Parent dashboard (`/parent/dashboard`)**: Protected parent dashboard — per-child stats, story library, character vault
 
 ## 🚀 Deployment
 
@@ -259,7 +255,7 @@ Ensure these are set in your production environment:
 - `BETTER_AUTH_SECRET` - Secure random 32+ character string
 - `GOOGLE_CLIENT_ID` - Google OAuth Client ID
 - `GOOGLE_CLIENT_SECRET` - Google OAuth Client Secret
-- `OPENROUTER_API_KEY` - OpenRouter API key (optional, for AI chat functionality)
+- `OPENROUTER_API_KEY` - OpenRouter API key (required at runtime for story generation)
 - `OPENROUTER_MODEL` - Model name from OpenRouter (optional, defaults to openai/gpt-5-mini)
 - `NEXT_PUBLIC_APP_URL` - Your production domain
 - `BLOB_READ_WRITE_TOKEN` - Vercel Blob token (optional, uses local storage if not set)

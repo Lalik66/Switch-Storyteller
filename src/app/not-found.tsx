@@ -43,7 +43,7 @@ export default function NotFound() {
               />
             </svg>
           </Link>
-          <Link href="/dashboard" className="btn-ghost-ink">
+          <Link href="/parent/dashboard" className="btn-ghost-ink">
             Open dashboard
           </Link>
         </div>
