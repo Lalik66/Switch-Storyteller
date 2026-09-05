@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { useClientMounted } from "@/hooks/use-client-mounted";
 import { useSession } from "@/lib/auth-client";
 
 const linkClasses =
@@ -13,24 +14,25 @@ export function MainNavLinks({
   communityEnabled?: boolean;
 }) {
   const t = useTranslations("Nav");
+  const mounted = useClientMounted();
   const { data: session } = useSession();
 
   return (
     <div className="hidden items-center gap-8 md:flex">
-      <Link href="#worlds" className={linkClasses}>
+      <Link href="/#worlds" className={linkClasses}>
         {t("worlds")}
       </Link>
-      <Link href="#loop" className={linkClasses}>
+      <Link href="/#loop" className={linkClasses}>
         {t("loop")}
       </Link>
-      <Link href="#parents" className={linkClasses}>
+      <Link href="/#parents" className={linkClasses}>
         {t("parents")}
       </Link>
-      <Link href="#pricing" className={linkClasses}>
+      <Link href="/#pricing" className={linkClasses}>
         {t("pricing")}
       </Link>
 
-      {session && (
+      {mounted && session && (
         <>
           <Link href="/parent/dashboard" className={linkClasses}>
             {t("dashboard")}

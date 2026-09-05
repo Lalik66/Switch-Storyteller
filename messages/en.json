@@ -323,6 +323,7 @@
     "minutesLabel": "min/day",
     "yearsLabel": "yrs",
     "saveFailed": "Could not save. Try again.",
+    "invalidAge": "Please enter an age between 3 and 17.",
     "deleteFailed": "Could not delete. Try again.",
     "sharingLabel": "Sharing",
     "publishingOn": "Publishing on",

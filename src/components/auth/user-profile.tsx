@@ -11,6 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useClientMounted } from "@/hooks/use-client-mounted";
 import { signOut, useSession } from "@/lib/auth-client";
 
 const stroke = {
@@ -52,14 +53,23 @@ function DoorIcon() {
   );
 }
 
+/** Stable SSR + first-paint placeholder — matches logged-in avatar footprint. */
+function ProfilePlaceholder() {
+  return (
+    <span
+      className="inline-block size-8 shrink-0 rounded-full bg-[color:var(--gold)]/15 ring-1 ring-[color:var(--ember)]/20 ring-offset-2 ring-offset-[color:var(--parchment)]"
+      aria-hidden
+    />
+  );
+}
+
 export function UserProfile() {
+  const mounted = useClientMounted();
   const { data: session, isPending } = useSession();
   const router = useRouter();
 
-  if (isPending) {
-    return (
-      <span className="eyebrow text-foreground/55">Loading&hellip;</span>
-    );
+  if (!mounted || isPending) {
+    return <ProfilePlaceholder />;
   }
 
   if (!session) {

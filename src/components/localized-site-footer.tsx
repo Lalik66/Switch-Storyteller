@@ -1,12 +1,10 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 
-// Hrefs live in code, not the messages bundle: they're anchor IDs / routes,
-// not translatable copy. If a developer renames `#loop`, they update it
-// here once instead of in every locale's JSON. Translators only ever touch
-// the matching label arrays in `messages/{en,az}.json` under `Footer.colNLabels`.
-const COL1_HREFS = ["#loop", "#worlds", "#sample"] as const;
-const COL2_HREFS = ["#parents", "#safety", "#pricing"] as const;
+// Hrefs live in code, not the messages bundle: home-page anchor paths
+// (`/#loop`, etc.), not translatable copy.
+const COL1_HREFS = ["/#loop", "/#worlds", "/#sample"] as const;
+const COL2_HREFS = ["/#parents", "/#safety", "/#pricing"] as const;
 const COL3_HREFS = ["#", "#", "#"] as const;
 
 export async function LocalizedSiteFooter() {

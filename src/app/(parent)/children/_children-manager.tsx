@@ -26,6 +26,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BADGES_BY_KEY, isKnownBadgeKey } from "@/lib/badges";
+import {
+  dbStrictnessToUi,
+  uiStrictnessToDb,
+  type UiStrictness,
+} from "@/lib/content-strictness";
 // NOTE: `@/lib/schema` is owned by the schema-agent.
 import { childProfile } from "@/lib/schema";
 import type { InferSelectModel } from "drizzle-orm";
@@ -37,13 +42,11 @@ type Translator = ReturnType<typeof useTranslations>;
 
 /* ── Form model ─────────────────────────────────────────────────────── */
 
-type Strictness = "soft" | "standard" | "brave";
-
 type ChildForm = {
   id?: string;
   displayName: string;
   age: string;
-  contentStrictness: Strictness;
+  contentStrictness: UiStrictness;
   allowPublish: boolean;
   allowRemix: boolean;
   dailyMinuteLimit: string;
@@ -113,11 +116,14 @@ export function ChildrenManager({
       ...(id !== undefined ? { id } : {}),
       displayName: readField<string>(row, "displayName", "display_name", ""),
       age: String(readField<number | string>(row, "age", "age", "")),
-      contentStrictness: readField<Strictness>(
-        row,
-        "contentStrictness",
-        "content_strictness",
-        "standard"
+      contentStrictness: dbStrictnessToUi(
+        readField<"standard" | "strict">(
+          row,
+          "contentStrictness",
+          "content_strictness",
+          "standard",
+        ),
+        Number(readField<number | string>(row, "age", "age", 8)) || 8,
       ),
       allowPublish: readField<boolean>(
         row,
@@ -146,10 +152,16 @@ export function ChildrenManager({
   const handleSave = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
+    const age = Number(form.age);
+    if (!Number.isInteger(age) || age < 3 || age > 17) {
+      toast.error(t("invalidAge"));
+      return;
+    }
+
     const payload = {
       displayName: form.displayName.trim(),
-      age: Number(form.age) || 0,
-      contentStrictness: form.contentStrictness,
+      age,
+      contentStrictness: uiStrictnessToDb(form.contentStrictness),
       allowPublish: form.allowPublish,
       allowRemix: form.allowRemix,
       dailyMinuteLimit: form.dailyMinuteLimit
@@ -170,6 +182,11 @@ export function ChildrenManager({
       });
 
       if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as {
+          error?: string;
+          details?: Record<string, string[]>;
+        };
+        console.error("[children] save failed", res.status, body);
         throw new Error(`Save failed: ${res.status}`);
       }
 
@@ -308,11 +325,14 @@ export function ChildrenManager({
               "\u2014"
             );
             const age = readField<number | string>(row, "age", "age", "\u2014");
-            const strictness = readField<Strictness>(
-              row,
-              "contentStrictness",
-              "content_strictness",
-              "standard"
+            const strictness = dbStrictnessToUi(
+              readField<"standard" | "strict">(
+                row,
+                "contentStrictness",
+                "content_strictness",
+                "standard",
+              ),
+              Number(age) || 8,
             );
             const dailyLimit = readField<number | null>(
               row,
@@ -494,7 +514,7 @@ function ChildDialogContent({
   // Strictness option values are stable enum keys; only the labels are
   // localized. Build the option list from the messages bundle so callers
   // never have to maintain a per-locale option array.
-  const strictnessOptions: Array<{ value: Strictness; label: string }> = [
+  const strictnessOptions: Array<{ value: UiStrictness; label: string }> = [
     { value: "soft", label: t("strictnessSoft") },
     { value: "standard", label: t("strictnessStandard") },
     { value: "brave", label: t("strictnessBrave") },
@@ -568,7 +588,7 @@ function ChildDialogContent({
             onChange={(e) =>
               setForm({
                 ...form,
-                contentStrictness: e.target.value as Strictness,
+                contentStrictness: e.target.value as UiStrictness,
               })
             }
             className="border-input h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-sm shadow-xs outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"

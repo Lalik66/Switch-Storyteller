@@ -323,6 +323,7 @@
     "minutesLabel": "dəq/gün",
     "yearsLabel": "yaş",
     "saveFailed": "Saxlanılmadı. Yenə cəhd et.",
+    "invalidAge": "Zəhmət olmasa 3–17 yaş arası daxil edin.",
     "deleteFailed": "Silinmədi. Yenə cəhd et.",
     "sharingLabel": "Paylaşma",
     "publishingOn": "Nəşr açıq",
