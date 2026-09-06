@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import {
   DropdownMenu,
@@ -49,18 +50,19 @@ function MoonIcon() {
 
 export function ModeToggle() {
   const { setTheme } = useTheme();
+  const t = useTranslations("Theme");
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          aria-label="Toggle lantern"
+          aria-label={t("toggle")}
           className="relative grid h-9 w-9 place-items-center rounded-full border border-[color:var(--border)] bg-transparent text-foreground/75 transition-all hover:-translate-y-[1px] hover:border-[color:var(--ember)] hover:text-[color:var(--ember)]"
         >
           <SunIcon />
           <MoonIcon />
-          <span className="sr-only">Toggle lantern</span>
+          <span className="sr-only">{t("toggle")}</span>
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
@@ -71,19 +73,19 @@ export function ModeToggle() {
           onClick={() => setTheme("light")}
           className="font-[var(--font-fraunces)] text-[14px] focus:bg-[color:var(--gold)]/20 focus:text-[color:var(--ember)]"
         >
-          Parchment
+          {t("light")}
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => setTheme("dark")}
           className="font-[var(--font-fraunces)] text-[14px] focus:bg-[color:var(--gold)]/20 focus:text-[color:var(--ember)]"
         >
-          Lantern-lit
+          {t("dark")}
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => setTheme("system")}
           className="font-[var(--font-fraunces)] text-[14px] focus:bg-[color:var(--gold)]/20 focus:text-[color:var(--ember)]"
         >
-          Follow the sky
+          {t("system")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

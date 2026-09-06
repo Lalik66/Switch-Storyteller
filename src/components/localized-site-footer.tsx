@@ -7,15 +7,25 @@ const COL1_HREFS = ["/#loop", "/#worlds", "/#sample"] as const;
 const COL2_HREFS = ["/#parents", "/#safety", "/#pricing"] as const;
 const COL3_HREFS = ["#", "#", "#"] as const;
 
+/**
+ * `t.raw()` returns `unknown`; guard the shape so a malformed messages bundle
+ * degrades to an empty column instead of throwing during render.
+ */
+function toStringArray(value: unknown): string[] {
+  return Array.isArray(value) && value.every((v) => typeof v === "string")
+    ? (value as string[])
+    : [];
+}
+
 export async function LocalizedSiteFooter() {
   const tFooter = await getTranslations("Footer");
   const tBrand = await getTranslations("Brand");
 
   // `t.raw()` returns the structured value (an array of label strings)
   // verbatim from the JSON, bypassing ICU formatting.
-  const col1Labels = tFooter.raw("col1Labels") as string[];
-  const col2Labels = tFooter.raw("col2Labels") as string[];
-  const col3Labels = tFooter.raw("col3Labels") as string[];
+  const col1Labels = toStringArray(tFooter.raw("col1Labels"));
+  const col2Labels = toStringArray(tFooter.raw("col2Labels"));
+  const col3Labels = toStringArray(tFooter.raw("col3Labels"));
 
   return (
     <footer className="relative mt-32 border-t border-border/60">
@@ -103,7 +113,7 @@ function FooterCol({
       <p className="eyebrow mb-4">{title}</p>
       <ul className="space-y-2.5 text-[15px]">
         {labels.map((label, i) => (
-          <li key={label}>
+          <li key={`${title}-${i}`}>
             <Link
               href={hrefs[i] ?? "#"}
               className="text-foreground/75 transition-colors hover:text-[color:var(--ember)]"

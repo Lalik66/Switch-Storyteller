@@ -1,6 +1,23 @@
 {
   "Common": {
-    "skipToContent": "Skip to main content"
+    "skipToContent": "Skip to main content",
+    "closeDialog": "Close"
+  },
+  "UserMenu": {
+    "signIn": "Sign in",
+    "beginTale": "Begin a tale",
+    "openMenu": "Open scribe menu",
+    "scribe": "The scribe",
+    "folio": "Your folio",
+    "workshop": "The workshop",
+    "signOut": "Close the door",
+    "signOutError": "Could not sign out. Please try again."
+  },
+  "Theme": {
+    "toggle": "Toggle lantern",
+    "light": "Parchment",
+    "dark": "Lantern-lit",
+    "system": "Follow the sky"
   },
   "Nav": {
     "worlds": "Worlds",

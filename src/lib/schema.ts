@@ -234,18 +234,25 @@ export const storyPage = pgTable(
   ]
 );
 
-export const promptLog = pgTable("prompt_log", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  storyId: uuid("story_id")
-    .notNull()
-    .references(() => story.id, { onDelete: "cascade" }),
-  originalPrompt: text("original_prompt").notNull(),
-  moderatedPrompt: text("moderated_prompt").notNull(),
-  moderationAction: moderationActionEnum("moderation_action").notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-});
+export const promptLog = pgTable(
+  "prompt_log",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    storyId: uuid("story_id")
+      .notNull()
+      .references(() => story.id, { onDelete: "cascade" }),
+    originalPrompt: text("original_prompt").notNull(),
+    moderatedPrompt: text("moderated_prompt").notNull(),
+    moderationAction: moderationActionEnum("moderation_action").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    // FK lookup + cascade-delete support for a story's prompt logs.
+    index("prompt_log_story_id_idx").on(table.storyId),
+  ]
+);
 
 export const moderationEvent = pgTable(
   "moderation_event",
@@ -282,6 +289,8 @@ export const moderationEvent = pgTable(
       table.reviewedByHuman,
       sql`${table.createdAt} desc`
     ),
+    // Parent-digest lookups filter events by story id (inArray on storyIds).
+    index("moderation_event_story_id_idx").on(table.storyId),
   ]
 );
 
@@ -330,6 +339,8 @@ export const storyImage = pgTable(
   },
   (table) => [
     index("story_image_scene_hash_idx").on(table.sceneHash),
+    // FK lookup for a page's images (join in GET /api/story/[id]/images).
+    index("story_image_story_page_id_idx").on(table.storyPageId),
   ]
 );
 
@@ -349,7 +360,11 @@ export const storyAudio = pgTable(
       .defaultNow()
       .notNull(),
   },
-  (table) => [index("story_audio_audio_hash_idx").on(table.audioHash)]
+  (table) => [
+    index("story_audio_audio_hash_idx").on(table.audioHash),
+    // FK lookup for a page's audio (join in GET /api/story/[id]/audio).
+    index("story_audio_story_page_id_idx").on(table.storyPageId),
+  ]
 );
 
 // ---------------------------------------------------------------------------

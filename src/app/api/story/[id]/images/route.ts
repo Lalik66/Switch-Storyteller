@@ -14,25 +14,44 @@ interface OpenRouterImageResponse {
   data: Array<{ b64_json: string }>;
 }
 
+// Image generation can be slow; cap it so a hung upstream call cannot exhaust
+// the serverless function's execution budget.
+const IMAGE_API_TIMEOUT_MS = 60_000;
+
 async function callImageAPI(
   prompt: string,
   model: string,
   apiKey: string,
 ): Promise<Buffer> {
-  const res = await fetch("https://openrouter.ai/api/v1/images/generations", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model,
-      prompt,
-      n: 1,
-      size: "1024x1024",
-      response_format: "b64_json",
-    }),
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), IMAGE_API_TIMEOUT_MS);
+  let res: Response;
+  try {
+    res = await fetch("https://openrouter.ai/api/v1/images/generations", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model,
+        prompt,
+        n: 1,
+        size: "1024x1024",
+        response_format: "b64_json",
+      }),
+      signal: controller.signal,
+    });
+  } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") {
+      throw new Error(
+        `Image API request timed out after ${IMAGE_API_TIMEOUT_MS}ms`,
+      );
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeout);
+  }
 
   if (!res.ok) {
     const text = await res.text().catch(() => "(no body)");

@@ -1,6 +1,23 @@
 {
   "Common": {
-    "skipToContent": "Əsas məzmuna keç"
+    "skipToContent": "Əsas məzmuna keç",
+    "closeDialog": "Bağla"
+  },
+  "UserMenu": {
+    "signIn": "Daxil ol",
+    "beginTale": "Nağıla başla",
+    "openMenu": "Müəllif menyusunu aç",
+    "scribe": "Müəllif",
+    "folio": "Qovluğun",
+    "workshop": "Emalatxana",
+    "signOut": "Qapını bağla",
+    "signOutError": "Çıxış alınmadı. Zəhmət olmasa, yenidən cəhd edin."
+  },
+  "Theme": {
+    "toggle": "Fənəri dəyiş",
+    "light": "Perqament",
+    "dark": "Fənər işığı",
+    "system": "Səmaya uyğun"
   },
   "Nav": {
     "worlds": "Dünyalar",

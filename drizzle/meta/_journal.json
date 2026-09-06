@@ -64,6 +64,13 @@
       "when": 1784238313039,
       "tag": "0008_melted_pretty_boy",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1788640335829,
+      "tag": "0009_add_fk_indexes",
+      "breakpoints": true
     }
   ]
 }

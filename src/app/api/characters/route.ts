@@ -53,7 +53,8 @@ export async function GET(req: Request) {
     .select()
     .from(character)
     .where(eq(character.childProfileId, childProfileId))
-    .orderBy(desc(character.appearanceCount));
+    .orderBy(desc(character.appearanceCount))
+    .limit(200);
 
   return new Response(JSON.stringify(rows), {
     status: 200,

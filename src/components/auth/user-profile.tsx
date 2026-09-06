@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -67,6 +69,7 @@ export function UserProfile() {
   const mounted = useClientMounted();
   const { data: session, isPending } = useSession();
   const router = useRouter();
+  const tMenu = useTranslations("UserMenu");
 
   if (!mounted || isPending) {
     return <ProfilePlaceholder />;
@@ -79,13 +82,13 @@ export function UserProfile() {
           href="/login"
           className="eyebrow text-foreground/65 transition-colors hover:text-[color:var(--ember)]"
         >
-          Sign in
+          {tMenu("signIn")}
         </Link>
         <Link
           href="/register"
           className="group inline-flex items-center gap-1.5 rounded-full border border-[color:var(--ember)]/70 px-3.5 py-1.5 font-[var(--font-fraunces)] text-[13px] text-[color:var(--ember)] transition-all hover:-translate-y-[1px] hover:bg-[color:var(--ember)] hover:text-[color:var(--primary-foreground)]"
         >
-          Begin a tale
+          {tMenu("beginTale")}
           <svg
             width="12"
             height="12"
@@ -108,9 +111,14 @@ export function UserProfile() {
   }
 
   const handleSignOut = async () => {
-    await signOut();
-    router.replace("/");
-    router.refresh();
+    try {
+      await signOut();
+      router.replace("/");
+      router.refresh();
+    } catch (err) {
+      console.error("[auth] sign out failed", err);
+      toast.error(tMenu("signOutError"));
+    }
   };
 
   const initial = (
@@ -124,7 +132,7 @@ export function UserProfile() {
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          aria-label="Open scribe menu"
+          aria-label={tMenu("openMenu")}
           className="group relative rounded-full ring-1 ring-[color:var(--ember)]/40 ring-offset-2 ring-offset-[color:var(--parchment)] transition-all hover:ring-[color:var(--ember)]"
         >
           <Avatar className="size-8">
@@ -144,7 +152,7 @@ export function UserProfile() {
         className="w-60 border-[color:var(--border)] bg-[color:var(--card)]"
       >
         <DropdownMenuLabel className="font-normal">
-          <p className="eyebrow text-foreground/55">&sect; The scribe</p>
+          <p className="eyebrow text-foreground/55">&sect; {tMenu("scribe")}</p>
           <p className="mt-2 font-[var(--font-fraunces)] text-[15px] leading-tight text-foreground">
             {session.user?.name}
           </p>
@@ -159,7 +167,7 @@ export function UserProfile() {
         >
           <Link href="/profile" className="flex items-center gap-2.5">
             <UserIcon />
-            Your folio
+            {tMenu("folio")}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem
@@ -176,7 +184,7 @@ export function UserProfile() {
             >
               <path d="M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z" />
             </svg>
-            The workshop
+            {tMenu("workshop")}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
@@ -185,7 +193,7 @@ export function UserProfile() {
           className="font-[var(--font-fraunces)] text-[14px] text-foreground/75 focus:bg-[color:var(--ember)]/10 focus:text-[color:var(--ember)]"
         >
           <DoorIcon />
-          Close the door
+          {tMenu("signOut")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

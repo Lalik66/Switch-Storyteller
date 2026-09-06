@@ -27,7 +27,8 @@ export async function GET() {
   const rows = await db
     .select()
     .from(childProfile)
-    .where(eq(childProfile.parentUserId, session.user.id));
+    .where(eq(childProfile.parentUserId, session.user.id))
+    .limit(100);
 
   return new Response(JSON.stringify(rows), {
     status: 200,

@@ -35,15 +35,26 @@ export async function GET(req: Request) {
 
   const resend = new Resend(env.RESEND_API_KEY);
 
-  // Load all parents (every user is a potential parent).
-  const parents = await db.select().from(user);
+  // Page through users in fixed-size batches so the digest job never loads the
+  // entire user table into memory at once (every user is a potential parent).
+  const BATCH_SIZE = 200;
 
   let sent = 0;
   let skipped = 0;
   const errors: string[] = [];
 
-  for (const parent of parents) {
-    try {
+  for (let offset = 0; ; offset += BATCH_SIZE) {
+    const parents = await db
+      .select()
+      .from(user)
+      .orderBy(user.id)
+      .limit(BATCH_SIZE)
+      .offset(offset);
+
+    if (parents.length === 0) break;
+
+    for (const parent of parents) {
+      try {
       const digest = await buildParentDigest(
         parent.id,
         parent.name ?? "Parent",
@@ -94,11 +105,11 @@ export async function GET(req: Request) {
 
       await markDigestSent(parent.id, digest.weekEnding);
       sent++;
-    } catch (err) {
-      const msg =
-        err instanceof Error ? err.message : "Unknown error";
-      errors.push(`${parent.email}: ${msg}`);
-      console.error(`[parent-digest] failed for ${parent.email}`, err);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Unknown error";
+        errors.push(`${parent.email}: ${msg}`);
+        console.error(`[parent-digest] failed for ${parent.email}`, err);
+      }
     }
   }
 
