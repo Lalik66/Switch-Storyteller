@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useAppLocale } from "@/i18n/use-app-locale";
 import { BADGES_BY_KEY, isKnownBadgeKey } from "@/lib/badges";
+import { parseStoryChoices } from "@/lib/parse-story-choices";
 // NOTE: `@/lib/schema` is owned by the schema-agent.
 import { story, storyPage } from "@/lib/schema";
 import type { InferSelectModel } from "drizzle-orm";
@@ -315,17 +316,36 @@ export function StoryReader({
 
   const totalForCounter = Math.max(stats.pageCount, 1);
 
-  // The three canonical action choices. Labels live in the messages
-  // bundle (Reader.actionChoices); the stable keys "a"/"b"/"c" are sent
-  // to the storyteller API so the prompt template can branch on intent.
-  // In Phase 2 these will be supplied per-page by the storyteller; for
-  // Phase 1 we keep a stable trio so the reader is exercisable end-to-end.
-  const choiceLabels = t.raw("actionChoices") as string[];
-  const actionChoices: Array<{ key: string; label: string }> = [
-    { key: "a", label: choiceLabels[0] ?? "" },
-    { key: "b", label: choiceLabels[1] ?? "" },
-    { key: "c", label: choiceLabels[2] ?? "" },
+  const fallbackChoiceLabels = t.raw("actionChoices") as string[];
+  const fallbackChoices: Array<{ key: string; label: string }> = [
+    { key: "a", label: fallbackChoiceLabels[0] ?? "" },
+    { key: "b", label: fallbackChoiceLabels[1] ?? "" },
+    { key: "c", label: fallbackChoiceLabels[2] ?? "" },
   ];
+
+  const latestPageRawContent = useMemo(() => {
+    if (streamingPage) return streamingPage.aiContent;
+    if (pages.length === 0) return "";
+    return readAiContent(pages[pages.length - 1] as StoryPage);
+  }, [pages, streamingPage]);
+
+  const latestPageParsed = useMemo(
+    () => parseStoryChoices(latestPageRawContent),
+    [latestPageRawContent],
+  );
+
+  const choiceKeys = ["a", "b", "c"] as const;
+  const pageChoicesReady =
+    !streamingPage?.isStreaming && latestPageParsed.choices.length > 0;
+  const actionChoices: Array<{ key: string; label: string }> = pageChoicesReady
+    ? latestPageParsed.choices.map((label, idx) => ({
+        key: choiceKeys[idx] ?? String(idx + 1),
+        label,
+      }))
+    : fallbackChoices;
+
+  const choicesDisabled =
+    submitting || Boolean(streamingPage?.isStreaming) || pages.length === 0;
 
   async function postAndStream(body: {
     storyId: string;
@@ -436,6 +456,9 @@ export function StoryReader({
       // On complete: the server has persisted the page. We keep the final
       // streamed text visible without mutating the `pages` array — the
       // next reload (or a follow-up action) will pull the canonical row.
+      setStreamingPage((prev) =>
+        prev ? { ...prev, isStreaming: false } : prev,
+      );
       setCustomAction("");
     } catch (err) {
       if ((err as { name?: string }).name !== "AbortError") {
@@ -449,8 +472,8 @@ export function StoryReader({
     }
   }
 
-  const handleChoice = (key: string) => {
-    void postAndStream({ storyId, chosenActionKey: key, lang });
+  const handleChoice = (label: string) => {
+    void postAndStream({ storyId, chosenActionKey: label, lang });
   };
 
   const handleCustomSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -578,13 +601,18 @@ export function StoryReader({
 
           {pages.map((page, idx) => {
             const pNum = readPageNumber(page, idx + 1);
+            const rawContent = readAiContent(page);
+            const isActivePage = !streamingPage && idx === pages.length - 1;
+            const displayContent = isActivePage
+              ? parseStoryChoices(rawContent).prose
+              : rawContent;
             return (
               <PageCard
                 key={(page as unknown as { id?: string }).id ?? idx}
                 pageNumber={pNum}
                 chapterNumber={readChapterNumber(page)}
                 total={totalForCounter}
-                content={readAiContent(page)}
+                content={displayContent}
                 imageUrl={images.get(pNum)}
                 audioUrl={audio.get(pNum)}
                 isLoadingAudio={loadingAudio.has(pNum)}
@@ -605,20 +633,30 @@ export function StoryReader({
                   : 1
               }
               total={totalForCounter}
-              content={streamingPage.aiContent}
+              content={
+                streamingPage.isStreaming
+                  ? streamingPage.aiContent
+                  : parseStoryChoices(streamingPage.aiContent).prose
+              }
               imageUrl={undefined}
               audioUrl={undefined}
               isLoadingAudio={false}
               onNarrate={undefined}
               t={t}
-              isLive
+              isLive={streamingPage.isStreaming}
             />
           )}
         </div>
 
-        {storyStatus === "draft" && (
+        {storyStatus === "draft" && pages.length > 0 && (
         <article className="card-stamp mt-10 p-6 md:p-8">
           <p className="eyebrow text-foreground/55">{t("whatNext")}</p>
+
+          {streamingPage?.isStreaming && (
+            <p className="mt-3 font-[var(--font-newsreader)] text-[15px] italic text-foreground/55">
+              {t("waitingForPage")}
+            </p>
+          )}
 
           <div className="rule-ornament my-5">
             <svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true">
@@ -634,15 +672,15 @@ export function StoryReader({
               <button
                 key={choice.key}
                 type="button"
-                onClick={() => handleChoice(choice.key)}
-                disabled={submitting}
+                onClick={() => handleChoice(choice.label)}
+                disabled={choicesDisabled}
                 className="group flex w-full items-center justify-between rounded-sm border border-border/80 bg-background/60 px-3 py-2.5 text-left text-[14px] text-foreground/85 transition-all hover:-translate-y-[1px] hover:border-[color:var(--ember)] hover:bg-[color:var(--gold)]/20 disabled:opacity-50"
               >
                 <span className="flex items-center gap-3">
-                  <span className="grid h-5 w-5 place-items-center rounded-full border border-border text-[10px] font-medium text-foreground/60 group-hover:border-[color:var(--ember)] group-hover:text-[color:var(--ember)]">
+                  <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full border border-border text-[10px] font-medium text-foreground/60 group-hover:border-[color:var(--ember)] group-hover:text-[color:var(--ember)]">
                     {choice.key}
                   </span>
-                  {choice.label}
+                  <span>{choice.label}</span>
                 </span>
                 <svg
                   width="14"
@@ -681,7 +719,7 @@ export function StoryReader({
               placeholder={t("customPlaceholder")}
               rows={3}
               maxLength={400}
-              disabled={submitting}
+              disabled={choicesDisabled}
               className="font-[var(--font-newsreader)] text-[15px] leading-relaxed"
             />
             <div className="flex items-center justify-between gap-3">
@@ -691,7 +729,7 @@ export function StoryReader({
               </span>
               <Button
                 type="submit"
-                disabled={!customAction.trim() || submitting}
+                disabled={!customAction.trim() || choicesDisabled}
                 className="btn-ember justify-center disabled:opacity-50"
               >
                 {submitting ? t("sending") : t("send")}

@@ -361,6 +361,7 @@
     "illustrationAlt": "Illustration for page {n}",
     "narrationAlt": "Narration for page {n}",
     "whatNext": "What happens next?",
+    "waitingForPage": "The scribe is still writing this page…",
     "orWriteYourOwn": "Or — write your own action",
     "customPlaceholder": "Maren steps between the fox and the window…",
     "send": "Continue the tale",
