@@ -550,6 +550,17 @@ export function StoryReader({
                 {remixing ? t("remixing") : t("remix")}
               </Button>
             )}
+            {(storyStatus === "complete" || storyStatus === "published") &&
+              pages.length > 0 && (
+              <Button asChild className="btn-ember justify-center">
+                <a
+                  href={`/api/story/${storyId}/pdf`}
+                  className="text-[color:var(--primary-foreground)]"
+                >
+                  {t("downloadPdf")}
+                </a>
+              </Button>
+            )}
           </div>
         </header>
         {/* Status-aware hint line. */}

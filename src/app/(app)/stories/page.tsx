@@ -7,8 +7,8 @@
  */
 
 import Link from "next/link";
-import { desc, eq, inArray } from "drizzle-orm";
-import { getTranslations } from "next-intl/server";
+import { count, desc, eq, inArray } from "drizzle-orm";
+import { getLocale, getTranslations } from "next-intl/server";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -18,7 +18,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { db } from "@/lib/db";
-import { childProfile, story } from "@/lib/schema";
+import { childProfile, story, storyPage } from "@/lib/schema";
 import { requireAuth } from "@/lib/session";
 import { getWorld } from "@/lib/worlds";
 import type { InferSelectModel } from "drizzle-orm";
@@ -31,6 +31,8 @@ type ChildWithStories = {
   child: ChildProfile;
   stories: Story[];
 };
+
+type StoryStatus = Story["status"];
 
 // ---------------------------------------------------------------------------
 // Data loading
@@ -45,15 +47,20 @@ type ChildWithStories = {
  * small (single-digit count per parent).
  */
 async function loadStoriesGroupedByChild(
-  parentId: string
-): Promise<ChildWithStories[]> {
+  parentId: string,
+): Promise<{
+  grouped: ChildWithStories[];
+  pageCountByStoryId: Map<string, number>;
+}> {
   const children = await db
     .select()
     .from(childProfile)
     .where(eq(childProfile.parentUserId, parentId))
     .orderBy(desc(childProfile.createdAt));
 
-  if (children.length === 0) return [];
+  if (children.length === 0) {
+    return { grouped: [], pageCountByStoryId: new Map() };
+  }
 
   // Batch-fetch all stories for every child in a single query (avoids N+1).
   const childIds = children.map((c) => c.id);
@@ -63,6 +70,24 @@ async function loadStoriesGroupedByChild(
     .where(inArray(story.childProfileId, childIds))
     .orderBy(desc(story.createdAt));
 
+  const storyIds = allStories.map((s) => s.id);
+  const pageCountByStoryId = new Map<string, number>();
+
+  if (storyIds.length > 0) {
+    const pageCountRows = await db
+      .select({
+        storyId: storyPage.storyId,
+        pageCount: count(),
+      })
+      .from(storyPage)
+      .where(inArray(storyPage.storyId, storyIds))
+      .groupBy(storyPage.storyId);
+
+    for (const row of pageCountRows) {
+      pageCountByStoryId.set(row.storyId, Number(row.pageCount));
+    }
+  }
+
   // Group stories by child in memory.
   const storyMap = new Map<string, Story[]>();
   for (const s of allStories) {
@@ -71,10 +96,12 @@ async function loadStoriesGroupedByChild(
     storyMap.set(s.childProfileId, arr);
   }
 
-  return children.map((child) => ({
+  const grouped = children.map((child) => ({
     child,
     stories: storyMap.get(child.id) ?? [],
   }));
+
+  return { grouped, pageCountByStoryId };
 }
 
 // ---------------------------------------------------------------------------
@@ -83,7 +110,7 @@ async function loadStoriesGroupedByChild(
 
 /** Maps a story status to a badge variant for visual distinction. */
 function statusVariant(
-  status: Story["status"]
+  status: StoryStatus,
 ): "default" | "secondary" | "outline" | "destructive" {
   switch (status) {
     case "complete":
@@ -98,13 +125,23 @@ function statusVariant(
   }
 }
 
-/** Formats a Date to a short, human-friendly string. */
-function formatDate(date: Date): string {
-  return date.toLocaleDateString("en-US", {
+/** Formats a Date using the active UI locale. */
+function formatDate(date: Date, locale: string): string {
+  const dateLocale = locale === "az" ? "az-AZ" : "en-US";
+  return date.toLocaleDateString(dateLocale, {
     month: "short",
     day: "numeric",
     year: "numeric",
   });
+}
+
+function isStoryStatus(value: string): value is StoryStatus {
+  return (
+    value === "draft" ||
+    value === "complete" ||
+    value === "published" ||
+    value === "archived"
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -113,7 +150,11 @@ function formatDate(date: Date): string {
 
 export default async function StoriesListPage() {
   const session = await requireAuth();
-  const grouped = await loadStoriesGroupedByChild(session.user.id);
+  const t = await getTranslations("StoriesList");
+  const locale = await getLocale();
+  const { grouped, pageCountByStoryId } = await loadStoriesGroupedByChild(
+    session.user.id,
+  );
 
   const hasAnyStories = grouped.some((g) => g.stories.length > 0);
 
@@ -122,16 +163,15 @@ export default async function StoriesListPage() {
       <div className="mx-auto max-w-4xl">
         <header className="mb-12 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <div className="max-w-2xl">
-            <p className="eyebrow">&sect; The library &middot; All stories</p>
+            <p className="eyebrow">{t("eyebrow")}</p>
             <h1 className="display-lg mt-4 text-4xl md:text-5xl">
-              Your children&rsquo;s{" "}
+              {t("titleLead")}{" "}
               <span className="italic-wonk text-[color:var(--ember)]">
-                stories.
+                {t("titleAccent")}
               </span>
             </h1>
             <p className="mt-5 font-[var(--font-newsreader)] text-[15.5px] leading-relaxed text-foreground/70">
-              Every tale your little scribes have started or finished, gathered
-              in one place. Tap any card to continue reading.
+              {t("intro")}
             </p>
           </div>
           {grouped.length > 0 && (
@@ -139,20 +179,23 @@ export default async function StoriesListPage() {
               href="/story/new"
               className="inline-flex h-10 shrink-0 items-center justify-center rounded-md bg-[color:var(--ember)] px-5 text-sm font-medium text-[color:var(--primary-foreground)] transition-opacity hover:opacity-90 md:self-end"
             >
-              Start a new tale
+              {t("startNewTale")}
             </Link>
           )}
         </header>
 
         {!hasAnyStories ? (
-          <EmptyState hasChildren={grouped.length > 0} />
+          <EmptyState hasChildren={grouped.length > 0} t={t} />
         ) : (
           <div className="space-y-14">
-            {grouped.map(({ child, stories }) => (
+            {grouped.map(({ child, stories: childStories }) => (
               <ChildStoryGroup
                 key={child.id}
                 child={child}
-                stories={stories}
+                stories={childStories}
+                pageCountByStoryId={pageCountByStoryId}
+                locale={locale}
+                t={t}
               />
             ))}
           </div>
@@ -166,19 +209,27 @@ export default async function StoriesListPage() {
 // Sub-components (server-only, no "use client")
 // ---------------------------------------------------------------------------
 
+type StoriesListTranslator = Awaited<
+  ReturnType<typeof getTranslations<"StoriesList">>
+>;
+
 /**
  * Empty state shown when no stories exist yet. Differentiates between
  * "no children added" and "children exist but no stories written".
  */
-function EmptyState({ hasChildren }: { hasChildren: boolean }) {
+function EmptyState({
+  hasChildren,
+  t,
+}: {
+  hasChildren: boolean;
+  t: StoriesListTranslator;
+}) {
   return (
     <Card className="text-center">
       <CardHeader>
-        <CardTitle className="text-xl">No stories yet</CardTitle>
+        <CardTitle className="text-xl">{t("emptyTitle")}</CardTitle>
         <CardDescription>
-          {hasChildren
-            ? "Your children haven\u2019t started any stories. Time for a new adventure!"
-            : "Add a child profile first, then start creating stories together."}
+          {hasChildren ? t("emptyBodyNoStories") : t("emptyBodyNoChildren")}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -186,7 +237,7 @@ function EmptyState({ hasChildren }: { hasChildren: boolean }) {
           href={hasChildren ? "/story/new" : "/children"}
           className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
         >
-          {hasChildren ? "Start a new story" : "Add a child profile"}
+          {hasChildren ? t("startNewStory") : t("addChild")}
         </Link>
       </CardContent>
     </Card>
@@ -196,22 +247,34 @@ function EmptyState({ hasChildren }: { hasChildren: boolean }) {
 /** A section for a single child, listing all their story cards. */
 function ChildStoryGroup({
   child,
-  stories,
+  stories: childStories,
+  pageCountByStoryId,
+  locale,
+  t,
 }: {
   child: ChildProfile;
   stories: Story[];
+  pageCountByStoryId: Map<string, number>;
+  locale: string;
+  t: StoriesListTranslator;
 }) {
-  if (stories.length === 0) return null;
+  if (childStories.length === 0) return null;
 
   return (
     <div>
       <h2 className="mb-4 text-lg font-semibold tracking-tight">
-        {child.displayName}&rsquo;s stories
+        {t("childStoriesHeading", { name: child.displayName })}
       </h2>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        {stories.map((s) => (
-          <StoryCard key={s.id} story={s} />
+        {childStories.map((s) => (
+          <StoryCard
+            key={s.id}
+            story={s}
+            pageCount={pageCountByStoryId.get(s.id) ?? 0}
+            locale={locale}
+            t={t}
+          />
         ))}
       </div>
     </div>
@@ -219,21 +282,32 @@ function ChildStoryGroup({
 }
 
 /** An individual story card linking to the story reader. */
-async function StoryCard({ story: s }: { story: Story }) {
+async function StoryCard({
+  story: s,
+  pageCount,
+  locale,
+  t,
+}: {
+  story: Story;
+  pageCount: number;
+  locale: string;
+  t: StoriesListTranslator;
+}) {
   const world = getWorld(s.worldKey);
   const tWorlds = await getTranslations("Worlds");
   const worldName = world ? tWorlds(`${world.key}.name`) : s.worldKey;
+  const statusLabel = isStoryStatus(s.status)
+    ? t(`status.${s.status}`)
+    : s.status;
 
   return (
     <Link href={`/story/${s.id}`} className="group block">
       <Card className="transition-shadow group-hover:shadow-md">
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-2">
-            <CardTitle className="text-base leading-snug">
-              {s.title}
-            </CardTitle>
+            <CardTitle className="text-base leading-snug">{s.title}</CardTitle>
             <Badge variant={statusVariant(s.status)} className="shrink-0">
-              {s.status}
+              {statusLabel}
             </Badge>
           </div>
           <CardDescription>{worldName}</CardDescription>
@@ -242,21 +316,27 @@ async function StoryCard({ story: s }: { story: Story }) {
         <CardContent>
           <dl className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
             <div>
-              <dt className="font-medium text-foreground/80">Hero</dt>
+              <dt className="font-medium text-foreground/80">
+                {t("heroLabel")}
+              </dt>
               <dd className="truncate">{s.heroName}</dd>
             </div>
             <div>
-              <dt className="font-medium text-foreground/80">Words</dt>
+              <dt className="font-medium text-foreground/80">
+                {t("wordsLabel")}
+              </dt>
               <dd>{s.wordCount.toLocaleString()}</dd>
             </div>
             <div>
-              <dt className="font-medium text-foreground/80">Pages</dt>
-              <dd>{s.chapterCount}</dd>
+              <dt className="font-medium text-foreground/80">
+                {t("pagesLabel")}
+              </dt>
+              <dd>{pageCount}</dd>
             </div>
           </dl>
 
           <p className="mt-3 text-xs text-muted-foreground">
-            Created {formatDate(s.createdAt)}
+            {t("created", { date: formatDate(s.createdAt, locale) })}
           </p>
         </CardContent>
       </Card>

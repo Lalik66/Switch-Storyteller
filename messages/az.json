@@ -349,6 +349,29 @@
     "remixingOff": "Remiks bağlı",
     "toggleFailed": "Yenilənmədi. Yenə cəhd et."
   },
+  "StoriesList": {
+    "eyebrow": "§ Kitabxana · Bütün hekayələr",
+    "titleLead": "Uşaqlarınızın",
+    "titleAccent": "hekayələri.",
+    "intro": "Kiçik yazıçılarınızın başlatdığı və ya bitirdiyi bütün nağıllar bir yerdə. Oxumağa davam etmək üçün kartı seçin.",
+    "startNewTale": "Yeni nağıl başla",
+    "emptyTitle": "Hələ hekayə yoxdur",
+    "emptyBodyNoStories": "Uşaqlarınız hələ hekayə yazmayıb. Yeni macəra vaxtıdır!",
+    "emptyBodyNoChildren": "Əvvəlcə uşaq profili əlavə edin, sonra birlikdə hekayələr yaradın.",
+    "startNewStory": "Yeni hekayə başlat",
+    "addChild": "Uşaq profili əlavə et",
+    "childStoriesHeading": "{name}in hekayələri",
+    "heroLabel": "Qəhrəman",
+    "wordsLabel": "Sözlər",
+    "pagesLabel": "Səhifələr",
+    "created": "Yaradılıb {date}",
+    "status": {
+      "draft": "Qaralama",
+      "complete": "Tamamlandı",
+      "published": "Nəşr edildi",
+      "archived": "Arxivləndi"
+    }
+  },
   "Reader": {
     "eyebrow": "§ Nağıl · Davam edir",
     "untitled": "Adsız nağıl",
@@ -399,6 +422,7 @@
     "publishDisallowedHint": "Əvvəlcə uşaq profilində Nəşr açıq pillini aktiv et.",
     "completeBanner": "Tamamlandı",
     "publishedBanner": "Nəşr edildi",
+    "downloadPdf": "PDF yüklə",
     "actionChoices": [
       "Cəsarətlə irəli addımla",
       "Diz çök və pıçılda",

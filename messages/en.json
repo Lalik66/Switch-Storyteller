@@ -349,6 +349,29 @@
     "remixingOff": "Remixing off",
     "toggleFailed": "Could not update. Try again."
   },
+  "StoriesList": {
+    "eyebrow": "§ The library · All stories",
+    "titleLead": "Your children's",
+    "titleAccent": "stories.",
+    "intro": "Every tale your little scribes have started or finished, gathered in one place. Tap any card to continue reading.",
+    "startNewTale": "Start a new tale",
+    "emptyTitle": "No stories yet",
+    "emptyBodyNoStories": "Your children haven't started any stories. Time for a new adventure!",
+    "emptyBodyNoChildren": "Add a child profile first, then start creating stories together.",
+    "startNewStory": "Start a new story",
+    "addChild": "Add a child profile",
+    "childStoriesHeading": "{name}'s stories",
+    "heroLabel": "Hero",
+    "wordsLabel": "Words",
+    "pagesLabel": "Pages",
+    "created": "Created {date}",
+    "status": {
+      "draft": "Draft",
+      "complete": "Complete",
+      "published": "Published",
+      "archived": "Archived"
+    }
+  },
   "Reader": {
     "eyebrow": "§ The tale · In progress",
     "untitled": "Untitled tale",
@@ -399,6 +422,7 @@
     "publishDisallowedHint": "Enable the Publishing pill on this child's profile first.",
     "completeBanner": "Complete",
     "publishedBanner": "Published",
+    "downloadPdf": "Download PDF",
     "actionChoices": [
       "Step forward bravely",
       "Kneel and whisper",
