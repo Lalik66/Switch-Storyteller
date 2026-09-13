@@ -494,7 +494,7 @@ export function LandingBelowFold() {
                 {t("parents.intro")}
               </p>
               <Link
-                href="#pricing"
+                href="/safety"
                 className="mt-10 inline-flex items-center gap-2 border-b border-[color:var(--gold)]/60 pb-1 text-[color:var(--gold)] transition-colors hover:border-[color:var(--gold)]"
               >
                 {t("parents.link")}
@@ -510,7 +510,10 @@ export function LandingBelowFold() {
               </Link>
             </div>
 
-            <div className="grid gap-px bg-[color:var(--parchment)]/15 sm:grid-cols-2 lg:col-span-7">
+            <div
+              id="safety"
+              className="scroll-mt-24 grid gap-px bg-[color:var(--parchment)]/15 sm:grid-cols-2 lg:col-span-7"
+            >
               {parentPillars.map((p, i) => (
                 <div key={p.title} className="bg-[color:var(--ink)] p-7">
                   <span className="font-mono text-xs text-[color:var(--gold)]">

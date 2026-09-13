@@ -2,6 +2,7 @@ import { Fraunces, Newsreader, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
+import { HashScrollOnLoad } from "@/components/hash-scroll-on-load";
 import { LanguageProvider } from "@/components/language-provider";
 import { LocalizedSiteFooter } from "@/components/localized-site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -107,6 +108,7 @@ export default async function RootLayout({
         >
           <NextIntlClientProvider locale={locale} messages={messages}>
             <LanguageProvider>
+              <HashScrollOnLoad />
               <div className="relative z-10 flex min-h-screen flex-col">
                 <SiteHeader />
                 <main id="main-content" className="flex-1">

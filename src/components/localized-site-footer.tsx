@@ -1,10 +1,10 @@
-import Link from "next/link";
 import { getTranslations } from "next-intl/server";
+import { FooterHashLink } from "@/components/footer-hash-link";
 
 // Hrefs live in code, not the messages bundle: home-page anchor paths
 // (`/#loop`, etc.), not translatable copy.
 const COL1_HREFS = ["/#loop", "/#worlds", "/#sample"] as const;
-const COL2_HREFS = ["/#parents", "/#safety", "/#pricing"] as const;
+const COL2_HREFS = ["/#parents", "/safety", "/#pricing"] as const;
 const COL3_HREFS = ["#", "#", "#"] as const;
 
 /**
@@ -114,12 +114,12 @@ function FooterCol({
       <ul className="space-y-2.5 text-[15px]">
         {labels.map((label, i) => (
           <li key={`${title}-${i}`}>
-            <Link
+            <FooterHashLink
               href={hrefs[i] ?? "#"}
               className="text-foreground/75 transition-colors hover:text-[color:var(--ember)]"
             >
               {label}
-            </Link>
+            </FooterHashLink>
           </li>
         ))}
       </ul>

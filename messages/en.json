@@ -454,5 +454,66 @@
       "name": "Remix Master",
       "description": "Forged your own riff on someone else's tale."
     }
+  },
+  "Safety": {
+    "meta": {
+      "title": "Our safety commitments",
+      "description": "How The Hero's Forge keeps your child's storytelling safe: four layers of moderation, COPPA-by-design privacy, full parent visibility, and controls you set."
+    },
+    "eyebrow": "§ For the grown-ups · Safety",
+    "title1": "Our safety",
+    "titleAccent": "commitments.",
+    "intro": "We built the Forge for our own kids first. That meant starting with the hardest question: what would make a parent trust an AI with their child's inner world? Here is every promise we make you — in full.",
+    "backToHome": "← Back to home",
+    "sections": [
+      {
+        "number": "01",
+        "title": "Four layers of safety",
+        "lead": "Every word your child sees passes all four checks — no exceptions.",
+        "points": [
+          "Pre-prompt screening filters what reaches the model before a story ever begins.",
+          "G-rated LLM guardrails keep the storyteller tuned for ages 7–12.",
+          "Post-generation review scans every produced page before it is shown.",
+          "A human moderation desk reviews anything the automated layers flag."
+        ]
+      },
+      {
+        "number": "02",
+        "title": "COPPA by design",
+        "lead": "Children are not the product — and never will be.",
+        "points": [
+          "No ad tracking of any kind.",
+          "No sale of your data, ever.",
+          "Parent-verified accounts before a child can write.",
+          "Instant export or deletion of your child's data on request."
+        ]
+      },
+      {
+        "number": "03",
+        "title": "Read every word",
+        "lead": "Nothing your child writes is hidden from you.",
+        "points": [
+          "A weekly parchment-paper digest arrives in your inbox.",
+          "Every tale your child writes is readable, verbatim.",
+          "No summaries, no paraphrasing — you see the real words.",
+          "Full history stays available in your parent dashboard."
+        ]
+      },
+      {
+        "number": "04",
+        "title": "You set the knobs",
+        "lead": "Your child's profile, your rules.",
+        "points": [
+          "Daily time limits you decide.",
+          "Content strictness tuned to your comfort.",
+          "Community publishing stays off until you turn it on.",
+          "Remix permissions controlled per child."
+        ]
+      }
+    ],
+    "closingTitle": "Questions we haven't answered?",
+    "closingBody": "Safety is never finished. If something here doesn't sit right, we want to hear it before you ever hand the pen to your child.",
+    "ctaPrimary": "Begin free",
+    "ctaSecondary": "Back to home"
   }
 }

@@ -15,6 +15,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { StoryPageProse } from "@/components/story/story-page-prose";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useAppLocale } from "@/i18n/use-app-locale";
@@ -613,10 +614,7 @@ export function StoryReader({
           {pages.map((page, idx) => {
             const pNum = readPageNumber(page, idx + 1);
             const rawContent = readAiContent(page);
-            const isActivePage = !streamingPage && idx === pages.length - 1;
-            const displayContent = isActivePage
-              ? parseStoryChoices(rawContent).prose
-              : rawContent;
+            const displayContent = parseStoryChoices(rawContent).prose;
             return (
               <PageCard
                 key={(page as unknown as { id?: string }).id ?? idx}
@@ -691,7 +689,9 @@ export function StoryReader({
                   <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full border border-border text-[10px] font-medium text-foreground/60 group-hover:border-[color:var(--ember)] group-hover:text-[color:var(--ember)]">
                     {choice.key}
                   </span>
-                  <span>{choice.label}</span>
+                  <span className="font-[var(--font-newsreader)] italic">
+                    {choice.label}
+                  </span>
                 </span>
                 <svg
                   width="14"
@@ -817,10 +817,8 @@ function PageCard({
           <span className="eyebrow">{t("pageOf", { n: pageNumber, total })}</span>
         </div>
 
-        <div className="mt-5 whitespace-pre-wrap font-[var(--font-newsreader)] text-[17px] leading-[1.85] text-foreground/90">
-          {content || (
-            <span className="italic text-foreground/40">&hellip;</span>
-          )}
+        <div className="mt-5">
+          <StoryPageProse content={content} />
         </div>
 
         {!isLive && (audioUrl || onNarrate) && (

@@ -454,5 +454,66 @@
       "name": "Remiks Ustası",
       "description": "Başqasının nağılına öz dəyişikliyini etdin."
     }
+  },
+  "Safety": {
+    "meta": {
+      "title": "Təhlükəsizlik öhdəliklərimiz",
+      "description": "Hero's Forge uşağınızın nağıl yaradıcılığını necə qoruyur: dörd qat moderasiya, COPPA prinsipli məxfilik, tam valideyn nəzarəti və sizin qurduğunuz limitlər."
+    },
+    "eyebrow": "§ Böyüklər üçün · Təhlükəsizlik",
+    "title1": "Təhlükəsizlik",
+    "titleAccent": "öhdəliklərimiz.",
+    "intro": "Döyməxananı əvvəl öz uşaqlarımız üçün tikdik. Ən çətin sualla başladıq: valideyn süni intellektə uşağının daxili dünyasını nəyə etibar edər? Budur sizə verdiyimiz hər söz — tam şəkildə.",
+    "backToHome": "← Ana səhifəyə qayıt",
+    "sections": [
+      {
+        "number": "01",
+        "title": "Dörd təhlükəsizlik qatı",
+        "lead": "Uşağınızın gördüyü hər söz bu dörd yoxlamadan keçir — istisnasız.",
+        "points": [
+          "Əvvəlcədən süzgəc nağıl başlamazdan öncə modelə çatanı filtrləyir.",
+          "Uşaq dostu LLM limitləri hekayəçini 7–12 yaş üçün tənzimləyir.",
+          "Generasiyadan sonra yoxlama hər səhifəni göstərilməzdən əvvəl nəzərdən keçirir.",
+          "İnsan moderator masası avtomatik qatların işarələdiyi hər şeyi yoxlayır."
+        ]
+      },
+      {
+        "number": "02",
+        "title": "COPPA prinsipi ilə",
+        "lead": "Uşaqlar məhsul deyil — heç vaxt olmayacaq.",
+        "points": [
+          "Heç bir reklam izləməsi yoxdur.",
+          "Məlumatınızın satışı — heç vaxt.",
+          "Uşaq yazmazdan əvvəl valideyn təsdiqli hesablar.",
+          "İstənilən vaxt uşağınızın məlumatının ixracı və ya silinməsi."
+        ]
+      },
+      {
+        "number": "03",
+        "title": "Hər sözü oxu",
+        "lead": "Uşağınızın yazdığı heç nə sizdən gizli deyil.",
+        "points": [
+          "Həftəlik parşömen özet e-poçtunuza gəlir.",
+          "Uşağınızın yazdığı hər nağıl olduğu kimi oxuna bilər.",
+          "Xülasə yoxdur, təkrar ifadə yoxdur — əsl sözləri görürsünüz.",
+          "Tam tarixçə valideyn panelinizdə əlçatan qalır."
+        ]
+      },
+      {
+        "number": "04",
+        "title": "Sən qurursan",
+        "lead": "Uşağınızın profili, sizin qaydalarınız.",
+        "points": [
+          "Günlük vaxt limitlərini siz təyin edirsiniz.",
+          "Məzmun sərtliyi sizin rahatlığınıza görə tənzimlənir.",
+          "Siz açana qədər icma nəşri bağlı qalır.",
+          "Remiks icazələri hər uşaq üçün ayrıca idarə olunur."
+        ]
+      }
+    ],
+    "closingTitle": "Cavablandırmadığımız suallar var?",
+    "closingBody": "Təhlükəsizlik heç vaxt bitmir. Burada nəsə düzgün görünmürsə, qələmi uşağınıza verməzdən əvvəl bunu bizdən eşitmək istəyirik.",
+    "ctaPrimary": "Pulsuz başla",
+    "ctaSecondary": "Ana səhifəyə qayıt"
   }
 }
