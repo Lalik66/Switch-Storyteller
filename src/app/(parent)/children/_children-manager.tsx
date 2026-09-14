@@ -171,8 +171,8 @@ export function ChildrenManager({
 
     setSubmitting(true);
     try {
-      // TODO(api-agent): /api/children is not in Phase 1 scope. The
-      // sibling API agent will land POST and PATCH handlers.
+      // POST creates a child, PATCH updates one — handlers live in
+      // `src/app/api/children/`.
       const url = form.id ? `/api/children/${form.id}` : "/api/children";
       const method = form.id ? "PATCH" : "POST";
       const res = await fetch(url, {
@@ -265,7 +265,7 @@ export function ChildrenManager({
       return;
     }
     try {
-      // TODO(api-agent): DELETE /api/children/:id not in Phase 1 scope.
+      // DELETE removes the child — handler in `src/app/api/children/[id]`.
       const res = await fetch(`/api/children/${id}`, { method: "DELETE" });
       if (!res.ok) {
         throw new Error(`Delete failed: ${res.status}`);

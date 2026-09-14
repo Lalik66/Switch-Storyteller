@@ -1,6 +1,6 @@
 # Icons & Ornaments
 
-**Source of truth for colors:** [`src/app/globals.css`](../../src/app/globals.css) (`--navy`, `--starlight`, `--ember`, `--gold` = `--ember`, `--violet`, …).
+**Source of truth for colors:** [`src/app/globals.css`](../../src/app/globals.css) (`--parchment`, `--ink`, `--ember`, `--gold`, `--forest`, `--dusk`).
 
 Every visual mark in **The Hero's Forge** UI is **inline SVG**. There are no icon fonts, no raster images, and no emojis used as UI. This keeps the system crisp, color-themable via `currentColor`, and free of network dependencies.
 
@@ -51,7 +51,7 @@ The system has two kinds of marks:
 | Header monogram | `width="40" height="40"` |
 | Rotating cursive seal | `className="h-28 w-28"` |
 
-> **Naming note:** `.btn-ember` is the **primary CTA class** in CSS but the **fill is `var(--violet)`**, not orange. See [`components.md`](./components.md).
+> **Note:** `.btn-ember` is the **primary CTA class** and its fill is **`var(--ember)`** (ember orange). See [`components.md`](./components.md).
 
 ---
 
@@ -156,7 +156,7 @@ Hovers `-rotate-6` over 500ms. The **white** letter on **ember** is an intention
 
 ### Rotating cursive seal
 
-140×140 SVG with `textPath` tracing a circle. Fraunces italic 11px, letter-spaced 3. Used on the hero manuscript card. The ring text uses `currentColor`; parent uses **`text-[color:var(--ink)]`**, and **`--ink`** is an alias of **`--navy`** in [`globals.css`](../../src/app/globals.css).
+140×140 SVG with `textPath` tracing a circle. Fraunces italic 11px, letter-spaced 3. Used on the hero manuscript card. The ring text uses `currentColor`; parent uses **`text-[color:var(--ink)]`** (the default text token in [`globals.css`](../../src/app/globals.css)).
 
 ```html
 <svg viewBox="0 0 140 140" className="h-28 w-28 text-[color:var(--ink)] slow-spin">

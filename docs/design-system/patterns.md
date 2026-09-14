@@ -195,7 +195,7 @@ Values use `display-lg text-4xl text-[color:var(--ember)]`, labels use `.eyebrow
 
 Full-bleed **dark band** for the Parents pillars. In the source, `bg-[color:var(--ink)]` and `text-[color:var(--parchment)]` (see `landing-below-fold`).
 
-In **[`globals.css`](../../src/app/globals.css)**, `--ink` and `--parchment` are **aliases** of `--navy` and `--starlight`, so the section stays aligned with the global canvas without duplicating hex values.
+In **[`globals.css`](../../src/app/globals.css)**, `--ink` and `--parchment` are the global text and surface tokens, so the section stays aligned with the global canvas without duplicating values.
 
 ```tsx
 <section className="relative border-y border-border/60 bg-[color:var(--ink)] py-32 text-[color:var(--parchment)]">

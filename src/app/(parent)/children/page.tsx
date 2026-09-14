@@ -5,10 +5,9 @@
  * §11 (bilingual copy). See
  * `.claude/plans/sequential-bubbling-horizon.md`.
  *
- * Server Component shell. Session-gated via `requireAuth()`; the DB
- * query that lists the parent's child profiles is stubbed behind a
- * TODO for the schema-agent. The interactive list + add/edit dialog
- * ship as a client child (`_children-manager.tsx`).
+ * Server Component shell. Session-gated via `requireAuth()`; loads the
+ * parent's child profiles from Postgres via Drizzle. The interactive
+ * list + add/edit dialog ship as a client child (`_children-manager.tsx`).
  */
 
 

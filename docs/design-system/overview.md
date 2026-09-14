@@ -1,6 +1,6 @@
 # Overview — The Hero's Forge Design System
 
-**Codename:** Illuminated Grimoire (cosmic / dark-canvas implementation in code: “Dream Forge Writer” in [`globals.css`](../../src/app/globals.css))
+**Codename:** Illuminated Grimoire — warm parchment (light) and cosmic navy (dark), keyed off the locked tokens in [`globals.css`](../../src/app/globals.css).
 **Version:** 0.2 (docs synced to `globals.css` + layout)
 **Last updated:** 2026-04-23
 
@@ -10,7 +10,7 @@ A warm, editorial storybook aesthetic built for an AI storytelling studio for ch
 
 ## Design principles
 
-1. **Warmth over cold tech.** The live palette is **navy + starlight + ember** with **violet** primaries; it should still feel like a storybook, not a default SaaS template.
+1. **Warmth over cold tech.** The live palette is **parchment + ink + ember** in light mode and **cosmic navy + starlight + ember** in dark, with **ember** primaries; it should still feel like a storybook, not a default SaaS template.
 2. **Craft is the feature.** Hand-drawn ornaments, variable typography, and asymmetric layouts signal that a person made this on purpose.
 3. **Reading is the hero.** Every page is a story page in spirit. Typography is sized, spaced, and weighted to invite slow reading.
 4. **Intentional asymmetry.** Grids are broken deliberately — tilted cards, roman numerals breaking the baseline, ornaments crossing gutters. Never generic.
@@ -45,7 +45,7 @@ Each document stands alone but cross-links liberally. Start here, then read in a
 - ✅ Use `§` + roman numerals for section markers (§ I, § II, § III…).
 - ✅ Tilt cards by 1–3 degrees when they need weight.
 - ✅ Break the grid with ornaments, numerals, and constellations.
-- ✅ Use **ember (orange)** for one headline accent word and small UI affordances; **violet** primaries and `.btn-ember` for the main CTA.
+- ✅ Use **ember (orange)** for one headline accent word and small UI affordances, and `.btn-ember` (ember fill) for the main CTA.
 - ✅ Use HTML entities (`&mdash;`, `&rsquo;`, `&middot;`) for typography.
 - ✅ Run `pnpm lint && pnpm typecheck` after every change.
 

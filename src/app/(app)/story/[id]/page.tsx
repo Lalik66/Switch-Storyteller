@@ -2,9 +2,8 @@
  * Story reader — §4.1 / §5 / §6 of
  * `.claude/plans/sequential-bubbling-horizon.md`.
  *
- * Server Component shell: does the protected-session check and stubs
- * the story + pages DB load. The actual Drizzle query lives behind a
- * TODO so the schema-agent can drop it in once `@/lib/schema` lands.
+ * Server Component shell: runs the protected-session check and loads the
+ * story plus its pages from Postgres via Drizzle (`@/lib/schema`).
  * Interactive bits (action buttons, custom action, streaming) are
  * delegated to the `<StoryReader>` client child below.
  */

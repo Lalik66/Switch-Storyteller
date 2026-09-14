@@ -6,9 +6,9 @@ Larger, multi-part arrangements (hero, sample page, parents section) are documen
 
 ---
 
-## `.btn-ember` — Primary CTA (violet; legacy class name)
+## `.btn-ember` — Primary CTA (ember orange)
 
-The class is still called **`.btn-ember`**, but the implementation in [`globals.css`](../../src/app/globals.css) is a **violet** pill (matches `--primary: var(--violet)`), not `var(--ember)`.
+The primary CTA class **`.btn-ember`** is an **ember-orange** pill: `background: var(--ember)`, and `--primary` resolves to `var(--ember)` (see [`colors.md`](./colors.md)).
 
 ```html
 <a href="#worlds" class="btn-ember">
@@ -17,7 +17,7 @@ The class is still called **`.btn-ember`**, but the implementation in [`globals.
 </a>
 ```
 
-Pill-shaped, **violet**-filled, with inset highlights. Hover lifts 2px and rotates `-0.4deg`. Renaming the class (e.g. to `.btn-primary`) is a future cleanup.
+Pill-shaped, **ember**-filled, with inset highlights. Hover lifts 2px and rotates `-0.4deg`.
 
 ```css
 /* From globals.css */
@@ -26,7 +26,7 @@ Pill-shaped, **violet**-filled, with inset highlights. Hover lifts 2px and rotat
   align-items: center;
   gap: 0.6rem;
   padding: 0.9rem 1.6rem;
-  background: var(--violet);
+  background: var(--ember);
   color: var(--primary-foreground);
   border-radius: 999px;
   font-family: var(--font-fraunces), Georgia, serif;
@@ -34,14 +34,14 @@ Pill-shaped, **violet**-filled, with inset highlights. Hover lifts 2px and rotat
   font-size: 1rem;
   letter-spacing: -0.01em;
   box-shadow:
-    inset 0 1px 0 color-mix(in oklch, white 25%, transparent),
-    inset 0 -2px 0 color-mix(in oklch, black 35%, transparent),
-    0 10px 24px -12px color-mix(in oklch, var(--violet) 70%, transparent);
+    inset 0 1px 0 color-mix(in oklch, white 35%, transparent),
+    inset 0 -2px 0 color-mix(in oklch, black 25%, transparent),
+    0 10px 24px -12px color-mix(in oklch, var(--ember) 70%, transparent);
   transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s;
 }
 ```
 
-**Orange (`--ember`)** is for marketing emphasis and small affordances, not this CTA, unless the CSS is intentionally changed.
+This CTA is ember's primary solid-fill use; reserve heavier orange washes elsewhere for marketing emphasis. See [`colors.md`](./colors.md) for the full ember usage rules.
 
 ### Rules
 
@@ -273,7 +273,7 @@ The shadcn primitives (`Input`, `Textarea`, `Label`, radio groups) still need to
 - Background: `var(--card)`
 - Font: Newsreader body
 - Labels: Fraunces at 14–15px, not uppercase
-- Focus ring: `2px var(--ring)` (violet in current tokens) with offset against `background`
+- Focus ring: `2px var(--ring)` (ember in current tokens) with offset against `background`
 - Placeholder: `text-foreground/40` in italic Newsreader
 
 Document them here once built. See [`overview.md`](./overview.md) roadmap item #1.

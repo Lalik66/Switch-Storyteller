@@ -23,13 +23,11 @@ The UI uses [next-themes](https://github.com/pacocoursey/next-themes) with the *
 
 ## Token flips (`.dark`)
 
-`globals.css` defines brand and semantic variables under **`:root`** and overrides many of them under **`.dark`** (same property names, different OKLCH / same `rgb` for ember). Examples:
+`globals.css` defines the six brand tokens and the semantic shadcn variables under **`:root`** and overrides them under **`.dark`** (same property names, different OKLCH values). The brand tokens are first-class — not aliases of one another. Examples:
 
-- `--navy` and `--starlight` get slightly different OKLCH in `.dark` (deeper page, crisper text).
-- `--violet`, `--cyan`, `--aurora`—adjusted for dark.
-- `--ember: rgb(239, 107, 49)` is **the same** in both roots for a consistent brand orange.
-- `--gold` remains `var(--ember)`.
-- `--ink` / `--parchment` stay aliases: `var(--navy)` / `var(--starlight)` and track the flips.
+- `--parchment` (page surface) and `--ink` (text) take different OKLCH in `.dark`: parchment flips from cream to a near-midnight blue-violet, ink from deep ink to cream starlight.
+- `--ember` shifts slightly lighter in `.dark` (`oklch(0.58 …)` → `oklch(0.68 …)`) so the brand orange stays legible on the navy surface.
+- `--gold` is a **distinct** warm yellow (never an alias of `--ember`), with its own light and dark values.
 - `--forest` / `--dusk` have separate light- and dark-mode OKLCH values for world/situational use.
 
 Component styles should use **semantic** tokens (`background`, `foreground`, `card`, `border`, …) or brand tokens so they track `.dark` without extra React branching.
@@ -38,10 +36,10 @@ Component styles should use **semantic** tokens (`background`, `foreground`, `ca
 
 ## Body gradients
 
-Fixed **radial** layers on `body` use **violet** and **gold** (not ember in the gradient itself):
+Fixed **radial** layers on `body` use **gold** and **ember**:
 
-- Default (`:root` / light class): `16%` / `12%` mixes in the first and second gradient.
-- `.dark body`: `18%` / `14%` (slightly stronger glints).
+- Light (`:root`): gold at `18%`, then ember at `10%`.
+- `.dark body`: ember at `14%`, then gold at `10%` (the warmer pair leads on the navy ground).
 
 See the exact `background-image` blocks in [`src/app/globals.css`](../../src/app/globals.css) `body` and `.dark body`.
 
@@ -54,7 +52,7 @@ See the exact `background-image` blocks in [`src/app/globals.css`](../../src/app
 | Rule | `mix-blend-mode` | Opacity |
 |---|---|---|
 | `.grain::before` | `overlay` | `0.12` |
-| `.dark .grain::before` | `overlay` | `0.10` |
+| `.dark .grain::before` | `screen` | `0.08` |
 
 `pointer-events: none` so it never blocks clicks.
 
@@ -68,4 +66,4 @@ Define values in **both** `:root` and `.dark` in the same change (or use aliases
 
 ## Contrast
 
-Re-measure `foreground` on `background` and key accents after any token change. The previous doc’s “parchment-only / gold on parchment” rules applied to an older **light-first** draft; the **implemented** look is **dark-base + orange accent + violet primary**.
+Re-measure `foreground` on `background` and key accents after any token change. The **implemented** look is **dark-base (cosmic navy) + ember-orange accent + gold highlight**, with light mode the parchment-base mirror of the same accents. Tokens are locked — these checks matter only if a change is proposed *and* owner-approved.
