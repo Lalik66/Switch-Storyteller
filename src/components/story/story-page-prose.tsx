@@ -25,7 +25,7 @@ const storyMarkdownComponents: Components = {
     </h3>
   ),
   h4: ({ children }) => (
-    <h4 className="font-[var(--font-fraunces)] text-base font-medium tracking-tight text-foreground/85 [&:not(:first-child)]:mt-4">
+    <h4 className="font-[var(--font-fraunces)] text-base font-medium tracking-tight text-[color:var(--ember)] [&:not(:first-child)]:mt-4">
       {children}
     </h4>
   ),
