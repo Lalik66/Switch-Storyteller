@@ -51,7 +51,7 @@ See the exact `background-image` blocks in [`src/app/globals.css`](../../src/app
 
 | Rule | `mix-blend-mode` | Opacity |
 |---|---|---|
-| `.grain::before` | `overlay` | `0.12` |
+| `.grain::before` | `multiply` | `0.18` |
 | `.dark .grain::before` | `screen` | `0.08` |
 
 `pointer-events: none` so it never blocks clicks.

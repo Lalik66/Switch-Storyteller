@@ -3,6 +3,7 @@ import { and, count, eq, gte } from "drizzle-orm";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { moderatePrompt } from "@/lib/moderation";
 import { childProfile, story } from "@/lib/schema";
 import { getWorld } from "@/lib/worlds";
 
@@ -49,7 +50,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const { heroName, worldKey, problem, childProfileId } = parsed.data;
+  const { heroName, worldKey, problem, lang, childProfileId } = parsed.data;
 
   // Validate that the selected world exists in the static manifest.
   const world = getWorld(worldKey);
@@ -119,6 +120,26 @@ export async function POST(req: Request) {
           "You\u2019ve already started a story this week! Come back next week for a new adventure, or continue your current story.",
       }),
       { status: 429, headers: { "Content-Type": "application/json" } },
+    );
+  }
+
+  // Layer 1 moderation — the child's free-text hero name + problem are the
+  // first thing the LLM sees on the opener page, and the opener carries no
+  // "action" text, so this is the ONLY place this input is pre-moderated.
+  // Gate it here, BEFORE a draft exists, so unsafe openers never reach the
+  // model. (No promptLog row: it FKs to a story that doesn't exist yet.)
+  const openerInput = `${heroName}\n${problem}`.trim();
+  const inputVerdict = await moderatePrompt(openerInput, lang);
+  if (inputVerdict.action === "blocked") {
+    return new Response(
+      JSON.stringify({
+        redirect: true,
+        message:
+          lang === "az"
+            ? "Gəl bu nağıla başqa bir fikirlə başlayaq — qəhrəmanımız hansı çətinliklə üzləşsin?"
+            : "Let’s start this tale with a different idea — what challenge could our hero face?",
+      }),
+      { status: 200, headers: { "Content-Type": "application/json" } },
     );
   }
 

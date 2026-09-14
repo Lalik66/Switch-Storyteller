@@ -93,6 +93,20 @@ describe("moderateOutput (Layer 3 — post-generation gate)", () => {
     expect(result.severity).toBe("low");
   });
 
+  it("treats the exact threshold values as strict > boundaries", async () => {
+    // Buckets use `>` (moderation.ts:189-191), so the threshold value itself
+    // falls into the LOWER bucket. Pin all three edges so a `>`→`>=` slip fails.
+    // 0.2 → not > 0.2 → null → safe (when not flagged).
+    resolveOnce(moderationBody({ flagged: false, scores: { violence: 0.2 } }));
+    expect((await moderateOutput("edge", "en")).status).toBe("safe");
+    // 0.5 → not > 0.5 but > 0.2 → low.
+    resolveOnce(moderationBody({ flagged: false, scores: { violence: 0.5 } }));
+    expect((await moderateOutput("edge", "en")).severity).toBe("low");
+    // 0.8 → not > 0.8 but > 0.5 → medium.
+    resolveOnce(moderationBody({ flagged: false, scores: { violence: 0.8 } }));
+    expect((await moderateOutput("edge", "en")).severity).toBe("medium");
+  });
+
   it("preserves an OpenAI-flagged signal as low severity even when all scores are below threshold", async () => {
     resolveOnce(
       moderationBody({

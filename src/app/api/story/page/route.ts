@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import { streamText } from "ai";
+import { generateText } from "ai";
 import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
@@ -224,134 +224,149 @@ export async function POST(req: Request) {
     knownChars.length > 0 ? knownChars : undefined,
   );
 
-  const result = streamText({
-    model: openrouter(modelId),
-    system: systemPrompt,
-    prompt: userPrompt,
-    // Cost guard: each page targets ~150 words of prose; 400 tokens provides
-    // comfortable buffer (avg English word ≈ 1.3 tokens).
-    maxOutputTokens: 400,
-    // Layer 3 moderation runs after the full page is generated.
-    onFinish: async ({ text, usage }) => {
-      try {
-        let finalText = text;
-        let attempts = 0;
-        let lastVerdict = await moderateOutput(finalText, lang);
+  // Generate → moderate → reveal. Nothing reaches the child until it has
+  // cleared Layer 3, so unsafe model output is NEVER shown live. The route
+  // returns the finished, safe page as JSON and the client types it out for a
+  // live feel (buffered reveal). This is the deliberate replacement for the
+  // old stream-then-moderate-in-onFinish design, which let raw output render
+  // before moderation ran.
+  async function generatePage(): Promise<{ text: string; usage: unknown }> {
+    const gen = await generateText({
+      model: openrouter(modelId),
+      system: systemPrompt,
+      prompt: userPrompt,
+      // Cost guard: each page targets ~150 words of prose; 400 tokens provides
+      // comfortable buffer (avg English word ≈ 1.3 tokens).
+      maxOutputTokens: 400,
+    });
+    return { text: gen.text, usage: gen.usage as unknown };
+  }
 
-        // Retry up to 2 times on flag before falling back to canned safe page.
-        while (lastVerdict.status === "flagged" && attempts < 2) {
-          attempts += 1;
-          const retry = streamText({
-            model: openrouter(modelId),
-            system: systemPrompt,
-            prompt: userPrompt,
-            maxOutputTokens: 400, // Same cost guard as main call
-          });
-          // Drain retry to a full string.
-          let retryText = "";
-          for await (const chunk of retry.textStream) {
-            retryText += chunk;
-          }
-          finalText = retryText;
-          lastVerdict = await moderateOutput(finalText, lang);
-        }
+  try {
+    let { text: finalText, usage } = await generatePage();
+    let lastVerdict = await moderateOutput(finalText, lang);
 
-        let moderationStatus: "safe" | "flagged" = "safe";
-        if (lastVerdict.status === "flagged") {
-          finalText = CANNED_SAFE_PAGE[lang];
-          moderationStatus = "flagged";
-          await db.insert(moderationEvent).values({
-            storyId,
-            flaggedContent: text,
-            reason: lastVerdict.reason ?? "post-generation moderation flag",
-            severity: lastVerdict.severity ?? "medium",
-            actionTaken: "canned_fallback",
-            reviewedByHuman: false,
-          });
-        }
+    // Retry up to 2 times on a flag before falling back to the canned safe page.
+    let attempts = 0;
+    while (lastVerdict.status === "flagged" && attempts < 2) {
+      attempts += 1;
+      const retry = await generatePage();
+      finalText = retry.text;
+      usage = retry.usage;
+      lastVerdict = await moderateOutput(finalText, lang);
+    }
 
-        await db.insert(storyPage).values({
-          storyId,
+    let moderationStatus: "safe" | "flagged" = "safe";
+    if (lastVerdict.status === "flagged") {
+      // Record what was flagged for the Layer 4 human-review trail, THEN
+      // replace the page the child actually receives with the canned fallback.
+      await db.insert(moderationEvent).values({
+        storyId,
+        flaggedContent: finalText,
+        reason: lastVerdict.reason ?? "post-generation moderation flag",
+        severity: lastVerdict.severity ?? "medium",
+        actionTaken: "canned_fallback",
+        reviewedByHuman: false,
+      });
+      finalText = CANNED_SAFE_PAGE[lang];
+      moderationStatus = "flagged";
+    }
+
+    await db.insert(storyPage).values({
+      storyId,
+      pageNumber: nextPageNumber,
+      aiContent: finalText,
+      childContent: customAction ?? null,
+      chosenActionKey: chosenActionKey ?? null,
+      moderationStatus,
+      modelUsed: modelId,
+      tokenUsage: usage ? JSON.parse(JSON.stringify(usage)) : null,
+    });
+
+    // Keep the story's aggregate counters in sync (PRD P1-4 progress
+    // tracking; badges, parent dashboard, and the weekly digest all
+    // read story.word_count). Recompute from all pages rather than
+    // incrementing so the row self-heals if a past write was missed.
+    const allPages = await db
+      .select({
+        aiContent: storyPage.aiContent,
+        childContent: storyPage.childContent,
+      })
+      .from(storyPage)
+      .where(eq(storyPage.storyId, storyId));
+
+    const totalWords = allPages.reduce(
+      (sum, p) =>
+        sum + countWords(p.aiContent) + countWords(p.childContent ?? ""),
+      0,
+    );
+
+    await db
+      .update(story)
+      .set({
+        wordCount: totalWords,
+        // Chapters are ~4 pages (see PREMIUM_PAGE_INTERVAL) — same
+        // bucketing as the chapterNumber prompt arg above.
+        chapterCount: Math.max(
+          1,
+          Math.ceil(allPages.length / PREMIUM_PAGE_INTERVAL),
+        ),
+      })
+      .where(eq(story.id, storyId));
+
+    // Phase 2: extract characters from the safe page (fire-and-forget).
+    if (moderationStatus === "safe") {
+      extractAndUpsertCharacters(finalText, child.id, storyRow.heroName).catch(
+        (e) => console.error("[story/page] character extraction error", e),
+      );
+    }
+
+    // Only safe text ever leaves the server.
+    return new Response(
+      JSON.stringify({
+        page: {
           pageNumber: nextPageNumber,
           aiContent: finalText,
-          childContent: customAction ?? null,
-          chosenActionKey: chosenActionKey ?? null,
           moderationStatus,
-          modelUsed: modelId,
-          tokenUsage: usage ? JSON.parse(JSON.stringify(usage)) : null,
-        });
+        },
+      }),
+      { status: 200, headers: { "Content-Type": "application/json" } },
+    );
+  } catch (err) {
+    // S3 (fail-closed): generation OR moderation threw. We NEVER return raw
+    // text (it may be unverified), and we NEVER drop the failure silently —
+    // log it, record a durable moderation event for the review trail, and hand
+    // the child a classified code the client renders as gentle, translated
+    // copy. classifyStreamError keeps any provider message off the wire.
+    const errorClass = classifyStreamError(err);
+    console.error("[story/page] generation/moderation error", {
+      storyId,
+      pageNumber: nextPageNumber,
+      model: modelId,
+      errorClass,
+      providerMessage: err instanceof Error ? err.message : String(err),
+    });
 
-        // Keep the story's aggregate counters in sync (PRD P1-4 progress
-        // tracking; badges, parent dashboard, and the weekly digest all
-        // read story.word_count). Recompute from all pages rather than
-        // incrementing so the row self-heals if a past write was missed.
-        const allPages = await db
-          .select({
-            aiContent: storyPage.aiContent,
-            childContent: storyPage.childContent,
-          })
-          .from(storyPage)
-          .where(eq(storyPage.storyId, storyId));
-
-        const totalWords = allPages.reduce(
-          (sum, p) =>
-            sum + countWords(p.aiContent) + countWords(p.childContent ?? ""),
-          0,
-        );
-
-        await db
-          .update(story)
-          .set({
-            wordCount: totalWords,
-            // Chapters are ~4 pages (see PREMIUM_PAGE_INTERVAL) — same
-            // bucketing as the chapterNumber prompt arg above.
-            chapterCount: Math.max(
-              1,
-              Math.ceil(allPages.length / PREMIUM_PAGE_INTERVAL),
-            ),
-          })
-          .where(eq(story.id, storyId));
-
-        // Phase 2: extract characters from the generated page (fire-and-forget).
-        if (moderationStatus === "safe") {
-          extractAndUpsertCharacters(
-            finalText,
-            child.id,
-            storyRow.heroName,
-          ).catch((e) =>
-            console.error("[story/page] character extraction error", e)
-          );
-        }
-      } catch (err) {
-        // Never throw from onFinish — the stream is already delivered.
-        console.error("[story/page] onFinish persistence error", err);
-      }
-    },
-  });
-
-  return (
-    result as unknown as {
-      toUIMessageStreamResponse: (opts?: {
-        onError?: (error: unknown) => string;
-      }) => Response;
-    }
-  ).toUIMessageStreamResponse({
-    // The AI SDK's default onError serializes the provider's raw message
-    // into the wire `errorText` (verified: @ai-sdk/provider-utils
-    // getErrorMessage returns error.message verbatim). That message can leak
-    // model IDs / key hints / credit state and is untranslated technical
-    // English. Replace it with a classified code — the ONLY thing the child's
-    // browser ever receives — and log the real details server-side for ops.
-    onError: (error) => {
-      const errorClass = classifyStreamError(error);
-      console.error("[story/page] generation stream error", {
+    try {
+      await db.insert(moderationEvent).values({
         storyId,
-        pageNumber: nextPageNumber,
-        model: modelId,
-        errorClass,
-        providerMessage: error instanceof Error ? error.message : String(error),
+        flaggedContent:
+          "[no page produced — generation or moderation failed before Layer 3 could clear it]",
+        reason: (err instanceof Error ? err.message : String(err)).slice(0, 500),
+        severity: "high",
+        actionTaken: "moderation_error",
+        reviewedByHuman: false,
       });
-      return errorClass;
-    },
-  });
+    } catch (logErr) {
+      console.error(
+        "[story/page] failed to record moderation_error event",
+        logErr,
+      );
+    }
+
+    return new Response(JSON.stringify({ error: errorClass }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 }

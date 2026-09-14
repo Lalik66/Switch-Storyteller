@@ -36,7 +36,7 @@ Pill-shaped, **ember**-filled, with inset highlights. Hover lifts 2px and rotate
   box-shadow:
     inset 0 1px 0 color-mix(in oklch, white 35%, transparent),
     inset 0 -2px 0 color-mix(in oklch, black 25%, transparent),
-    0 10px 24px -12px color-mix(in oklch, var(--ember) 70%, transparent);
+    0 10px 24px -12px color-mix(in oklch, var(--ember) 80%, transparent);
   transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s;
 }
 ```

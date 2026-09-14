@@ -377,88 +377,72 @@ export function StoryReader({
         signal: controller.signal,
       });
 
-      if (!res.ok || !res.body) {
-        throw new Error(`Story page stream failed: ${res.status}`);
+      if (!res.ok) {
+        throw new Error(`Story page request failed: ${res.status}`);
       }
 
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      // The server sends Vercel AI SDK's UI-message-stream protocol — SSE
-      // events of the form `data: <json>\n\n` plus a terminal `data: [DONE]`.
-      // Parse them properly: append `text-delta` deltas to display, surface
-      // `error` events as a toast, ignore the rest. (Earlier this loop just
-      // dumped the raw bytes onto the page, which made errors look like
-      // garbage and successful streams look like JSON soup.)
-      let sseBuf = "";
-      let assembled = "";
-      let streamError: string | null = null;
-      let redirectMessage: string | null = null;
-
-      const handleEvent = (rawJson: string) => {
-        // Sentinel marking end-of-stream.
-        if (rawJson === "[DONE]") return;
-        let parsed: { type?: string; delta?: string; errorText?: string; redirect?: boolean; message?: string };
-        try {
-          parsed = JSON.parse(rawJson) as typeof parsed;
-        } catch {
-          return; // Skip malformed events silently.
-        }
-        if (parsed.type === "text-delta" && typeof parsed.delta === "string") {
-          assembled += parsed.delta;
-          setStreamingPage((prev) =>
-            prev ? { ...prev, aiContent: assembled } : prev,
-          );
-        } else if (parsed.type === "error") {
-          // NEVER render a server-supplied string. Both failure classes
-          // ("transient" | "hard_config", carried in parsed.errorText by the
-          // route's onError) share one gentle message today, so we ignore the
-          // payload entirely and render our own translated copy. This is
-          // defence-in-depth: even if the server's onError were ever dropped
-          // and a raw provider message leaked into errorText, the child would
-          // still only ever see t("scribeStumbled"). The class code remains
-          // available in parsed.errorText for future per-class copy.
-          streamError = t("scribeStumbled");
-        } else if (parsed.redirect && typeof parsed.message === "string") {
-          // Layer 1 moderation kid-friendly redirect (200 JSON, not SSE).
-          redirectMessage = parsed.message;
-        }
+      // The route now returns the FINISHED, already-moderated page as JSON —
+      // it no longer streams raw model output. So the child only ever sees
+      // text that has cleared Layer 3; we type it out below for a live feel.
+      const data = (await res.json()) as {
+        page?: { pageNumber: number; aiContent: string; moderationStatus: string };
+        redirect?: boolean;
+        message?: string;
+        error?: string;
       };
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        sseBuf += decoder.decode(value, { stream: true });
-        // Events terminate with a blank line ("\n\n").
-        let sep: number;
-        while ((sep = sseBuf.indexOf("\n\n")) !== -1) {
-          const block = sseBuf.slice(0, sep);
-          sseBuf = sseBuf.slice(sep + 2);
-          for (const line of block.split("\n")) {
-            const trimmed = line.trim();
-            if (!trimmed.startsWith("data:")) continue;
-            handleEvent(trimmed.slice(5).trim());
-          }
-        }
+      if (data.error) {
+        // NEVER render a server-supplied string. The route only ever sends a
+        // classified code ("transient" | "hard_config"); both map to one gentle
+        // translated line today. Defence-in-depth: even a leaked raw provider
+        // message could never reach the child here.
+        setStreamingPage(null);
+        toast.error(t("scribeStumbled"));
+        return;
       }
 
-      if (streamError) {
-        // The server will not have persisted a page on error — drop the
-        // streaming placeholder and surface the reason via toast.
+      if (data.redirect && typeof data.message === "string") {
+        // Layer 1 moderation kid-friendly redirect — no page persisted.
         setStreamingPage(null);
-        toast.error(streamError);
+        toast(data.message);
         return;
       }
-      if (redirectMessage) {
-        // Moderation soft-block: no page persisted, show the kid-friendly redirect.
+
+      if (!data.page) {
         setStreamingPage(null);
-        toast(redirectMessage);
+        toast.error(t("streamFailed"));
         return;
       }
-      // On complete: the server has persisted the page. We keep the final
-      // streamed text visible without mutating the `pages` array — the
-      // next reload (or a follow-up action) will pull the canonical row.
+
+      // Buffered reveal: the full safe text is in hand. Type it out (~12ms per
+      // step, capped so long pages don't crawl) and bail early if aborted.
+      const fullText = data.page.aiContent;
+      await new Promise<void>((resolve) => {
+        const step = Math.max(1, Math.ceil(fullText.length / 240));
+        let i = 0;
+        const tick = () => {
+          if (controller.signal.aborted) {
+            resolve();
+            return;
+          }
+          i = Math.min(fullText.length, i + step);
+          const slice = fullText.slice(0, i);
+          setStreamingPage((prev) =>
+            prev ? { ...prev, aiContent: slice } : prev,
+          );
+          if (i >= fullText.length) {
+            resolve();
+            return;
+          }
+          window.setTimeout(tick, 12);
+        };
+        tick();
+      });
+
+      // Finalize: show the full text and flip off the live flag so the reader
+      // parses out the action choices.
       setStreamingPage((prev) =>
-        prev ? { ...prev, isStreaming: false } : prev,
+        prev ? { ...prev, aiContent: fullText, isStreaming: false } : prev,
       );
       setCustomAction("");
     } catch (err) {
