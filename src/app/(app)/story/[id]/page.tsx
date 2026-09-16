@@ -76,9 +76,8 @@ export default async function StoryReaderPage({
   const result = await loadStoryWithPages(id, session.user.id);
 
   if (!result) {
-    // Until the schema-agent wires `loadStoryWithPages`, every hit
-    // lands here. That keeps Phase 1 compiling without polluting the
-    // client tree with fake data.
+    // No such story, or it isn't owned by this parent's family —
+    // `loadStoryWithPages` returns null in both cases.
     notFound();
   }
 

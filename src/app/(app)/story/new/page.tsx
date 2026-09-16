@@ -179,7 +179,17 @@ export default function NewStoryPage() {
         return;
       }
 
-      const json = (await res.json()) as { storyId?: string };
+      const json = (await res.json()) as {
+        storyId?: string;
+        redirect?: boolean;
+        message?: string;
+      };
+      if (json.redirect && typeof json.message === "string") {
+        // Layer 1 moderation soft-block — a gentle nudge, not an error, and
+        // no draft was created. Don't navigate.
+        toast(json.message);
+        return;
+      }
       if (json.storyId) {
         window.location.href = `/story/${json.storyId}`;
       }
