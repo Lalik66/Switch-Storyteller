@@ -235,9 +235,11 @@ export async function POST(req: Request) {
       model: openrouter(modelId),
       system: systemPrompt,
       prompt: userPrompt,
-      // Cost guard: each page targets ~150 words of prose; 400 tokens provides
-      // comfortable buffer (avg English word ≈ 1.3 tokens).
-      maxOutputTokens: 400,
+      // Cost guard: each page targets ~150 words of prose plus a 3-line choice
+      // block. English tokenizes at ~1.3 tokens/word, but Azerbaijani (with
+      // ə/ş/ç/ğ/ı/ö/ü) runs ~3x heavier — a flat 400 truncated AZ pages mid
+      // choice-block. Budget per-language so neither language gets cut off.
+      maxOutputTokens: lang === "az" ? 1200 : 500,
     });
     return { text: gen.text, usage: gen.usage as unknown };
   }

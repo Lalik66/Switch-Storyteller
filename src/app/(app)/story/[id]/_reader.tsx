@@ -336,8 +336,12 @@ export function StoryReader({
   );
 
   const choiceKeys = ["a", "b", "c"] as const;
+  // The storyteller always ends a page with exactly three choices. Anything
+  // short (a truncated generation, an odd page) means the block is incomplete,
+  // so fall back to the three generic action choices rather than surfacing a
+  // lone stub button.
   const pageChoicesReady =
-    !streamingPage?.isStreaming && latestPageParsed.choices.length > 0;
+    !streamingPage?.isStreaming && latestPageParsed.choices.length >= 3;
   const actionChoices: Array<{ key: string; label: string }> = pageChoicesReady
     ? latestPageParsed.choices.map((label, idx) => ({
         key: choiceKeys[idx] ?? String(idx + 1),
@@ -346,7 +350,7 @@ export function StoryReader({
     : fallbackChoices;
 
   const choicesDisabled =
-    submitting || Boolean(streamingPage?.isStreaming) || pages.length === 0;
+    submitting || Boolean(streamingPage?.isStreaming);
 
   async function postAndStream(body: {
     storyId: string;
@@ -641,7 +645,7 @@ export function StoryReader({
           )}
         </div>
 
-        {storyStatus === "draft" && pages.length > 0 && (
+        {storyStatus === "draft" && (
         <article className="card-stamp mt-10 p-6 md:p-8">
           <p className="eyebrow text-foreground/55">{t("whatNext")}</p>
 
