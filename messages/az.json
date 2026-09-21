@@ -405,6 +405,7 @@
     "remixing": "Remiks hazırlanır…",
     "remixFailed": "Dəmirçi soyudu. Yenə cəhd et.",
     "remixRateLimited": "Bu həftə artıq bir nağıl başlatmısan — gələn həftə yeni macəra üçün geri qayıt.",
+    "dailyLimitReached": "Bugünkü nağıl vaxtın bitdi! Növbəti macəra üçün sabah yenə gəl.",
     "finish": "Nağılı bitir",
     "finishing": "Son səhifə möhürlənir…",
     "finished": "Tamamlandı! İndi icmaya nəşr edə bilərsən.",

@@ -5,6 +5,8 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { moderatePrompt } from "@/lib/moderation";
 import { childProfile, story } from "@/lib/schema";
+import { overDailyLimit } from "@/lib/usage";
+import { getSecondsUsedToday } from "@/lib/usage-db";
 import { getWorld } from "@/lib/worlds";
 
 /** Maximum stories a free-tier child profile may create within a rolling 7-day window. */
@@ -96,6 +98,25 @@ export async function POST(req: Request) {
       return new Response(
         JSON.stringify({ error: "No child profile found. Create one first." }),
         { status: 400, headers: { "Content-Type": "application/json" } },
+      );
+    }
+  }
+
+  // P1-1: daily screen-time limit. A child who has spent today's budget in the
+  // reader can't start a fresh tale either — the gate mirrors POST
+  // /api/story/page so the limit closes the whole loop, not just continuation.
+  if (child.dailyMinuteLimit != null) {
+    const usedSeconds = await getSecondsUsedToday(child.id);
+    if (overDailyLimit(child, usedSeconds).over) {
+      return new Response(
+        JSON.stringify({
+          error: "daily_limit_reached",
+          message:
+            lang === "az"
+              ? "Bugünkü nağıl vaxtın bitdi! Növbəti macəra üçün sabah yenə gəl."
+              : "That's today's story time all used up! Come back tomorrow for the next adventure.",
+        }),
+        { status: 429, headers: { "Content-Type": "application/json" } },
       );
     }
   }

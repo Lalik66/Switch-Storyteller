@@ -4,6 +4,7 @@ import {
   text,
   timestamp,
   boolean,
+  date,
   index,
   uniqueIndex,
   uuid,
@@ -162,6 +163,40 @@ export const childProfile = pgTable(
       .notNull(),
   },
   (table) => [index("child_profile_parent_user_id_idx").on(table.parentUserId)]
+);
+
+// P1-1: makes `child_profile.daily_minute_limit` real. One row per
+// (child, local calendar day) accumulating the seconds a child spends in the
+// story reader. The story loop reads today's row to enforce the limit; the
+// parent dashboard reads it to show "X / Y min today".
+export const childUsageDaily = pgTable(
+  "child_usage_daily",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    childProfileId: uuid("child_profile_id")
+      .notNull()
+      .references(() => childProfile.id, { onDelete: "cascade" }),
+    // Calendar day in Asia/Baku, 'YYYY-MM-DD'. Stored as a DATE (not a
+    // timestamp): the "day" is a fixed-timezone bucket, not an instant, so the
+    // limit resets at Baku midnight for every family regardless of server tz.
+    usageDate: date("usage_date", { mode: "string" }).notNull(),
+    // Seconds, not minutes — reader heartbeats accrue sub-minute; the UI
+    // displays whole minutes. Comparisons use dailyMinuteLimit * 60.
+    secondsUsed: integer("seconds_used").notNull().default(0),
+    // Last heartbeat time — drives the capped-delta credit in creditHeartbeat()
+    // (see src/lib/usage.ts). Only heartbeats write this table.
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    // One accumulator row per child per day; also the ON CONFLICT target for
+    // the atomic heartbeat upsert.
+    uniqueIndex("child_usage_daily_child_date_unique_idx").on(
+      table.childProfileId,
+      table.usageDate,
+    ),
+  ]
 );
 
 export const story = pgTable(
@@ -441,6 +476,9 @@ export const parentReport = pgTable(
 
 export type ChildProfile = typeof childProfile.$inferSelect;
 export type NewChildProfile = typeof childProfile.$inferInsert;
+
+export type ChildUsageDaily = typeof childUsageDaily.$inferSelect;
+export type NewChildUsageDaily = typeof childUsageDaily.$inferInsert;
 
 export type Story = typeof story.$inferSelect;
 export type NewStory = typeof story.$inferInsert;

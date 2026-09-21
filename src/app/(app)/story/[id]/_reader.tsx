@@ -219,6 +219,37 @@ export function StoryReader({
     }
   }
 
+  // P1-1: reader heartbeat. While this reader is mounted and the tab is
+  // visible, tell the server the child is actively co-writing so it can meter
+  // screen time against the parent's daily limit. Best-effort — a failed beat
+  // never interrupts reading. The server measures the real elapsed time and
+  // caps each credit, so a paused/duplicated beat can't skew the count.
+  useEffect(() => {
+    let cancelled = false;
+
+    const beat = () => {
+      if (cancelled || document.visibilityState !== "visible") return;
+      void fetch("/api/usage/heartbeat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ storyId }),
+        keepalive: true,
+      }).catch(() => {});
+    };
+
+    beat(); // credit the moment the reader opens
+    const interval = window.setInterval(beat, 30_000);
+    // Send a prompt beat when the tab returns to the foreground, so a child who
+    // switches back mid-session is metered without waiting for the next tick.
+    document.addEventListener("visibilitychange", beat);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", beat);
+    };
+  }, [storyId]);
+
   // Phase 2: illustrations — keyed by 1-indexed page number.
   const [images, setImages] = useState<Map<number, string>>(new Map());
   const [generatingImages, setGeneratingImages] = useState(false);
@@ -380,6 +411,19 @@ export function StoryReader({
         body: JSON.stringify(body),
         signal: controller.signal,
       });
+
+      if (res.status === 429) {
+        // P1-1: today's screen-time budget is spent. A gentle stop, not an
+        // error — clear the placeholder and surface the server's kid-friendly
+        // copy (falling back to a translated line).
+        const limitBody = (await res.json().catch(() => ({}))) as {
+          error?: string;
+          message?: string;
+        };
+        setStreamingPage(null);
+        toast(limitBody.message ?? t("dailyLimitReached"));
+        return;
+      }
 
       if (!res.ok) {
         throw new Error(`Story page request failed: ${res.status}`);

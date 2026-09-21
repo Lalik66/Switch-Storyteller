@@ -71,6 +71,13 @@
       "when": 1788640335829,
       "tag": "0009_add_fk_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1789640324468,
+      "tag": "0010_add_child_usage_daily",
+      "breakpoints": true
     }
   ]
 }
