@@ -22,6 +22,8 @@ import {
   STORY_OPENER_PROMPT,
 } from "@/lib/story-prompts";
 import { classifyStreamError } from "@/lib/stream-errors";
+import { overDailyLimit } from "@/lib/usage";
+import { getSecondsUsedToday } from "@/lib/usage-db";
 
 // Canned safe fallback content when moderation repeatedly flags output.
 const CANNED_SAFE_PAGE: Record<"en" | "az", string> = {
@@ -132,6 +134,25 @@ export async function POST(req: Request) {
       }),
       { status: 409, headers: { "Content-Type": "application/json" } },
     );
+  }
+
+  // P1-1: daily screen-time limit. Enforced here (not just shown in the UI) so
+  // the co-writing loop actually stops when the day's budget is spent. Checked
+  // before any model work so an over-limit child never triggers a paid call.
+  if (child.dailyMinuteLimit != null) {
+    const usedSeconds = await getSecondsUsedToday(child.id);
+    if (overDailyLimit(child, usedSeconds).over) {
+      return new Response(
+        JSON.stringify({
+          error: "daily_limit_reached",
+          message:
+            lang === "az"
+              ? "Bugünkü nağıl vaxtın bitdi! Növbəti macəra üçün sabah yenə gəl."
+              : "That's today's story time all used up! Come back tomorrow for the next adventure.",
+        }),
+        { status: 429, headers: { "Content-Type": "application/json" } },
+      );
+    }
   }
 
   // Layer 1 moderation — pre-prompt on any user-authored text.

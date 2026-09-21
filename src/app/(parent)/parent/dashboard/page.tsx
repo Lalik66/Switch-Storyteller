@@ -11,6 +11,7 @@ import {
   type ChildProfile,
 } from "@/lib/schema";
 import { requireAuth } from "@/lib/session";
+import { getSecondsUsedToday } from "@/lib/usage-db";
 
 type ChildDashboardData = {
   child: ChildProfile;
@@ -21,6 +22,11 @@ type ChildDashboardData = {
   characterCount: number;
   moderationIncidents: number;
   lastReportSentAt: Date | null;
+  // P1-1: whole minutes spent in the reader today (Asia/Baku) and the parent's
+  // configured cap (null = no limit). Makes the "daily minute limit" honest by
+  // showing what's actually been used against it.
+  minutesUsedToday: number;
+  dailyMinuteLimit: number | null;
 };
 
 function startOfWeek(): Date {
@@ -87,6 +93,10 @@ async function loadDashboardData(
       .where(eq(character.childProfileId, child.id));
     const characterCount = charResult?.total ?? 0;
 
+    const minutesUsedToday = Math.floor(
+      (await getSecondsUsedToday(child.id)) / 60,
+    );
+
     const lastReport = await db
       .select({ sentAt: parentReport.sentAt })
       .from(parentReport)
@@ -108,6 +118,8 @@ async function loadDashboardData(
       characterCount,
       moderationIncidents,
       lastReportSentAt: lastReport[0]?.sentAt ?? null,
+      minutesUsedToday,
+      dailyMinuteLimit: child.dailyMinuteLimit ?? null,
     });
   }
 
@@ -235,6 +247,30 @@ export default async function ParentDashboardPage() {
                       value={d.characterCount}
                     />
                   </dl>
+
+                  {/* P1-1: today's reader time against the parent's cap. */}
+                  <div className="mt-4 flex items-baseline gap-2">
+                    <span className="eyebrow text-foreground/55">
+                      Today&rsquo;s reading time
+                    </span>
+                    <span
+                      className={`font-[var(--font-fraunces)] text-[15px] italic ${
+                        d.dailyMinuteLimit != null &&
+                        d.minutesUsedToday >= d.dailyMinuteLimit
+                          ? "text-[color:var(--ember)]"
+                          : "text-foreground/80"
+                      }`}
+                    >
+                      {d.dailyMinuteLimit != null
+                        ? `${d.minutesUsedToday} / ${d.dailyMinuteLimit} min`
+                        : `${d.minutesUsedToday} min`}
+                    </span>
+                    {d.dailyMinuteLimit == null && (
+                      <span className="font-[var(--font-newsreader)] text-[13px] italic text-foreground/45">
+                        (no limit set)
+                      </span>
+                    )}
+                  </div>
 
                   {d.moderationIncidents > 0 && (
                     <div className="mt-4 rounded-md border border-[color:var(--ember)]/40 bg-[color:var(--ember)]/10 px-4 py-3">
