@@ -1,6 +1,6 @@
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateObject } from "ai";
-import { eq, and, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { getServerEnv } from "@/lib/env";
@@ -53,37 +53,24 @@ export async function extractAndUpsertCharacters(
         continue;
       }
 
-      const existing = await db
-        .select()
-        .from(character)
-        .where(
-          and(
-            eq(character.childProfileId, childProfileId),
-            sql`lower(${character.name}) = lower(${normalizedName})`
-          )
-        )
-        .limit(1);
-
-      const current = existing[0];
-      if (current) {
-        const shouldUpdateDescription =
-          char.description.length > (current.description?.length ?? 0);
-
-        await db
-          .update(character)
-          .set({
-            appearanceCount: sql`${character.appearanceCount} + 1`,
-            ...(shouldUpdateDescription && { description: char.description }),
-          })
-          .where(eq(character.id, current.id));
-      } else {
-        await db.insert(character).values({
-          childProfileId,
-          name: normalizedName,
-          description: char.description,
-          appearanceCount: 1,
-        });
-      }
+      // Atomic upsert keyed on the (child_profile_id, lower(name)) unique
+      // index. Two pages that finish close together can no longer both insert
+      // the same character — the second collapses into an appearance-count
+      // bump. The description is replaced only when the new one is longer
+      // (richer), preserving the old read-modify-write intent without the race.
+      // Raw SQL because the conflict target is an EXPRESSION index (lower(name)),
+      // which Drizzle's typed `onConflictDoUpdate` target can't express.
+      await db.execute(sql`
+        INSERT INTO ${character} (child_profile_id, name, description, appearance_count)
+        VALUES (${childProfileId}::uuid, ${normalizedName}, ${char.description}, 1)
+        ON CONFLICT (child_profile_id, lower(name)) DO UPDATE SET
+          appearance_count = ${character}.appearance_count + 1,
+          description = CASE
+            WHEN length(excluded.description) > length(${character}.description)
+              THEN excluded.description
+            ELSE ${character}.description
+          END
+      `);
     }
   } catch (err) {
     console.error("[character-extraction] extraction failed (non-fatal)", err);

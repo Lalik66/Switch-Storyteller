@@ -100,7 +100,11 @@ export async function buildParentDigest(
   parentEmail: string,
 ): Promise<ParentWeeklyDigest> {
   const since = startOfWeek();
-  const weekEnding = new Date();
+  // Deterministic per-week bucket (the Sunday that closes this week) so a
+  // re-run of the cron upserts the same parent_report rows instead of writing
+  // duplicates. Was `new Date()`, which made every run a distinct timestamp.
+  const weekEnding = new Date(since);
+  weekEnding.setUTCDate(since.getUTCDate() + 6);
 
   const children = await db
     .select()
@@ -128,14 +132,30 @@ export async function persistDigest(
   parentUserId: string,
 ): Promise<void> {
   for (const summary of digest.children) {
-    await db.insert(parentReport).values({
-      parentUserId,
-      childProfileId: summary.child.id,
-      weekEnding: digest.weekEnding,
-      storiesCreated: summary.storiesCreated,
-      totalWordsWritten: summary.totalWordsWritten,
-      moderationIncidents: summary.moderationIncidents,
-    });
+    await db
+      .insert(parentReport)
+      .values({
+        parentUserId,
+        childProfileId: summary.child.id,
+        weekEnding: digest.weekEnding,
+        storiesCreated: summary.storiesCreated,
+        totalWordsWritten: summary.totalWordsWritten,
+        moderationIncidents: summary.moderationIncidents,
+      })
+      // Idempotent on the (parent, child, week) unique index — a re-run
+      // refreshes the counts rather than inserting a duplicate row.
+      .onConflictDoUpdate({
+        target: [
+          parentReport.parentUserId,
+          parentReport.childProfileId,
+          parentReport.weekEnding,
+        ],
+        set: {
+          storiesCreated: summary.storiesCreated,
+          totalWordsWritten: summary.totalWordsWritten,
+          moderationIncidents: summary.moderationIncidents,
+        },
+      });
   }
 }
 

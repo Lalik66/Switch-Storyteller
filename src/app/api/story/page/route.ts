@@ -32,7 +32,9 @@ const CANNED_SAFE_PAGE: Record<"en" | "az", string> = {
 };
 
 const bodySchema = z.object({
-  storyId: z.string().min(1),
+  // UUID-shaped so a malformed id is a clean 400 instead of a Postgres
+  // "invalid input syntax for type uuid" 500 on the story lookup below.
+  storyId: z.string().uuid(),
   chosenActionKey: z.string().max(128).optional(),
   customAction: z.string().max(1000).optional(),
   lang: z.enum(["en", "az"]),
@@ -295,47 +297,65 @@ export async function POST(req: Request) {
       moderationStatus = "flagged";
     }
 
-    await db.insert(storyPage).values({
-      storyId,
-      pageNumber: nextPageNumber,
-      aiContent: finalText,
-      childContent: customAction ?? null,
-      chosenActionKey: chosenActionKey ?? null,
-      moderationStatus,
-      modelUsed: modelId,
-      tokenUsage: usage ? JSON.parse(JSON.stringify(usage)) : null,
+    // Insert the page + recompute the story's aggregate counters atomically.
+    // A `SELECT ... FOR UPDATE` on the story row serializes concurrent page
+    // writes for THIS story, so the page number is derived from the real
+    // current max (not a stale pre-generation count) and two overlapping
+    // submits can't both claim the same number or race the counter update.
+    // The unique index on (story_id, page_number) is the final backstop.
+    const insertedPageNumber = await db.transaction(async (tx) => {
+      await tx.execute(sql`SELECT id FROM ${story} WHERE ${story.id} = ${storyId} FOR UPDATE`);
+
+      const [maxRow] = await tx
+        .select({ max: sql<number | null>`max(${storyPage.pageNumber})` })
+        .from(storyPage)
+        .where(eq(storyPage.storyId, storyId));
+      const pageNumber = (maxRow?.max ?? 0) + 1;
+
+      await tx.insert(storyPage).values({
+        storyId,
+        pageNumber,
+        aiContent: finalText,
+        childContent: customAction ?? null,
+        chosenActionKey: chosenActionKey ?? null,
+        moderationStatus,
+        modelUsed: modelId,
+        tokenUsage: usage ? JSON.parse(JSON.stringify(usage)) : null,
+      });
+
+      // Keep the story's aggregate counters in sync (PRD P1-4 progress
+      // tracking; badges, parent dashboard, and the weekly digest all
+      // read story.word_count). Recompute from all pages rather than
+      // incrementing so the row self-heals if a past write was missed.
+      const allPages = await tx
+        .select({
+          aiContent: storyPage.aiContent,
+          childContent: storyPage.childContent,
+        })
+        .from(storyPage)
+        .where(eq(storyPage.storyId, storyId));
+
+      const totalWords = allPages.reduce(
+        (sum, p) =>
+          sum + countWords(p.aiContent) + countWords(p.childContent ?? ""),
+        0,
+      );
+
+      await tx
+        .update(story)
+        .set({
+          wordCount: totalWords,
+          // Chapters are ~4 pages (see PREMIUM_PAGE_INTERVAL) — same
+          // bucketing as the chapterNumber prompt arg above.
+          chapterCount: Math.max(
+            1,
+            Math.ceil(allPages.length / PREMIUM_PAGE_INTERVAL),
+          ),
+        })
+        .where(eq(story.id, storyId));
+
+      return pageNumber;
     });
-
-    // Keep the story's aggregate counters in sync (PRD P1-4 progress
-    // tracking; badges, parent dashboard, and the weekly digest all
-    // read story.word_count). Recompute from all pages rather than
-    // incrementing so the row self-heals if a past write was missed.
-    const allPages = await db
-      .select({
-        aiContent: storyPage.aiContent,
-        childContent: storyPage.childContent,
-      })
-      .from(storyPage)
-      .where(eq(storyPage.storyId, storyId));
-
-    const totalWords = allPages.reduce(
-      (sum, p) =>
-        sum + countWords(p.aiContent) + countWords(p.childContent ?? ""),
-      0,
-    );
-
-    await db
-      .update(story)
-      .set({
-        wordCount: totalWords,
-        // Chapters are ~4 pages (see PREMIUM_PAGE_INTERVAL) — same
-        // bucketing as the chapterNumber prompt arg above.
-        chapterCount: Math.max(
-          1,
-          Math.ceil(allPages.length / PREMIUM_PAGE_INTERVAL),
-        ),
-      })
-      .where(eq(story.id, storyId));
 
     // Phase 2: extract characters from the safe page (fire-and-forget).
     if (moderationStatus === "safe") {
@@ -348,7 +368,7 @@ export async function POST(req: Request) {
     return new Response(
       JSON.stringify({
         page: {
-          pageNumber: nextPageNumber,
+          pageNumber: insertedPageNumber,
           aiContent: finalText,
           moderationStatus,
         },

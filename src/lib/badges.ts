@@ -16,7 +16,7 @@
  *      surface a celebratory toast.
  */
 
-import { and, count, countDistinct, eq, isNotNull, sum } from "drizzle-orm";
+import { and, count, countDistinct, eq, inArray, isNotNull, sum } from "drizzle-orm";
 import type { db as Db } from "@/lib/db";
 import { childBadge, story } from "@/lib/schema";
 
@@ -187,10 +187,18 @@ async function computeBadgeStats(
         .select({ value: sum(story.wordCount) })
         .from(story)
         .where(eq(story.childProfileId, childProfileId)),
+      // Exploration counts worlds visited in *finished* stories only, so a
+      // child can't earn "world-walker" by spinning up throwaway drafts —
+      // consistent with the completion/volume badges that gate on finished work.
       database
         .select({ value: countDistinct(story.worldKey) })
         .from(story)
-        .where(eq(story.childProfileId, childProfileId)),
+        .where(
+          and(
+            eq(story.childProfileId, childProfileId),
+            inArray(story.status, ["complete", "published"]),
+          ),
+        ),
       // Remixes — stories cloned from a source via the Remix flow.
       database
         .select({ value: count() })

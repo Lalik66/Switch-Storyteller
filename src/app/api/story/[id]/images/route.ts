@@ -1,11 +1,21 @@
 import { headers } from "next/headers";
 import { and, eq, inArray } from "drizzle-orm";
+import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getServerEnv } from "@/lib/env";
 import { buildScenePrompt, sceneHash } from "@/lib/image-prompts";
-import { childProfile, story, storyImage, storyPage } from "@/lib/schema";
+import { moderateImage } from "@/lib/moderation";
+import {
+  childProfile,
+  moderationEvent,
+  story,
+  storyImage,
+  storyPage,
+} from "@/lib/schema";
 import { upload } from "@/lib/storage";
+import { overDailyLimit } from "@/lib/usage";
+import { getSecondsUsedToday } from "@/lib/usage-db";
 
 // Pages to illustrate (1-indexed page numbers, per PRD §8: pages 1/3/5/7/8).
 const ILLUSTRATED_PAGES = [1, 3, 5, 7, 8] as const;
@@ -70,6 +80,8 @@ async function resolveStory(storyId: string, parentUserId: string) {
       id: story.id,
       heroName: story.heroName,
       worldKey: story.worldKey,
+      childProfileId: childProfile.id,
+      dailyMinuteLimit: childProfile.dailyMinuteLimit,
     })
     .from(story)
     .innerJoin(childProfile, eq(story.childProfileId, childProfile.id))
@@ -97,6 +109,9 @@ export async function GET(
   }
 
   const { id: storyId } = await params;
+  if (!z.string().uuid().safeParse(storyId).success) {
+    return Response.json({ error: "Invalid story id" }, { status: 400 });
+  }
   const storyRow = await resolveStory(storyId, session.user.id);
   if (!storyRow) {
     return Response.json({ error: "Story not found" }, { status: 404 });
@@ -128,6 +143,9 @@ export async function POST(
   }
 
   const { id: storyId } = await params;
+  if (!z.string().uuid().safeParse(storyId).success) {
+    return Response.json({ error: "Invalid story id" }, { status: 400 });
+  }
   const env = getServerEnv();
 
   if (!env.OPENROUTER_API_KEY) {
@@ -140,6 +158,19 @@ export async function POST(
   const storyRow = await resolveStory(storyId, session.user.id);
   if (!storyRow) {
     return Response.json({ error: "Story not found" }, { status: 404 });
+  }
+
+  // Cost/abuse guard: illustration is a paid upstream call, so a child who has
+  // spent today's screen-time budget can't keep triggering generations. Mirrors
+  // the gate on the story-generation routes.
+  if (storyRow.dailyMinuteLimit != null) {
+    const usedSeconds = await getSecondsUsedToday(storyRow.childProfileId);
+    if (overDailyLimit(storyRow, usedSeconds).over) {
+      return Response.json(
+        { error: "daily_limit_reached" },
+        { status: 429 },
+      );
+    }
   }
 
   // Fetch only the target pages (1/3/5/7/8).
@@ -167,44 +198,83 @@ export async function POST(
   const model = env.OPENROUTER_IMAGE_MODEL;
   const apiKey = env.OPENROUTER_API_KEY;
   const results: Array<{ pageNumber: number; url: string }> = [];
+  const failures: number[] = [];
+  let blocked = 0;
 
-  for (const page of pages) {
-    const prompt = buildScenePrompt(
-      page.aiContent,
-      storyRow.heroName,
-      storyRow.worldKey,
-    );
-    const hash = sceneHash(prompt);
-
-    // Cache hit — reuse existing image without calling the API again.
-    const [cached] = await db
-      .select({ url: storyImage.url })
-      .from(storyImage)
-      .where(eq(storyImage.sceneHash, hash))
-      .limit(1);
-
-    if (cached) {
-      results.push({ pageNumber: page.pageNumber, url: cached.url });
-      continue;
-    }
-
-    // Cache miss — generate, upload, and persist.
-    const imageBuffer = await callImageAPI(prompt, model, apiKey);
-
-    const filename = `${storyId}-p${page.pageNumber}-${hash.slice(0, 8)}.png`;
-    const stored = await upload(imageBuffer, filename, "story-images", {
-      maxSize: 10 * 1024 * 1024,
-    });
-
-    await db.insert(storyImage).values({
-      storyPageId: page.id,
-      url: stored.url,
-      sceneHash: hash,
-      modelUsed: model,
-    });
-
-    results.push({ pageNumber: page.pageNumber, url: stored.url });
+  // Link an image URL to THIS page. `onConflictDoNothing` on the per-page
+  // unique index makes re-runs idempotent.
+  async function linkImageToPage(
+    storyPageId: string,
+    url: string,
+    hash: string,
+  ) {
+    await db
+      .insert(storyImage)
+      .values({ storyPageId, url, sceneHash: hash, modelUsed: model })
+      .onConflictDoNothing({ target: storyImage.storyPageId });
   }
 
-  return Response.json({ images: results });
+  for (const page of pages) {
+    // Per-page isolation: one page's upstream failure must not 500 the whole
+    // batch and discard the pages that already succeeded.
+    try {
+      const prompt = buildScenePrompt(
+        page.aiContent,
+        storyRow.heroName,
+        storyRow.worldKey,
+      );
+      const hash = sceneHash(prompt);
+
+      // Cache hit — reuse the existing (already-moderated) image without
+      // calling the API again, but STILL link a row to this page so GET
+      // returns it after reload even on a cross-story cache hit.
+      const [cached] = await db
+        .select({ url: storyImage.url })
+        .from(storyImage)
+        .where(eq(storyImage.sceneHash, hash))
+        .limit(1);
+
+      if (cached) {
+        await linkImageToPage(page.id, cached.url, hash);
+        results.push({ pageNumber: page.pageNumber, url: cached.url });
+        continue;
+      }
+
+      // Cache miss — generate, then screen the pixels BEFORE they are uploaded
+      // or shown to a child. A benign prompt can still yield an unsafe image.
+      const imageBuffer = await callImageAPI(prompt, model, apiKey);
+
+      const verdict = await moderateImage(imageBuffer, "en");
+      if (verdict.status === "flagged") {
+        // Record the block for the Layer 4 review trail and drop the bytes —
+        // nothing unscreened is ever persisted or returned.
+        await db.insert(moderationEvent).values({
+          storyId,
+          flaggedContent: `[generated illustration for page ${page.pageNumber} — image withheld]`,
+          reason: verdict.reason ?? "image moderation flag",
+          severity: verdict.severity ?? "medium",
+          actionTaken: "image_blocked",
+          reviewedByHuman: false,
+        });
+        blocked += 1;
+        continue;
+      }
+
+      const filename = `${storyId}-p${page.pageNumber}-${hash.slice(0, 8)}.png`;
+      const stored = await upload(imageBuffer, filename, "story-images", {
+        maxSize: 10 * 1024 * 1024,
+      });
+
+      await linkImageToPage(page.id, stored.url, hash);
+      results.push({ pageNumber: page.pageNumber, url: stored.url });
+    } catch (err) {
+      console.error(
+        `[story/images] generation failed for page ${page.pageNumber}`,
+        err,
+      );
+      failures.push(page.pageNumber);
+    }
+  }
+
+  return Response.json({ images: results, blocked, failures });
 }

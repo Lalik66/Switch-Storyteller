@@ -516,5 +516,22 @@
     "closingBody": "Təhlükəsizlik heç vaxt bitmir. Burada nəsə düzgün görünmürsə, qələmi uşağınıza verməzdən əvvəl bunu bizdən eşitmək istəyirik.",
     "ctaPrimary": "Pulsuz başla",
     "ctaSecondary": "Ana səhifəyə qayıt"
+  },
+  "Errors": {
+    "eyebrow": "§ Errata · Yarımçıq qalan nağıl",
+    "titleLead": "Mürəkkəb",
+    "titleAccent": "qurudu.",
+    "body": "Səhifəni çevirərkən gözlənilməz bir şey baş verdi. Katiblərə xəbər verildi və məsələni araşdıracaqlar. Yenidən cəhd edə, ya da tanış bir fəslə qayıda bilərsən.",
+    "errorLabel": "xəta",
+    "tryAgain": "Yenidən cəhd et",
+    "returnHome": "Ana səhifəyə qayıt"
+  },
+  "NotFound": {
+    "eyebrow": "§ Errata · İtmiş səhifə",
+    "titleLead": "Bu səhifə heç vaxt",
+    "titleAccent": "cildlənməyib.",
+    "body": "Axtardığın səhifə başqa bir nağıla köçüb, ya da bəlkə heç yazılmayıb. Gəl səni tanış bir fəslə qaytaraq.",
+    "returnHome": "Ana səhifəyə qayıt",
+    "openDashboard": "Panelə keç"
   }
 }

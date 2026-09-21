@@ -41,7 +41,7 @@ export function LanguageSwitcher() {
             className={cn(
               "rounded-full px-2.5 py-1 text-[11px] font-medium tracking-wide transition-colors",
               active
-                ? "bg-[color:var(--ember)] text-white shadow-sm"
+                ? "bg-[color:var(--ember)] text-[color:var(--primary-foreground)] shadow-sm"
                 : "text-foreground/55 hover:text-foreground"
             )}
             aria-pressed={active}

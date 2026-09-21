@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "crypto";
 import { render } from "@react-email/components";
 import { Resend } from "resend";
 import { ParentDigestEmail } from "@/emails/parent-digest";
@@ -12,13 +13,26 @@ import { user } from "@/lib/schema";
 
 export const dynamic = "force-dynamic";
 
+/** Constant-time string compare that never throws on length mismatch. */
+function safeEqual(a: string, b: string): boolean {
+  const ab = Buffer.from(a);
+  const bb = Buffer.from(b);
+  if (ab.length !== bb.length) return false;
+  return timingSafeEqual(ab, bb);
+}
+
 export async function GET(req: Request) {
   const env = getServerEnv();
 
-  // Auth: only allow Vercel Cron (via CRON_SECRET) or unauthenticated in dev.
-  if (env.NODE_ENV === "production") {
-    const authHeader = req.headers.get("authorization");
-    if (!env.CRON_SECRET || authHeader !== `Bearer ${env.CRON_SECRET}`) {
+  // Auth. This endpoint walks the entire user table and emails each family
+  // their child's activity (PII), so it must never run unauthenticated outside
+  // a local dev box that has deliberately left CRON_SECRET unset. Gating on
+  // NODE_ENV alone was unsafe: a misconfigured preview/staging (NODE_ENV not
+  // exactly "production") with a live RESEND_API_KEY became an open mass-mailer.
+  const isLocalDev = env.NODE_ENV === "development";
+  if (!isLocalDev || env.CRON_SECRET) {
+    const authHeader = req.headers.get("authorization") ?? "";
+    if (!env.CRON_SECRET || !safeEqual(authHeader, `Bearer ${env.CRON_SECRET}`)) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { "Content-Type": "application/json" },

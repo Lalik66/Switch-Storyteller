@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useTranslations } from "next-intl";
 
 export default function Error({
   error,
@@ -9,6 +10,8 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const t = useTranslations("Errors");
+
   useEffect(() => {
     console.error("Application error:", error);
   }, [error]);
@@ -16,11 +19,13 @@ export default function Error({
   return (
     <section className="container mx-auto px-6 py-32 md:py-40">
       <div className="mx-auto max-w-xl text-center">
-        <p className="eyebrow">&sect; Errata &middot; An interrupted tale</p>
+        <p className="eyebrow">{t("eyebrow")}</p>
 
         <h1 className="display-xl mt-6 text-[clamp(3rem,7vw,5.5rem)] leading-[0.95]">
-          The ink&nbsp;
-          <span className="italic-wonk text-[color:var(--ember)]">ran dry.</span>
+          {t("titleLead")}&nbsp;
+          <span className="italic-wonk text-[color:var(--ember)]">
+            {t("titleAccent")}
+          </span>
         </h1>
 
         <div className="rule-ornament my-8 mx-auto max-w-xs">
@@ -33,20 +38,18 @@ export default function Error({
         </div>
 
         <p className="mx-auto max-w-md font-[var(--font-newsreader)] text-[15.5px] leading-relaxed text-foreground/70">
-          Something unexpected happened while we were turning the page. The
-          scribes have been notified and will investigate. You can try again, or
-          return to a familiar chapter.
+          {t("body")}
         </p>
 
         {error.digest && (
           <p className="mt-4 font-mono text-[11px] uppercase tracking-[0.18em] text-foreground/40">
-            error &middot; {error.digest}
+            {t("errorLabel")} &middot; {error.digest}
           </p>
         )}
 
         <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
           <button type="button" onClick={reset} className="btn-ember">
-            Try again
+            {t("tryAgain")}
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
               <path
                 d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"
@@ -62,7 +65,7 @@ export default function Error({
             onClick={() => (window.location.href = "/")}
             className="btn-ghost-ink"
           >
-            Return home
+            {t("returnHome")}
           </button>
         </div>
       </div>

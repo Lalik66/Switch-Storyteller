@@ -237,6 +237,12 @@ export const story = pgTable(
     ),
     // Lookup all remixes of a given source story.
     index("story_parent_story_id_idx").on(table.parentStoryId),
+    // Community feed: published stories, newest first. Partial index so the
+    // feed query (WHERE status='published' ORDER BY created_at DESC) and its
+    // sibling count() are served without a full-table scan + sort.
+    index("story_published_created_idx")
+      .on(sql`${table.createdAt} desc`)
+      .where(sql`${table.status} = 'published'`),
   ]
 );
 
@@ -261,8 +267,12 @@ export const storyPage = pgTable(
       .notNull(),
   },
   (table) => [
-    // Ordered read of a single story's pages.
-    index("story_page_story_id_page_number_idx").on(
+    // Ordered read of a single story's pages — AND the invariant that a story
+    // never has two pages sharing a page number. UNIQUE so two concurrent
+    // POST /api/story/page calls can't both insert page N+1 (dup pages / broken
+    // ordering / count drift). The insert path derives the number inside a
+    // transaction and treats a conflict as a retry signal.
+    uniqueIndex("story_page_story_id_page_number_unique_idx").on(
       table.storyId,
       table.pageNumber
     ),
@@ -354,6 +364,14 @@ export const character = pgTable(
   },
   (table) => [
     index("character_child_profile_id_idx").on(table.childProfileId),
+    // One character row per (child, case-insensitive name). Makes the
+    // extract-and-upsert path race-safe via ON CONFLICT instead of the old
+    // non-atomic SELECT-then-INSERT that could double-insert a character when
+    // two pages finished close together.
+    uniqueIndex("character_child_lower_name_unique_idx").on(
+      table.childProfileId,
+      sql`lower(${table.name})`
+    ),
   ]
 );
 
@@ -365,8 +383,11 @@ export const storyImage = pgTable(
       .notNull()
       .references(() => storyPage.id, { onDelete: "cascade" }),
     url: text("url").notNull(),
-    // SHA-256 of the normalised scene prompt — cache key for reuse across stories.
-    sceneHash: text("scene_hash").notNull().unique(),
+    // SHA-256 of the normalised scene prompt — cache key for reuse across
+    // stories. NOT unique: the same scene can legitimately illustrate a page
+    // in more than one story, and each of those pages needs its own linking
+    // row so GET (which joins on story_page_id) returns the image after reload.
+    sceneHash: text("scene_hash").notNull(),
     modelUsed: text("model_used").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
@@ -374,8 +395,9 @@ export const storyImage = pgTable(
   },
   (table) => [
     index("story_image_scene_hash_idx").on(table.sceneHash),
-    // FK lookup for a page's images (join in GET /api/story/[id]/images).
-    index("story_image_story_page_id_idx").on(table.storyPageId),
+    // One illustration per page — also the ON CONFLICT target when linking a
+    // cross-story cache hit to this page.
+    uniqueIndex("story_image_story_page_id_unique_idx").on(table.storyPageId),
   ]
 );
 
@@ -388,7 +410,9 @@ export const storyAudio = pgTable(
       .references(() => storyPage.id, { onDelete: "cascade" }),
     url: text("url").notNull(),
     // SHA-256 of (voiceId | modelUsed | normalised text) — cache key for reuse.
-    audioHash: text("audio_hash").notNull().unique(),
+    // NOT unique (see story_image.sceneHash): the same narration can serve a
+    // page in more than one story, and each page needs its own linking row.
+    audioHash: text("audio_hash").notNull(),
     voiceId: text("voice_id").notNull(),
     modelUsed: text("model_used").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
@@ -397,8 +421,9 @@ export const storyAudio = pgTable(
   },
   (table) => [
     index("story_audio_audio_hash_idx").on(table.audioHash),
-    // FK lookup for a page's audio (join in GET /api/story/[id]/audio).
-    index("story_audio_story_page_id_idx").on(table.storyPageId),
+    // One narration per page — also the ON CONFLICT target when linking a
+    // cross-story cache hit to this page.
+    uniqueIndex("story_audio_story_page_id_unique_idx").on(table.storyPageId),
   ]
 );
 
@@ -462,7 +487,11 @@ export const parentReport = pgTable(
       .notNull(),
   },
   (table) => [
-    index("parent_report_parent_child_week_idx").on(
+    // One report row per (parent, child, week). UNIQUE so a re-run of the
+    // weekly cron (or a send failure after persist) upserts instead of writing
+    // duplicate rows. `weekEnding` is bucketed to the week boundary by the
+    // digest builder so the key is deterministic across runs.
+    uniqueIndex("parent_report_parent_child_week_unique_idx").on(
       table.parentUserId,
       table.childProfileId,
       table.weekEnding

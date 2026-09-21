@@ -8,7 +8,7 @@ For single primitives (buttons, cards, icons), see [`components.md`](./component
 
 ## Grain overlay
 
-The base texture of the entire app. Applied via a `.grain` class on `<body>` in [`src/app/layout.tsx`](../../src/app/layout.tsx). **Authoritative values** (noise data URL, `opacity: 0.12` / `0.10`, `mix-blend-mode: overlay` for both light and dark) live in [`src/app/globals.css`](../../src/app/globals.css) under `.grain::before` and `.dark .grain::before`.
+The base texture of the entire app. Applied via a `.grain` class on `<body>` in [`src/app/layout.tsx`](../../src/app/layout.tsx). **Authoritative values** (noise data URL, `opacity: 0.18` light / `0.08` dark, `mix-blend-mode: multiply` light and `screen` dark) live in the LOCKED block of [`src/app/globals.css`](../../src/app/globals.css) under `.grain::before` and `.dark .grain::before`.
 
 ```css
 /* Paraphrased — see repo for the full inline SVG and exact numbers */
@@ -18,13 +18,13 @@ The base texture of the entire app. Applied via a `.grain` class on `<body>` in 
   inset: 0;
   pointer-events: none;
   z-index: 1;
-  opacity: 0.12;
-  mix-blend-mode: overlay;
+  opacity: 0.18;
+  mix-blend-mode: multiply;
   /* background-image: data-URL feTurbulence noise */
 }
 .dark .grain::before {
-  mix-blend-mode: overlay;
-  opacity: 0.1;
+  mix-blend-mode: screen;
+  opacity: 0.08;
 }
 ```
 

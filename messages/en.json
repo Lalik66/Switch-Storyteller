@@ -516,5 +516,22 @@
     "closingBody": "Safety is never finished. If something here doesn't sit right, we want to hear it before you ever hand the pen to your child.",
     "ctaPrimary": "Begin free",
     "ctaSecondary": "Back to home"
+  },
+  "Errors": {
+    "eyebrow": "§ Errata · An interrupted tale",
+    "titleLead": "The ink",
+    "titleAccent": "ran dry.",
+    "body": "Something unexpected happened while we were turning the page. The scribes have been notified and will investigate. You can try again, or return to a familiar chapter.",
+    "errorLabel": "error",
+    "tryAgain": "Try again",
+    "returnHome": "Return home"
+  },
+  "NotFound": {
+    "eyebrow": "§ Errata · A missing page",
+    "titleLead": "This folio was",
+    "titleAccent": "never bound.",
+    "body": "The page you were looking for has wandered off into another tale, or perhaps it was never written at all. Let’s get you back to a familiar chapter.",
+    "returnHome": "Return home",
+    "openDashboard": "Open dashboard"
   }
 }

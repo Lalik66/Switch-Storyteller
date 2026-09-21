@@ -94,6 +94,22 @@ export async function POST(
   }
 
   // Publish path — every gate must pass.
+  // A story must be FINISHED before it can reach the community. Without this
+  // an in-progress draft could be published straight through a direct API
+  // call (the reader UI already hides publish for drafts, but the API is the
+  // real gate). 'published' is allowed through so re-publish stays idempotent.
+  if (targetStory.status !== "complete" && targetStory.status !== "published") {
+    return json(
+      {
+        error: "not_complete",
+        message:
+          "Finish this tale before publishing it — only completed stories can be shared.",
+        currentStatus: targetStory.status,
+      },
+      422,
+    );
+  }
+
   if (!child.allowPublish) {
     return json(
       {

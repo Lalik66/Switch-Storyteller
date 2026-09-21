@@ -364,3 +364,31 @@
   }
   .slow-spin { animation: slow-spin 30s linear infinite; }
 }
+
+/* ────────────────────────────────────────────────────────────────────────
+ * Accessibility — reduced motion.
+ *
+ * Honors the OS "reduce motion" setting for viewers who are sensitive to
+ * animation (a real concern on a 7–12 audience). Neutralizes the decorative
+ * loops (marquee, twinkle, slow-spin, drift) and collapses one-shot entrances
+ * to their end state. This is a motion rule, NOT a token change — it does not
+ * touch the LOCKED OKLCH palette above.
+ * ──────────────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .marquee,
+  .twinkle,
+  .slow-spin,
+  .drift {
+    animation: none !important;
+    transform: none !important;
+  }
+}

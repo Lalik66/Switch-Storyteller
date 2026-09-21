@@ -66,10 +66,16 @@ function readAiContent(page: StoryPage): string {
   return typeof value === "string" ? value : "";
 }
 
-function readChapterNumber(page: StoryPage): number {
-  const record = page as unknown as Record<string, unknown>;
-  const v = record.chapterNumber ?? record.chapter_number ?? 1;
-  return typeof v === "number" ? v : 1;
+/** Pages per chapter — mirrors PREMIUM_PAGE_INTERVAL on the generation route. */
+const PAGES_PER_CHAPTER = 4;
+
+/**
+ * Chapter number for a 1-indexed page. `story_page` has no chapter column
+ * (chapters are a pure ~4-page bucketing derived from page number), so the
+ * old field lookup always fell back to 1 — every card read "Chapter 01".
+ */
+function chapterForPage(pageNumber: number): number {
+  return Math.max(1, Math.ceil(pageNumber / PAGES_PER_CHAPTER));
 }
 
 function readPageNumber(page: StoryPage, fallback: number): number {
@@ -107,7 +113,7 @@ export function StoryReader({
   const tBadges = useTranslations("Badges");
   const router = useRouter();
 
-  const [pages] = useState<StoryPage[]>(initialPages);
+  const [pages, setPages] = useState<StoryPage[]>(initialPages);
   const [streamingPage, setStreamingPage] = useState<StreamingPage | null>(
     null
   );
@@ -338,11 +344,11 @@ export function StoryReader({
       .map(readAiContent)
       .concat(streamingPage?.aiContent ?? "")
       .join(" ");
-    const chapterCount = new Set(pages.map(readChapterNumber)).size || 1;
+    const pageCount = pages.length + (streamingPage ? 1 : 0);
     return {
       words: countWords(allText),
-      chapters: chapterCount,
-      pageCount: pages.length + (streamingPage ? 1 : 0),
+      chapters: chapterForPage(pageCount),
+      pageCount,
     };
   }, [pages, streamingPage]);
 
@@ -487,11 +493,19 @@ export function StoryReader({
         tick();
       });
 
-      // Finalize: show the full text and flip off the live flag so the reader
-      // parses out the action choices.
-      setStreamingPage((prev) =>
-        prev ? { ...prev, aiContent: fullText, isStreaming: false } : prev,
-      );
+      // Finalize: commit the finished page into the persistent `pages` list
+      // and clear the streaming slot. Previously the finished page lived only
+      // in `streamingPage`, so the NEXT submit's placeholder overwrote it and
+      // every in-session page vanished until a full reload. Appending here
+      // keeps the whole adventure on screen (and makes the pageCount-gated
+      // "generate images" affordance reachable from live writing).
+      const committedPage = {
+        id: `page-${data.page.pageNumber}-${Date.now()}`,
+        pageNumber: data.page.pageNumber,
+        aiContent: fullText,
+      } as unknown as StoryPage;
+      setPages((prev) => [...prev, committedPage]);
+      setStreamingPage(null);
       setCustomAction("");
     } catch (err) {
       if ((err as { name?: string }).name !== "AbortError") {
@@ -651,7 +665,7 @@ export function StoryReader({
               <PageCard
                 key={(page as unknown as { id?: string }).id ?? idx}
                 pageNumber={pNum}
-                chapterNumber={readChapterNumber(page)}
+                chapterNumber={chapterForPage(pNum)}
                 total={totalForCounter}
                 content={displayContent}
                 imageUrl={images.get(pNum)}
@@ -668,11 +682,7 @@ export function StoryReader({
             <PageCard
               key={streamingPage.id}
               pageNumber={streamingPage.pageNumber}
-              chapterNumber={
-                pages.length > 0
-                  ? readChapterNumber(pages[pages.length - 1] as StoryPage)
-                  : 1
-              }
+              chapterNumber={chapterForPage(streamingPage.pageNumber)}
               total={totalForCounter}
               content={
                 streamingPage.isStreaming

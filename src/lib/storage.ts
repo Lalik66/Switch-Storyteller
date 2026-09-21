@@ -222,6 +222,28 @@ export async function deleteFile(url: string): Promise<void> {
   }
 }
 
+/**
+ * Delete many files, tolerating individual failures. Used when a child or
+ * character is deleted: the DB rows cascade away, but the underlying blob
+ * objects (illustrations, narration, avatars) must be purged too so a
+ * "delete my child's data" request leaves nothing retrievable and storage
+ * doesn't grow forever. A single failed delete never blocks the rest.
+ */
+export async function deleteFilesBestEffort(
+  urls: Array<string | null | undefined>,
+): Promise<void> {
+  const targets = urls.filter(
+    (u): u is string => typeof u === "string" && u.length > 0,
+  );
+  await Promise.all(
+    targets.map((u) =>
+      deleteFile(u).catch((err) =>
+        console.error("[storage] best-effort delete failed for", u, err),
+      ),
+    ),
+  );
+}
+
 
 
 

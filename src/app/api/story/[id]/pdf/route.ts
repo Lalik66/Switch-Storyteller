@@ -2,6 +2,7 @@ import React from "react";
 import { headers } from "next/headers";
 import { Document, Page, Text, View, StyleSheet, renderToStream } from "@react-pdf/renderer";
 import { asc, eq } from "drizzle-orm";
+import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { story, storyPage, childProfile } from "@/lib/schema";
@@ -80,46 +81,43 @@ async function streamToBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
   return Buffer.concat(chunks);
 }
 
-export async function GET(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  // Session gate.
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
+const jsonError = (error: string, status: number) =>
+  new Response(JSON.stringify({ error }), {
+    status,
+    headers: { "Content-Type": "application/json" },
+  });
+
+/**
+ * Session-gate, verify ownership (parent owns child owns story), and render
+ * the story to a PDF buffer. Shared by GET (download) and POST (persist).
+ */
+async function renderOwnedStoryPdf(
+  storyId: string,
+  userId: string,
+): Promise<
+  | { ok: true; pdfBuffer: Buffer; filename: string }
+  | { ok: false; response: Response }
+> {
+  if (!z.string().uuid().safeParse(storyId).success) {
+    return { ok: false, response: jsonError("Invalid story id", 400) };
   }
 
-  const { id: storyId } = await params;
-
-  // Load the story and verify the child_profile belongs to the requesting parent.
-  const storyRows = await db
+  const [storyRow] = await db
     .select()
     .from(story)
     .where(eq(story.id, storyId))
     .limit(1);
-  const storyRow = storyRows[0];
   if (!storyRow) {
-    return new Response(JSON.stringify({ error: "Story not found" }), {
-      status: 404,
-      headers: { "Content-Type": "application/json" },
-    });
+    return { ok: false, response: jsonError("Story not found", 404) };
   }
 
-  const childRows = await db
+  const [child] = await db
     .select()
     .from(childProfile)
     .where(eq(childProfile.id, storyRow.childProfileId))
     .limit(1);
-  const child = childRows[0];
-  if (!child || child.parentUserId !== session.user.id) {
-    return new Response(JSON.stringify({ error: "Forbidden" }), {
-      status: 403,
-      headers: { "Content-Type": "application/json" },
-    });
+  if (!child || child.parentUserId !== userId) {
+    return { ok: false, response: jsonError("Forbidden", 403) };
   }
 
   const pages = await db
@@ -139,22 +137,53 @@ export async function GET(
 
   const pdfStream = (await renderToStream(doc)) as NodeJS.ReadableStream;
   const pdfBuffer = await streamToBuffer(pdfStream);
+  return { ok: true, pdfBuffer, filename: `${slugify(storyRow.title)}.pdf` };
+}
 
-  const filename = `${slugify(storyRow.title)}.pdf`;
+// GET — stream the PDF as a download. Read-only, no side effects.
+export async function GET(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) return jsonError("Unauthorized", 401);
 
-  // Optional persistence: ?persist=1 pipes the PDF through storage.ts so the
-  // parent dashboard (and, later, the Lulu print flow) can reference a stable URL.
-  const url = new URL(req.url);
-  if (url.searchParams.get("persist") === "1") {
-    await upload(pdfBuffer, filename, `stories/${storyId}`);
-  }
+  const { id: storyId } = await params;
+  const result = await renderOwnedStoryPdf(storyId, session.user.id);
+  if (!result.ok) return result.response;
 
-  return new Response(new Uint8Array(pdfBuffer), {
+  return new Response(new Uint8Array(result.pdfBuffer), {
     status: 200,
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="${filename}"`,
+      "Content-Disposition": `attachment; filename="${result.filename}"`,
       "Cache-Control": "private, no-store",
     },
+  });
+}
+
+// POST — render and persist to blob storage, returning a stable URL. The
+// persistence side-effect lives on POST (not a GET ?persist=1) so it can't be
+// triggered by a prefetch, <img>, or cross-site link.
+export async function POST(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) return jsonError("Unauthorized", 401);
+
+  const { id: storyId } = await params;
+  const result = await renderOwnedStoryPdf(storyId, session.user.id);
+  if (!result.ok) return result.response;
+
+  const stored = await upload(
+    result.pdfBuffer,
+    result.filename,
+    `stories/${storyId}`,
+  );
+
+  return new Response(JSON.stringify({ url: stored.url }), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
   });
 }

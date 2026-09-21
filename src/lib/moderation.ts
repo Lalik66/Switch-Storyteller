@@ -120,12 +120,24 @@ function getApiKey(): string {
 }
 
 /**
+ * A single moderation input part. `omni-moderation-latest` accepts either a
+ * bare string or a multimodal array of text/image parts — we use the latter
+ * to screen generated illustrations (see `moderateImage`).
+ */
+type ModerationInput =
+  | string
+  | Array<
+      | { type: "text"; text: string }
+      | { type: "image_url"; image_url: { url: string } }
+    >;
+
+/**
  * Low-level call into the OpenAI moderation endpoint. Returns the first
- * result object (we always submit a single-string input). Any non-2xx
- * response is surfaced as a thrown Error so callers can fail closed.
+ * result object. Any non-2xx response is surfaced as a thrown Error so
+ * callers can fail closed.
  */
 async function callOpenAIModeration(
-  text: string,
+  input: ModerationInput,
 ): Promise<OpenAIModerationResult> {
   const apiKey = getApiKey();
 
@@ -137,7 +149,7 @@ async function callOpenAIModeration(
     },
     body: JSON.stringify({
       model: MODERATION_MODEL,
-      input: text,
+      input,
     }),
   });
 
@@ -297,5 +309,37 @@ export async function moderateOutput(
     status: "flagged",
     reason: localizedFlaggedReason(lang, category),
     severity: resolvedSeverity,
+  };
+}
+
+/**
+ * Layer 3 gate for GENERATED IMAGES. A text-to-image model can emit
+ * disturbing or inappropriate visuals even from a benign, already-safe scene
+ * prompt, so every illustration is screened before it is uploaded or shown to
+ * a child — mirroring the text pipeline on the visual channel.
+ *
+ * `pngBuffer` is the raw image bytes; we submit it as a base64 data URL.
+ * Throws on API / configuration failures (fail-closed), so callers should
+ * treat a thrown error as "do not show this image".
+ */
+export async function moderateImage(
+  pngBuffer: Buffer,
+  lang: "en" | "az",
+): Promise<OutputModerationResult> {
+  const dataUrl = `data:image/png;base64,${pngBuffer.toString("base64")}`;
+  const result = await callOpenAIModeration([
+    { type: "image_url", image_url: { url: dataUrl } },
+  ]);
+  const { category, score } = peakScore(result.category_scores);
+  const severity = bucketSeverity(score);
+
+  if (severity === null && !result.flagged) {
+    return { status: "safe" };
+  }
+
+  return {
+    status: "flagged",
+    reason: localizedFlaggedReason(lang, category),
+    severity: severity ?? "low",
   };
 }

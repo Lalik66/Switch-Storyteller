@@ -40,4 +40,39 @@ describe("parseStoryChoices", () => {
     expect(prose).toBe(content);
     expect(choices).toEqual([]);
   });
+
+  it("captures all three choices when separated by blank lines", () => {
+    // Some models (esp. the longer AZ path) put a blank line between each
+    // arrow. The parser must still collect all three AND keep every arrow
+    // line out of the rendered prose.
+    const content = [
+      "The lantern flickered in the dark hall.",
+      "",
+      "→ Choice A",
+      "",
+      "→ Choice B",
+      "",
+      "→ Choice C",
+    ].join("\n");
+
+    const { prose, choices } = parseStoryChoices(content);
+
+    expect(prose).toBe("The lantern flickered in the dark hall.");
+    expect(choices).toEqual(["Choice A", "Choice B", "Choice C"]);
+  });
+
+  it("does not let earlier arrow lines leak into prose", () => {
+    const content = [
+      "A short page.",
+      "",
+      "→ First option",
+      "→ Second option",
+      "→ Third option",
+    ].join("\n");
+
+    const { prose } = parseStoryChoices(content);
+
+    expect(prose).not.toContain("→");
+    expect(prose).toBe("A short page.");
+  });
 });

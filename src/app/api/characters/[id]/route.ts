@@ -4,6 +4,7 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { character, childProfile } from "@/lib/schema";
+import { deleteFilesBestEffort } from "@/lib/storage";
 
 const patchBodySchema = z.object({
   name: z.string().min(1).max(80).optional(),
@@ -118,6 +119,9 @@ export async function DELETE(
   }
 
   await db.delete(character).where(eq(character.id, id));
+
+  // Purge the character's portrait blob, if any (storage hygiene).
+  await deleteFilesBestEffort([owned.character.imageUrl]);
 
   return new Response(null, { status: 204 });
 }

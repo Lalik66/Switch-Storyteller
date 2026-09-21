@@ -45,6 +45,14 @@ export function parseStoryChoices(content: string): ParsedStoryPage {
       i -= 1;
       if (choices.length >= 3) break;
     } else if (choices.length > 0) {
+      // A blank line between choices is common (some models separate the
+      // arrow lines with an empty line, especially on the longer AZ path).
+      // Skip it and keep scanning up so all three choices are captured and
+      // none of the earlier arrow lines leak back into the rendered prose.
+      if (line.trim() === "") {
+        i -= 1;
+        continue;
+      }
       break;
     } else {
       i -= 1;

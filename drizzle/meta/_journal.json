@@ -78,6 +78,13 @@
       "when": 1789640324468,
       "tag": "0010_add_child_usage_daily",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1789986875091,
+      "tag": "0011_rich_chameleon",
+      "breakpoints": true
     }
   ]
 }

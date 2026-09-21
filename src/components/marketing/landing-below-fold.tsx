@@ -386,14 +386,10 @@ export function LandingBelowFold() {
             <dl className="mt-10 grid max-w-md grid-cols-2 gap-6">
               {sampleStats.map(([n, l]) => (
                 <div key={l} className="border-l border-border/70 pl-4">
-                  <dt
-                    className="display-lg text-4xl text-[color:var(--ember)]"
-                    dangerouslySetInnerHTML={{ __html: n }}
-                  />
-                  <dd
-                    className="eyebrow mt-1"
-                    dangerouslySetInnerHTML={{ __html: l }}
-                  />
+                  <dt className="display-lg text-4xl text-[color:var(--ember)]">
+                    {n}
+                  </dt>
+                  <dd className="eyebrow mt-1">{l}</dd>
                 </div>
               ))}
             </dl>
